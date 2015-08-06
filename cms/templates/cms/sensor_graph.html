@@ -1,0 +1,483 @@
+
+{% extends "base.html" %}
+
+{% block title %}センサーグラフ{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h3 id="header" class="page-header"></h3>
+    <form name="Sample_form" action="Sample.html">
+      <text id="id2">表示件数：</text>
+      <input type="text" name="textbox_limit" size="5", value="{{ limit }}">
+      　取得日時：
+      <select name="textbox_year">
+            <option id="year2014" value="2014"/>2014</option>
+            <option id="year2015" value="2015"/>2015</option>
+      </select>
+      年
+      <select name="textbox_month">
+            <option id="month01" value="01"/>1</option>
+            <option id="month02" value="02"/>2</option>
+            <option id="month03" value="03"/>3</option>
+            <option id="month04" value="04"/>4</option>
+            <option id="month05" value="05"/>5</option>
+            <option id="month06" value="06"/>6</option>
+            <option id="month07" value="07"/>7</option>
+            <option id="month08" value="08"/>8</option>
+            <option id="month09" value="09"/>9</option>
+            <option id="month10" value="10"/>10</option>
+            <option id="month11" value="11"/>11</option>
+            <option id="month12" value="12"/>12</option>
+      </select>
+      月
+      <select name="textbox_day">
+            <option id="day01" value="01"/>1</option>
+            <option id="day02" value="02"/>2</option>
+            <option id="day03" value="03"/>3</option>
+            <option id="day04" value="04"/>4</option>
+            <option id="day05" value="05"/>5</option>
+            <option id="day06" value="06"/>6</option>
+            <option id="day07" value="07"/>7</option>
+            <option id="day08" value="08"/>8</option>
+            <option id="day09" value="09"/>9</option>
+            <option id="day10" value="10"/>10</option>
+            <option id="day11" value="11"/>11</option>
+            <option id="day12" value="12"/>12</option>
+            <option id="day13" value="13"/>13</option>
+            <option id="day14" value="14"/>14</option>
+            <option id="day15" value="15"/>15</option>
+            <option id="day16" value="16"/>16</option>
+            <option id="day17" value="17"/>17</option>
+            <option id="day18" value="18"/>18</option>
+            <option id="day19" value="19"/>19</option>
+            <option id="day20" value="20"/>20</option>
+            <option id="day21" value="21"/>21</option>
+            <option id="day22" value="22"/>22</option>
+            <option id="day23" value="23"/>23</option>
+            <option id="day24" value="24"/>24</option>
+            <option id="day25" value="25"/>25</option>
+            <option id="day26" value="26"/>26</option>
+            <option id="day27" value="27"/>27</option>
+            <option id="day28" value="28"/>28</option>
+            <option id="day29" value="29"/>29</option>
+            <option id="day30" value="30"/>30</option>
+            <option id="day31" value="31"/>31</option>
+      </select>
+      日
+      <select name="textbox_hour">
+            <option id="hour00" value="00"/>0</option>
+            <option id="hour01" value="01"/>1</option>
+            <option id="hour02" value="02"/>2</option>
+            <option id="hour03" value="03"/>3</option>
+            <option id="hour04" value="04"/>4</option>
+            <option id="hour05" value="05"/>5</option>
+            <option id="hour06" value="06"/>6</option>
+            <option id="hour07" value="07"/>7</option>
+            <option id="hour08" value="08"/>8</option>
+            <option id="hour09" value="09"/>9</option>
+            <option id="hour10" value="10"/>10</option>
+            <option id="hour11" value="11"/>11</option>
+            <option id="hour12" value="12"/>12</option>
+            <option id="hour13" value="13"/>13</option>
+            <option id="hour14" value="14"/>14</option>
+            <option id="hour15" value="15"/>15</option>
+            <option id="hour16" value="16"/>16</option>
+            <option id="hour17" value="17"/>17</option>
+            <option id="hour18" value="18"/>18</option>
+            <option id="hour19" value="19"/>19</option>
+            <option id="hour20" value="20"/>20</option>
+            <option id="hour21" value="21"/>21</option>
+            <option id="hour22" value="22"/>22</option>
+            <option id="hour23" value="23"/>23</option>
+      </select>
+      時
+      <select name="textbox_minute">
+            <option id="minute00" value="00"/>0</option>
+            <option id="minute05" value="05"/>5</option>
+            <option id="minute10" value="10"/>10</option>
+            <option id="minute15" value="15"/>15</option>
+            <option id="minute20" value="20"/>20</option>
+            <option id="minute25" value="25"/>25</option>
+            <option id="minute30" value="30"/>30</option>
+            <option id="minute35" value="35"/>35</option>
+            <option id="minute40" value="40"/>40</option>
+            <option id="minute45" value="45"/>45</option>
+            <option id="minute50" value="50"/>50</option>
+            <option id="minute55" value="55"/>55</option>
+      </select>
+      分
+      <input type="button" value="更新" onclick="reload_datetime()" class="btn btn-default btn-sm">
+    </form>
+    <svg id="svg1" width="1024" height="560">
+    <div id="tooltip_div"></div>
+    <script type="text/javascript">
+
+    //  センサーデータセット
+    var dataset = [];
+    var dataset_acceleration = [];
+    var dataset_illuminance = [];
+    var dataset_heat = [];
+    {% for s in t %}
+    if("{{ s.ac }}"!="None"){
+      dataset_acceleration.push({ac:{{ s.rssi }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}",x:0,y:0});
+    }
+    if("{{ s.ilu }}"!="None"){
+      dataset_illuminance.push({ilu:{{ s.ilu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}",x:0,y:0});
+    }
+    if("{{ s.tu }}"!="None"){
+      dataset_heat.push({tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}",x:0,y:0});
+    }
+    {% endfor %}
+
+    // d3.select("body").append("p").text(dataset.length);
+    // d3.select("body").append("p").text(dataset_heat.length);
+
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+    // svgの選択
+    var svg1 = d3.select("#svg1")
+
+    // 幅（Width）と高さ（ height）
+    var w = 1024;
+    var h = 560;
+    var padding = 30;
+
+    // 定義域と値域の設定
+    if("{{ sensor }}" == "0"){ // 加速度グラフ
+      var xScale = d3.time.scale()
+                    .domain(d3.extent(dataset_acceleration, function (d) {
+                                return parseDate(d.datetime);
+                            }))
+                    .range([padding*2, w - padding *2]);
+      var yScale = d3.scale.linear()
+                     .domain([-90,-30])
+                     .range([h - padding, padding]);
+    } else if ("{{ sensor }}" == "1"){ // 照度グラフ
+      var xScale = d3.time.scale()
+                    .domain(d3.extent(dataset_illuminance, function (d) {
+                                return parseDate(d.datetime);
+                            }))
+                    .range([padding*2, w - padding *2]);
+      var yScale = d3.scale.linear()
+                     .domain([d3.min(dataset_illuminance, function(d) {
+                              return d.ilu;
+                            }),d3.max(dataset_illuminance, function(d) {
+                              return d.ilu;
+                           })])
+                     .range([h - padding, padding]);
+    } else { // 気温グラフ
+      var xScale = d3.time.scale()
+                    .domain(d3.extent(dataset_heat, function (d) {
+                                return parseDate(d.datetime);
+                            }))
+                    .range([padding*2, w - padding *2]);
+      var yScale = d3.scale.linear()
+                     .domain([d3.min(dataset_heat, function(d) {
+                              return d.tu;
+                            }),d3.max(dataset_heat, function(d) {
+                              return d.tu;
+                           })])
+                     .range([h - padding, padding]);
+    }
+
+    // x軸の定義
+    var xAxis = d3.svg.axis()
+                  .scale(xScale)
+                  .orient("bottom")
+                  .ticks(5);  // 大雑把に目盛りの個数を設定
+
+    // y軸の定義
+    var yAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient("left")
+                  .ticks(5);  // 大雑把に目盛りの個数を設定
+
+    // ヘッダーの入力
+    if ("{{ sensor }}" == "0"){
+      d3.select("#header").text("加速度変化グラフ sensor "+parseInt("{{ device_id }}".slice(-2)));
+    } else if ("{{ sensor }}" == "1"){
+      d3.select("#header").text("照度変化グラフ sensor "+parseInt("{{ device_id }}".slice(-2)));
+    } else {
+      d3.select("#header").text("気温変化グラフ sensor "+parseInt("{{ device_id }}".slice(-2)));
+    }
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
+    //ドラッグ時のイベントをセット
+    drag = d3.behavior.drag()
+     .on("drag", function(d,i) { // ドラッグ中
+      d.x += d3.event.dx;
+      d.y += d3.event.dy;
+      d3.select(this)
+      .attr("transform", function(d,i){
+        return "translate(" + [ d.x,d.y ] + ")";
+      })
+      .transition().duration(50)
+      .attr("r",15);
+      })
+     .on("dragend", function(d){ // ドラッグ終了時
+      d.x = 0;
+      d.y = 0;
+      d3.select(this)
+      .transition().duration(500)
+      .attr({
+        "transform": "translate(0,0)",
+      })
+      .transition().duration(400)
+      .style("opacity",0)
+      .attr({
+        "r": 150,
+      })
+      .remove()
+     });   
+
+
+    // 気温に対応した色を返す(サーモグラフィ風)
+    function thermography(tu){
+      threshold_H = 29.4; // この温度以上は赤色
+      threshold_L = 17.8; // この温度以下は青色
+      if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 0 + ")"; // 黄～赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 2.0 / 4.0 ) ) {
+        return  "rgb(" + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ", " + 0 + ")"; // 緑～黄  
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 1.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ")"; // 水～緑
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 0.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ")"; // 青～水
+      }else {
+        return  "rgb(" + 0 + ", " + 0 + ", " + 255 + ")"; // 青
+      }
+    }
+
+    // 照度に対応した色を返す(青←→黃)
+    function illuminance_color(ilu){
+      var threshold = 700; // 700lx以上は明るいとみなす
+      if (ilu > threshold) {
+        return  "rgb(" + 255 + ", " + 255 + ", " + 0 + ")";
+      } else {
+        return  "rgb(" + Math.round((255/threshold)*ilu) + ", " + Math.round((255/threshold)*ilu) + ", " + Math.round((255/threshold)*(1000 - ilu)) + ")";
+      }
+    }
+
+    // 加速度グラフの描画
+    function acceleration_graph(){
+      svg1.selectAll("rect.acceleration")
+      .data(dataset_acceleration)
+      .enter()
+      .append("rect")
+      .attr({
+        "x": function(d){ return xScale(parseDate(d.datetime));},
+        "y": h - padding,
+        "width": (w - padding*4)/dataset_acceleration.length,
+        "height": 0,
+        "fill": "green",
+      })
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"rgb(0,255,0)",
+        });
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","green")
+        .style("width", "260px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text(d.ac + " m/s²　" + d.datetime.slice(5))
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"green",
+        });
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      .transition().duration(function(d,i){ return i*3;})
+      .attr({
+        "y": function(d){ return yScale(d.ac);},
+        "height": function(d){ return (h - padding) - yScale(d.ac);},
+      });
+    }
+    // 照度グラフの描画
+    function illuminance_graph(){
+      svg1.selectAll("circle.illuminance")
+      .data(dataset_illuminance)
+      .enter()
+      .append("circle")
+      .attr({
+        "cx": function(d){ return xScale(parseDate(d.datetime));},
+        "cy": yScale(0),
+        "r": 8,
+        "fill": function(d){ return illuminance_color(d.ilu);},
+      })
+      .call(drag)
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","blue")
+        .style("width", "260px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text(d.ilu + " lx　" + d.datetime.slice(5))
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      .transition().duration(function(d,i){ return i*3;})
+      .attr({
+        "cy": function(d){ return yScale(d.ilu);},
+      });
+    }
+
+    // d3.select("body").append("p").text(dataset.length);
+    // d3.select("body").append("p").text(dataset_heat.length);
+    // 気温グラフの描画
+    function heat_graph(){
+      svg1.selectAll("circle.temperature")
+      .data(dataset_heat)
+      .enter()
+      .append("circle")
+      .attr({
+        "cx": function(d){ return xScale(parseDate(d.datetime));},
+        "cy": yScale(0),
+        "r": 8,
+        "fill": function(d){ return thermography(d.tu);},
+      })
+      .call(drag)
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        div.transition().duration(300)
+          .style("opacity",1)
+          .style("background","red")
+          .style("width", "260px" )
+          .style("height", "35px")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          .text(d.tu + " ℃　" + d.datetime.slice(5))
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      .transition().duration(function(d,i){ return i*3;})
+      .attr({
+        "cy": function(d){ return yScale(d.tu);},
+      });
+    }
+
+    // 描画グラフの選択と実行
+    if ("{{ sensor }}" == "0"){
+      acceleration_graph();
+    } else if ("{{ sensor }}" == "1"){
+      illuminance_graph();
+    } else {
+      heat_graph();
+    }
+
+    // x軸の生成
+    svg1.append("g")
+      .attr("class", "x axis")  // "axis" クラスを定義
+      .attr("transform", "translate(0," + (h - padding) + ")")
+      .call(xAxis);
+
+    // y軸の生成
+    svg1.append("g")
+       .attr("class", "y axis")
+       .attr("transform", "translate(" + padding*2 + ",0)")
+       .call(yAxis);
+
+    function reload_datetime(){
+      var limit = Sample_form.textbox_limit.value;
+      if (limit == ""){
+        limit = 25;
+      }
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      document.location = "{% url 'cms:sensor_graph' %}"+"limit=" + limit 
+      + "/datetime=" + year + month + day + hour + minute + "/type=" + "{{ sensor }}" + "{{ device_id }}";
+    }
+    
+    // // 更新前の選択状態を記憶
+    // d3.select("#year"+"{{ year }}").attr("selected",true);
+    // d3.select("#month"+"{{ month }}").attr("selected",true);
+    // d3.select("#day"+"{{ day }}").attr("selected",true);
+    // d3.select("#hour"+"{{ hour }}").attr("selected",true);
+    // d3.select("#minute"+"{{ minute }}").attr("selected",true);
+
+    // セレクトボックスの値をdatetimeに合わせる
+    function set_selectbox(){
+      var year = datetime.getFullYear() - 2014;
+      var minute = datetime.getMinutes()/5;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
+      document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
+      document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+    }
+
+    // 取得時間を表示
+    var year = parseInt({{ year }});
+    var month = parseInt({{ month }})-1;
+    var day = parseInt({{ day }});
+    var hour = parseInt({{ hour }});
+    var minute = parseInt({{ minute }});
+    var datetime = new Date(year,month,day,hour,minute);
+    set_selectbox(); // セレクトボックスにdatetimeをセット
+
+
+    </script>
+{% endblock content %}
+
+
+
+

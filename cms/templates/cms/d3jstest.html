@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+
+{% block title %}d3.jsテスト{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis {
+    font: 10px sans-serif;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  .axis .domain {
+    fill: none;
+    stroke: #000;
+    stroke-opacity: .3;
+    stroke-width: 10px;
+    stroke-linecap: round;
+  }
+
+  .axis .halo {
+    fill: none;
+    stroke: #ddd;
+    stroke-width: 8px;
+    stroke-linecap: round;
+  }
+
+  .slider .handle {
+    fill: #fff;
+    stroke: #000;
+    stroke-opacity: .5;
+    stroke-width: 1.25px;
+    cursor: crosshair;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: green;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 class="page-header">d3.jsテスト</h3>
+<a id="color_btn" onclick="color()" class="btn btn-default btn-sm">Color</a>
+<a onclick="opacity()" class="btn btn-default btn-sm">Opacity</a>
+<a onclick="size()" class="btn btn-default btn-sm">Size</a>
+<a onclick="position()" class="btn btn-default btn-sm">Position</a>
+<a onclick="Colorful()" class="btn btn-default btn-sm">Colorful</a>
+<a onclick="Sizeful()" class="btn btn-default btn-sm">Sizeful</a>
+<a onclick="Allrandom()" class="btn btn-default btn-sm">Allrandom</a>
+<a onclick="Reset()" class="btn btn-default btn-sm">Reset</a>
+<a onclick="Delete()" class="btn btn-default btn-sm">Delete</a>
+<a onclick="Load_JSON()" class="btn btn-default btn-sm">JSON読み込み</a>
+<br></br>
+<form name="Sample4_form" action="Sample4.html">
+        <select name="drop">
+            <option value="color"/>color</option>
+            <option value="opacity"/>opacity</option>
+            <option value="size"/>size</option>
+            <input type="button" value="実行" onclick="Sample4()" class="btn btn-default btn-sm">
+        </select>
+        　名前を入力してください：
+        <input type="text" name="textbox" size="10">
+        <input type="button" value="おk" onclick="Sample1()" class="btn btn-default btn-sm">
+        　半径：
+        <input type="text" name="r_input" size="3">
+        x座標：
+        <input type="text" name="cx_input" size="3">
+        y座標：
+        <input type="text" name="cy_input" size="3">
+        色：
+        <select name="fill_input">
+            <option value="red"/>赤</option>
+            <option value="blue"/>青</option>
+            <option value="green"/>緑</option>
+            <option value="yellow"/>黃</option>
+            <option value="black"/>黒</option>
+            <option value="purple"/>紫</option>
+            <option value="orange"/>オレンジ</option>
+            <option value="pink"/>ピンク</option>
+        </select>
+        の円を作ります
+        <input type="button" value="作成" onclick="makeCircle()" class="btn btn-default btn-sm">
+    </form>
+    <form name="selbox">
+<p>好きなプロ野球リーグは？</p>
+<select name="league" onchange="teamSet()">
+<option value="">*リーグ選択</option>
+<option value="">セ・リーグ</option>
+<option value="">パ・リーグ</option>
+</select>
+
+<p>好きなチームは？</p>
+<select name="team">
+<option value="">*チーム選択</option>
+<option value=""></option>
+<option value=""></option>
+<option value=""></option>
+<option value=""></option>
+<option value=""></option>
+<option value=""></option>
+</select>
+</form>
+<br>
+<a href="javascript:void(0)" id="category_1" onclick="show('1');">
+【リンクに表示する文字や画像】</a>
+<div id="layer_1" style="display: none;position:relative;margin-left:15pt" class="close">
+<svg id="svg1" width="1024" height="560">
+ <image x="0" y="0" width="100%" height="100%" xlink:href="{{ MEDIA_URL }}/static_site/images/809.JPG"></image>
+</svg></div>
+ <!-- ボタンと地図の間にスペースを -->
+<?xml version="1.0" standalone="no"?>
+<text id="b"></text>
+<br>
+
+<svg id="svg2" width="320" height="240">
+<div id="frame" style="width:532px; height: 80px; border:2px solid gray;"></div>
+<div id="tooltip_div"></div>
+
+<script type="text/javascript">
+    
+    // データセットの定義
+    // マップの座標(目盛り)を追加
+    var coordinate = []; 
+    for (var i = 0; i < 11; i++) {
+     for (var j = 0; j < 6; j++) {
+       coordinate.push({cx:i*100, cy:j*100,x:0,y:0});
+     }
+   }
+   // //  センサーデータセット
+   //  var dataset = [];
+   //  {% for s in t %}
+   //  dataset.push({ax:{{ s.ax }},ay:{{ s.ay }},az:{{ s.az }},ilu:{{ s.ilu }},tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+   //  {% endfor %}
+
+    // svg1 の編集
+    var svg1 = d3.select("#svg1")
+
+    // // 座標目盛り(円)の生成
+    // svg1.selectAll("circle.coordinate")
+    // .data(coordinate)
+    // .enter()
+    // .append("circle")
+    // .attr("id", function(d,i){
+    //     return "circle_"+i;
+    // })
+    // .attr("cx", function(d) {
+    //   return d.x;
+    // })
+    // .attr("cy", function(d) {
+    //   return d.y;
+    // })
+    // .attr("r", 8)
+    // .attr("fill","purple")
+        // // マウスがバーに重なったら説明文を出す
+        // .on( "mouseover", function(d){
+        //   div.transition().duration(300)
+        //   .style("opacity",1)
+        //   .style("height", "36px")
+        //   .style("background","purple")
+        //   .style("left", (d3.event.pageX + 20) + "px")
+        //   .style("top", (d3.event.pageY + 20) + "px")
+        //   .text("x = " + d.x + " , y = " + d.y)
+        // })
+        // // マウスがバーから離れたら説明文をけす
+        // .on( "mouseout", function(d){
+        //   div.transition().duration(300)
+        //   .style("opacity",0)
+        // })
+    //     // .call(drag)
+    //     ;
+
+    // 色をトグルで切り替える
+    var flag_color = false;
+    function color(){
+        if (flag_color) {
+            svg1.selectAll("circle")
+              .transition()
+              .duration(1000)
+              .attr("fill","purple");
+              d3.select("#color_btn").style("color","black");
+        } else {svg1.selectAll("circle")
+              .transition()
+              .duration(1000)
+              .attr("fill","green");
+              d3.select("#color_btn").style("color","blue");
+          };
+      flag_color = !flag_color;
+    }
+
+    // 透明度をトグルで切り替える
+    var flag_opacity = false;
+    function opacity(){
+        if (flag_opacity) {
+            svg1.selectAll("circle")
+              .transition()
+              .duration(1000)
+              .style("opacity",1);
+        } else {svg1.selectAll("circle")
+              .transition()
+              .duration(1000)
+              .style("opacity",0);
+          };
+      flag_opacity = !flag_opacity;
+    }
+
+    // 大きさをトグルで切り替える
+    var flag_size = false;
+    function size(){
+        if (flag_size) {
+            svg1.selectAll("circle")
+              .transition()
+              .duration(1000)
+              .attr("r","8");
+        } else {svg1.selectAll("circle")
+              .transition()
+              .duration(1000)
+              .attr("r","20");
+          };
+      flag_size = !flag_size;
+    }
+
+    // 位置をランダムで変える
+    function position(){
+        for (var i = 0; i < coordinate.length; i++) {
+            svg1.select("#circle_"+i)
+            .transition()
+            .duration(1000)
+            .attr("cx", Math.random() * 1024)
+            .attr("cy", Math.random() * 560)
+        };
+        // g.transition().duration(1000)
+        // .attr("cx", function(d){return Math.random() * 1024;})
+        // .attr("cy", function(d){return Math.random() * 560;});
+    }
+
+    // 色をランダムで変える
+    var colors = d3.scale.category10().range();
+    function Colorful(){
+        for (var i = 0; i < coordinate.length; i++) {
+            var v = Math.floor(Math.random() * 11); // floorで整数を呼び出す
+            svg1.select("#circle_"+i)
+            .transition()
+            .duration(1000)
+            .attr("fill", colors[v])
+        };
+        // g.transition().duration(1000)
+        // .attr("fill", function(d){var v = Math.floor(Math.random() * 11); return colors[v];});
+    }
+
+    // 大きさをランダムで変える
+    function Sizeful(){
+        for (var i = 0; i < coordinate.length; i++) {
+            svg1.select("#circle_"+i)
+            .transition()
+            .duration(1000)
+            .attr("r", Math.random() * (25 - 1) + 1) // 1~25までのランダムな値
+        };
+    }
+
+    // すべてをランダムで変える
+    function Allrandom(){
+        for (var i = 0; i < coordinate.length; i++) {
+            var v = Math.floor(Math.random() * 11);
+            svg1.select("#circle_"+i)
+            .transition()
+            .duration(1000)
+            .attr("cx", Math.random() * 1024)
+            .attr("cy", Math.random() * 560)
+            .attr("r", Math.random() * (25 - 1) + 1) // 1~25までのランダムな値
+            .attr("fill", colors[v])
+        };
+    }
+
+    // すべてをリセット
+    function Reset(){
+        for (var i = 0; i < coordinate.length; i++) {
+            svg1.select("#circle_"+i)
+            .transition()
+            .duration(1000)
+            .attr("cx", coordinate[i].x)
+            .attr("cy", coordinate[i].y)
+            .attr("r", 8)
+            .attr("fill", "purple")
+            .style("opacity",1);
+        };
+    }
+
+    // すべてデリート
+    function Delete(){
+        for (var i = 0; i < coordinate.length; i++) {
+            svg1.select("#circle_"+i)
+            .transition()
+            .duration(1000)
+            .attr("cy", 600)
+            .style("opacity",0.5)
+            .each('end', function () {
+              d3.select(this).remove();
+            });
+        };
+    }
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "140px" )
+    .style("height", "90px")
+    .style("opacity",0)
+
+    var text_ax = d3.select("#text_ax")
+    .attr("fill","white")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .style("opacity",0)
+
+    var text_ay = d3.select("#text_ay")
+    .attr("fill","white")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .style("opacity",0)
+
+    var text_az = d3.select("#text_az")
+    .attr("fill","white")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .style("opacity",0)
+
+    function Sample4(){
+                    var hoge = Sample4_form.drop.value;
+                    if (hoge == "color"){
+                        color();
+                    } else if (hoge == "opacity"){
+                        opacity();
+                    } else if (hoge == "size"){
+                        size();
+                    }
+        }
+
+    function Sample1(){
+        var hoge = Sample4_form.textbox.value;  //テキストエリアの値を取得
+         
+        alert(""+ hoge +"の豚野郎！");
+    }
+
+    function makeCircle(){
+        var r_input = Sample4_form.r_input.value;
+        var cx_input = Sample4_form.cx_input.value;
+        var cy_input = Sample4_form.cy_input.value;
+        var fill_input = Sample4_form.fill_input.value;
+        svg1.data([{x:cx_input, y:cy_input, r:r_input, fill:fill_input}])
+        .append("circle")
+        .attr({
+            "id": "circle_"+coordinate.length,
+            "cx": function(d){ return d.x;},
+            "cy": function(d){ return d.y;},
+            "r": 0.1,
+            "fill": function(d){ return d.fill;},
+        })
+        .call(drag)
+        .transition().duration(1000)
+        .attr({
+            "r": function(d){ return d.r;},
+        })
+        ;
+        // coordinate.push({cx:cx_input,cy:cy_input,x:0,y:0});
+    }
+
+    function Load_JSON(){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'cms:response_json' %}"+"datetime=201411121335/",
+        dataType: 'json',
+        success: function(json){
+          var len = json.length;
+          for(var i=0; i < len; i++){
+            $("#b").append("pos_x = " + json[i].pos_x + " pos_y = " + json[i].pos_y + " tu = " + json[i].tu + '<br>');
+          }
+        }
+      });
+    }
+  
+        
+    // //ドラッグ時のイベントをセット
+    // var drag = d3.behavior.drag()
+    // .origin(function(d) { return d; })
+    // .on("dragstart", dragstarted)
+    // .on("drag", dragged)
+    // .on("dragend", dragended);
+
+    // function dragstarted(d) {
+    //   d3.event.sourceEvent.stopPropagation();
+    //   d3.select(this).classed("dragging", true);
+    // }
+
+    // function dragged(d) {
+    //   d3.select(this).attr("cx", d.x = d3.event.x)
+    //                  .attr("cy", d.y = d3.event.y);
+    // }
+
+    // function dragended(d) {
+    //   d3.select(this).classed("dragging", false);
+    // }  
+
+    drag = d3.behavior.drag()
+ .on("drag", function(d,i) {
+  d.x += d3.event.dx;
+  d.y += d3.event.dy;
+  d3.select(this).attr("transform", function(d,i){
+    return "translate(" + [ d.x,d.y ] + ")";
+  });
+});   
+
+     var g = svg1.selectAll("g.coordinate")
+     .data(coordinate)
+     .enter()
+     .append("g")
+     .attr("x",0)
+     .attr("y",0)
+     .attr("transform","translate(0,0)")
+     .append('circle')
+     .attr({
+      "id": function(d,i){ return "circle_"+i;},
+      "cx": function(d){ return d.cx;},
+      "cy": function(d){ return d.cy;},
+      "r": 8,
+      "fill": "purple",
+     })
+     // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("height", "36px")
+        .style("background","purple")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text("x = " + d.cx + " , y = " + d.cy)
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+     .call(drag);
+
+     var list = {
+          nodes : [   // ノードリスト
+              { name : "a" },
+              { name : "b" },
+              { name : "c" },
+          ],
+          links : [   // ノードとノードを結ぶ線の関係。配列要素の順番をID・参照番号として利用している
+              { source : 0, target : 1 },
+              { source : 0, target : 2 },
+              { source : 1, target : 2 }
+          ]
+      };
+      var svg2 = d3.select("#svg2")
+      var svgWidth = 320;
+      var svgHeight = 240;
+      // Force Layoutを設定
+      var force = d3.layout.force()
+          .nodes(list.nodes)  // ノードを指定
+          .links(list.links)  // ノードとノードを結ぶリンク線を指定
+          .size([svgWidth, svgHeight])
+          .linkDistance(160)
+          .start();
+      // ノードとノードを結ぶ線を描画
+      var link = svg2.selectAll("line")
+          .data(list.links)
+          .enter()
+          .append("line")
+          .style("stroke", "red")
+          .style("stroke-width", 5);
+      // ノードを示す円（●）を描画
+      var node = svg2.selectAll("circle")  // 円を生成
+          .data(list.nodes)
+          .enter()
+          .append("circle")   // circleを追加
+          .attr("r", 10)  // 半径は10
+          .call(force.drag);  // ノードをドラッグできるようにする
+      // 再描画時に線を描画
+      force.on("tick", function() {
+          link
+          .attr("x1", function(d) { return d.source.x; }) // ソースとターゲットの要素座標を指定していく
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+          node
+          .attr("cx", function(d) { return d.x; })    // ノードの座標を指定していく
+          .attr("cy", function(d) { return d.y; });
+      });
+
+      function show(inputData) {
+        var objID=document.getElementById( "layer_" + inputData );
+        var buttonID=document.getElementById( "category_" + inputData );
+        if(objID.className=='close') {
+        objID.style.display='block';
+        objID.className='open';
+        }else{
+        objID.style.display='none';
+        objID.className='close';
+      }}
+
+      //セ・リーグのチームの配列
+      var s_league=new Array(
+      "","中日","ヤクルト","巨人","阪神","横浜","広島"
+      );
+
+      //パ・リーグのチームの配列
+      var p_league=new Array(
+      "","ロッテ","西武","オリックス","ソフトバンク","楽天","日本ハム"
+      );
+
+
+      function teamSet(){
+
+        //オプションタグを連続して書き換える
+        for ( i=1; i<7; i++ ){
+
+          //選択したリーグによって分岐
+          switch (document.selbox.league.selectedIndex){
+            case 0: document.selbox.team.options[i].text="";break;
+            case 1: document.selbox.team.options[i].text=s_league[i];break;
+            case 2: document.selbox.team.options[i].text=p_league[i];break;
+          }
+        }
+
+        //チーム名のセレクトボックスの選択番号を０にする
+        document.selbox.team.selectedIndex=0;
+      }
+
+      
+
+      /***********************************
+                スライダーサンプル
+      ************************************/
+
+      //var margin = {top: 200, right: 50, bottom: 200, left: 50},
+      var margin = {top: 10, right: 15, bottom: 10, left: 15},
+      //    width = 960 - margin.left - margin.right,
+          width = 520 - margin.left - margin.right,
+      //    height = 500 - margin.bottom - margin.top;
+          height = 78 - margin.bottom - margin.top;
+
+      var x = d3.scale.linear()
+          .domain([0, 180])
+          .range([0, width])
+          .clamp(true);
+
+      var brush = d3.svg.brush()
+          .x(x)
+          .extent([0, 0])
+          .on("brush", brushed);
+
+      //var svg = d3.select("body").append("svg")
+      var svg = d3.select("#frame").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      svg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height / 2 + ")")
+          .call(d3.svg.axis()
+            .scale(x)
+            .orient("bottom")
+            .tickFormat(function(d) { return d + "°"; })
+            .tickSize(0)
+            .tickPadding(12))
+        .select(".domain")
+        .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+          .attr("class", "halo");
+
+      var slider = svg.append("g")
+          .attr("class", "slider")
+          .call(brush);
+
+      slider.selectAll(".extent,.resize")
+          .remove();
+
+      slider.select(".background")
+          .attr("height", height);
+
+      var handle = slider.append("circle")
+          .attr("class", "handle")
+          .attr("transform", "translate(0," + height / 2 + ")")
+          .attr("r", 9);
+
+      slider
+          .call(brush.event)
+        .transition() // gratuitous intro!
+          .duration(750)
+          .call(brush.extent([70, 70]))
+          .call(brush.event);
+
+      function brushed() {
+        var value = brush.extent()[0];
+        if (d3.event.sourceEvent) value = x.invert(d3.mouse(this)[0]), brush.extent([value, value]);
+        handle.attr("cx", x(value));
+       // d3.select("body").style("background-color", d3.hsl(value, .8, .8));
+        d3.select("#frame").style("background-color", d3.hsl(value, .8, .8));
+        svg1.selectAll("circle").attr("r", value/3);
+      }
+
+  </script>
+  {% endblock content %}

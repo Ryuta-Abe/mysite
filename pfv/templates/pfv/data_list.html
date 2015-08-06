@@ -1,0 +1,179 @@
+
+{% extends "base.html" %}
+
+{% block title %}データ一覧{% endblock title %}
+
+{% block extrahead %}
+<style>
+table {
+  margin-top: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <h3 class="page-header">データ一覧</h3>
+    <form name="Sample_form" action="Sample.html">
+      <text id="id2">表示件数：</text>
+      <input type="text" name="textbox_limit" size="5", value="{{ limit }}">
+      <input type="button" value="更新" onclick="reload()" class="btn btn-default btn-sm">
+      　取得日時：
+      <select name="textbox_year">
+            <option id="year2014" value="2014"/>2014</option>
+            <option id="year2015" value="2015"/>2015</option>
+      </select>
+      年
+      <select name="textbox_month">
+            <option id="month01" value="01"/>1</option>
+            <option id="month02" value="02"/>2</option>
+            <option id="month03" value="03"/>3</option>
+            <option id="month04" value="04"/>4</option>
+            <option id="month05" value="05"/>5</option>
+            <option id="month06" value="06"/>6</option>
+            <option id="month07" value="07"/>7</option>
+            <option id="month08" value="08"/>8</option>
+            <option id="month09" value="09"/>9</option>
+            <option id="month10" value="10"/>10</option>
+            <option id="month11" value="11"/>11</option>
+            <option id="month12" value="12"/>12</option>
+      </select>
+      月
+      <select name="textbox_day">
+            <option id="day01" value="01"/>1</option>
+            <option id="day02" value="02"/>2</option>
+            <option id="day03" value="03"/>3</option>
+            <option id="day04" value="04"/>4</option>
+            <option id="day05" value="05"/>5</option>
+            <option id="day06" value="06"/>6</option>
+            <option id="day07" value="07"/>7</option>
+            <option id="day08" value="08"/>8</option>
+            <option id="day09" value="09"/>9</option>
+            <option id="day10" value="10"/>10</option>
+            <option id="day11" value="11"/>11</option>
+            <option id="day12" value="12"/>12</option>
+            <option id="day13" value="13"/>13</option>
+            <option id="day14" value="14"/>14</option>
+            <option id="day15" value="15"/>15</option>
+            <option id="day16" value="16"/>16</option>
+            <option id="day17" value="17"/>17</option>
+            <option id="day18" value="18"/>18</option>
+            <option id="day19" value="19"/>19</option>
+            <option id="day20" value="20"/>20</option>
+            <option id="day21" value="21"/>21</option>
+            <option id="day22" value="22"/>22</option>
+            <option id="day23" value="23"/>23</option>
+            <option id="day24" value="24"/>24</option>
+            <option id="day25" value="25"/>25</option>
+            <option id="day26" value="26"/>26</option>
+            <option id="day27" value="27"/>27</option>
+            <option id="day28" value="28"/>28</option>
+            <option id="day29" value="29"/>29</option>
+            <option id="day30" value="30"/>30</option>
+            <option id="day31" value="31"/>31</option>
+      </select>
+      日
+      <select name="textbox_hour">
+            <option id="hour00" value="00"/>0</option>
+            <option id="hour01" value="01"/>1</option>
+            <option id="hour02" value="02"/>2</option>
+            <option id="hour03" value="03"/>3</option>
+            <option id="hour04" value="04"/>4</option>
+            <option id="hour05" value="05"/>5</option>
+            <option id="hour06" value="06"/>6</option>
+            <option id="hour07" value="07"/>7</option>
+            <option id="hour08" value="08"/>8</option>
+            <option id="hour09" value="09"/>9</option>
+            <option id="hour10" value="10"/>10</option>
+            <option id="hour11" value="11"/>11</option>
+            <option id="hour12" value="12"/>12</option>
+            <option id="hour13" value="13"/>13</option>
+            <option id="hour14" value="14"/>14</option>
+            <option id="hour15" value="15"/>15</option>
+            <option id="hour16" value="16"/>16</option>
+            <option id="hour17" value="17"/>17</option>
+            <option id="hour18" value="18"/>18</option>
+            <option id="hour19" value="19"/>19</option>
+            <option id="hour20" value="20"/>20</option>
+            <option id="hour21" value="21"/>21</option>
+            <option id="hour22" value="22"/>22</option>
+            <option id="hour23" value="23"/>23</option>
+      </select>
+      時
+      <select name="textbox_minute">
+            <option id="minute00" value="00"/>0</option>
+            <option id="minute05" value="05"/>5</option>
+            <option id="minute10" value="10"/>10</option>
+            <option id="minute15" value="15"/>15</option>
+            <option id="minute20" value="20"/>20</option>
+            <option id="minute25" value="25"/>25</option>
+            <option id="minute30" value="30"/>30</option>
+            <option id="minute35" value="35"/>35</option>
+            <option id="minute40" value="40"/>40</option>
+            <option id="minute45" value="45"/>45</option>
+            <option id="minute50" value="50"/>50</option>
+            <option id="minute55" value="55"/>55</option>
+      </select>
+      分
+      <input type="button" value="更新" onclick="reload_datetime()" class="btn btn-default btn-sm">
+    </form>
+    <table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
+
+      <thead>    
+        <tr>
+          <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+          <th class="table-filterable">　PCWL_ID　</th>
+          <th class="table-filterable">MACアドレス</th>
+          <th>RSSI</th>
+          <th>　dBm　</th>
+          <th class="table-filterable">シーケンス</th>
+          <th class="table-filterable">取得時刻</th>
+          <th>timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in t %}
+        <tr>
+          <td align="center">{{ s.node_id }}</td>
+          <td align="center">{{ s.mac }}</td>
+          <td align="center">{{ s.rssi }}</td>  <!-- test -->
+          <td align="center">{{ s.dbm }}</td>  <!-- test -->
+          <td align="center">{{ s.sequence }}</td>
+          <td align="center">{{ s.get_time_no }}</td>
+          <td align="center">{{ s.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <script type="text/javascript">
+
+    function reload(){
+      var limit = Sample_form.textbox_limit.value;
+      if (limit == ""){
+        limit = 25;
+      }
+      document.location = "http://localhost:8000/pfv/data_list/limit=" + limit;
+    }
+    function reload_datetime(){
+      var limit = Sample_form.textbox_limit.value;
+      if (limit == ""){
+        limit = 25;
+      }
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      document.location = "http://localhost:8000/pfv/data_list/limit=" + limit 
+      + "/datetime=" + year + month + day + hour + minute;
+    }
+
+    //d3.select("body").append("p").text("{{ minute }}");
+    
+    // 更新前の選択状態を記憶
+    d3.select("#year"+"{{ year }}").attr("selected",true);
+    d3.select("#month"+"{{ month }}").attr("selected",true);
+    d3.select("#day"+"{{ day }}").attr("selected",true);
+    d3.select("#hour"+"{{ hour }}").attr("selected",true);
+    d3.select("#minute"+"{{ minute }}").attr("selected",true);
+    </script>
+{% endblock content %}

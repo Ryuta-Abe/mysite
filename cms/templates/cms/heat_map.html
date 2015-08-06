@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block title %}気温マップ{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 class="page-header">気温マップ</h3>
+<a id="btn_acceleration" href="{% url 'cms:acceleration_map' %}" class="btn btn-default btn-sm">加速度</a>
+<a id="btn_illuminance" href="{% url 'cms:illuminance_map' %}" class="btn btn-default btn-sm">照　度</a>
+<a id="btn_heat" href="{% url 'cms:heat_map' %}" class="btn btn-default btn-sm">気　温</a>
+　　　　　<!-- ボタン間にスペースを -->
+<a id="btn_visualize" onclick="visualize()" class="btn btn-default btn-sm" align>視覚化</a>
+<a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
+<a id="btn_box" onclick="box()" class="btn btn-default btn-sm">親　機</a>
+<br></br> <!-- ボタンと地図の間にスペースを -->
+<?xml version="1.0" standalone="no"?>
+<svg id="svg1" width="1024" height="560">
+ <image x="0" y="0" width="100%" height="100%" xlink:href="{{ MEDIA_URL }}/static_site/images/809.JPG"></image>
+</svg>
+<div id="tooltip_div"></div>
+<svg id="svg2" width="1000" height="100"></svg>
+
+<script type="text/javascript">
+
+    // 温度ボタンの色付け
+    d3.select("#btn_heat").style("color","blue")
+
+    // データセットの定義
+    // マップの座標(目盛り)を追加
+    var coordinate = []; 
+    for (var i = 0; i < 11; i++) {
+     for (var j = 0; j < 6; j++) {
+       coordinate.push([i*100, j*100]);
+     }
+   }
+    //  赤外線センサーデータ
+    var  heat = [];
+    {% for s in t6 %}
+    heat.push({tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}","box_id":"{{ s.box_id }}"});
+    {% endfor %}
+    {% for s in t7 %}
+    heat.push({tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}","box_id":"{{ s.box_id }}"});
+    {% endfor %}
+    {% for s in t8 %}
+    heat.push({tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}","box_id":"{{ s.box_id }}"});
+    {% endfor %}
+    {% for s in t9 %}
+    heat.push({tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}","box_id":"{{ s.box_id }}"});
+    {% endfor %}
+
+    // jsonの重複を削除する関数
+    function Optimize(list){
+      temp = [];
+      flag = [];
+      for (var i = 1; i < 47; i++) {
+        flag.push(true); // flag[id]=True : id番はまだ登録されていない
+      };
+      for (var i = 0; i < list.length; i++) {
+        id = parseInt(list[i]["device_id"].slice(-2),10);
+        if (flag[id]) {
+          temp.push({
+          "tu":list[i]["tu"],
+          "pos_x":list[i]["pos_x"],
+          "pos_y":list[i]["pos_y"],
+          "device_id":list[i]["device_id"],
+          "box_id":list[i]["box_id"]
+        });
+          flag[id] = !flag[id]; // false(登録済み)にする
+        }
+      };
+      return temp;
+    }
+    heat = Optimize(heat); // idの重複を削除、最新のみを残す
+
+    d3.select("body").append("p").text("(´・ω・｀)");
+
+    // svgの選択
+    var svg1 = d3.select("#svg1")
+    var svg2 = d3.select("#svg2")
+    svg2.style("opacity",0);
+
+    // 視覚化状態をトグルで切り替える
+    function thermography(tu){
+      threshold_H = 35.4; // この温度以上は赤色
+      threshold_L = 4.8; // この温度以下は青色
+      if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 0 + ")"; // 黄～赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 2.0 / 4.0 ) ) {
+        return  "rgb(" + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ", " + 0 + ")"; // 緑～黄  
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 1.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ")"; // 水～緑
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 0.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ")"; // 青～水
+      }else {
+        return  "rgb(" + 0 + ", " + 0 + ", " + 255 + ")"; // 青
+      }
+    }
+    var flag_visualize = false;
+    function visualize(){
+        if (flag_visualize) {
+          d3.select("#btn_visualize").style("color","black");
+          for (var i = 0; i < heat.length; i++) {
+            svg1.select("#heat_circle"+i)
+            .transition()
+            .duration(1000)
+            .style("opacity",1)
+            .attr("r", 15)
+            .attr("fill","red");
+            svg2.transition().duration(1000).style("opacity",0);
+          }
+        } else {
+          d3.select("#btn_visualize").style("color","blue");
+          for (var i = 0; i < heat.length; i++) {
+            svg1.select("#heat_circle"+i)
+            .transition()
+            .duration(1000)
+            .style("opacity",0.5)
+            .attr("r",150)
+            .attr("fill", thermography(heat[i]["tu"]));
+            svg2.transition().duration(1000).style("opacity",1);
+          };
+        };
+      flag_visualize = !flag_visualize;
+    }
+
+    // 座標目盛りの透明度をトグルで切り替える
+    d3.select("#btn_opacity").style("color","blue");
+    var flag_opacity = true;
+    function opacity(){
+        if (flag_opacity) {
+          d3.select("#btn_opacity").style("color","black");
+          svg1.selectAll("#circle_coordinate")
+              .transition()
+              .duration(1000)
+              .style("opacity",0);
+        } else {
+          d3.select("#btn_opacity").style("color","blue");
+          svg1.selectAll("#circle_coordinate")
+              .transition()
+              .duration(1000)
+              .style("opacity",1);
+          };
+      flag_opacity = !flag_opacity;
+    }
+
+    // 親機表示の透明度をトグルで切り替える
+    d3.select("#btn_box").style("color","blue");
+    var flag_box = true;
+    function box(){
+        if (flag_box) {
+          d3.select("#btn_box").style("color","black");
+          svg1.selectAll("#g_box")
+              .transition()
+              .duration(1000)
+              .style("opacity",0);
+        } else {
+          d3.select("#btn_box").style("color","blue");
+          svg1.selectAll("#g_box")
+              .transition()
+              .duration(1000)
+              .style("opacity",1);
+          };
+      flag_box = !flag_box;
+    }
+
+    // 座標目盛り(円)の生成
+    svg1.selectAll("circle.coordinate")
+    .data(coordinate)
+    .enter()
+    .append("circle")
+    .attr("id", "circle_coordinate")
+    .attr("cx", function(d) {
+      return d[0];
+    })
+    .attr("cy", function(d) {
+      return d[1];
+    })
+    .attr("r", 3)
+    .attr("fill","purple")
+        // マウスがバーに重なったら説明文を出す
+        .on( "mouseover", function(d){
+          if (flag_opacity){ // 座標可視状態なら説明を出す
+            div.transition().duration(300)
+            .style("opacity",1)
+            .style("background","purple")
+            .style("width", "140px" )
+            .style("height", "35px")
+            .style("left", (d3.event.pageX + 20) + "px")
+            .style("top", (d3.event.pageY + 20) + "px")
+            .text("x = " + d[0] + " , y = " + d[1])
+          }
+        })
+        // マウスがバーから離れたら説明文をけす
+        .on( "mouseout", function(d){
+          div.transition().duration(300)
+          .style("opacity",0)
+        });
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
+    // 親機データのマッピング
+    var box_list = [];
+    box_list.push({pos_x:890,pos_y:190,box_id:6,text:"接続中の子機：　"});
+    box_list.push({pos_x:710,pos_y:370,box_id:7,text:"接続中の子機：　"});
+    box_list.push({pos_x:300,pos_y:340,box_id:8,text:"接続中の子機：　"});
+    box_list.push({pos_x:30,pos_y:440,box_id:9,text:"接続中の子機：　"});
+    for (var i = 0; i < heat.length; i++) {
+      if (heat[i]["box_id"] == "9CBD9D010006"){
+        box_list[0]["text"] += parseInt(heat[i]["device_id"].slice(-2)) + ", ";
+      } else if (heat[i]["box_id"] == "9CBD9D010007"){
+        box_list[1]["text"] += parseInt(heat[i]["device_id"].slice(-2)) + ", ";
+      } else if (heat[i]["box_id"] == "9CBD9D010008"){
+        box_list[2]["text"] += parseInt(heat[i]["device_id"].slice(-2)) + ", ";
+      } else if (heat[i]["box_id"] == "9CBD9D010009"){
+        box_list[3]["text"] += parseInt(heat[i]["device_id"].slice(-2)) + ", ";
+      }
+    };
+    var g_box = svg1.selectAll("g.box")
+    .data(box_list)
+    .enter()
+    .append("g")
+    .attr({
+      "id": "g_box",
+      transform: function(d) {
+        return "translate(" + (d.pos_x - 15) + "," + (d.pos_y - 15) + ")";
+      },
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+      if (flag_box){ // 親機可視状態なら説明を出す
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","brown")
+        .style("width", "140px")
+        .style("height", "60px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text(d.text.slice(0, -2)) // 末尾のカンマを削る
+      }
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0)
+    })
+    // 四角の描画
+    g_box.append("rect")
+    .attr({
+      "rx": 5,
+      "ry": 5,
+      "width": 30,
+      "height": 30,
+      "fill": "brown",
+    });
+    // テキストの描画
+    g_box.append("text")
+    .attr({
+      "text-anchor": "middle",
+      "dx": 15,
+      "dy": 20,
+      "fill": "white",
+    })
+    .text(function(d) {
+            return d.box_id;
+          });
+
+    // 赤外線データのマッピング
+    var g = svg1.selectAll("g.heat")
+    .data(heat)
+    .enter()
+    .append("g")
+    .attr({
+      transform: function(d) {
+        return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      },
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+      div.transition().duration(300)
+      .style("opacity",1).text(d.tu + " ℃ ")
+      .style("background","red")
+      .style("width", "80px")
+      .style("height", "35px")
+      .style("left", (d3.event.pageX + 20) + "px")
+      .style("top", (d3.event.pageY + 20) + "px")
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0).text("☆(ゝω･)")
+    })
+    // マウスクリック時の動作
+    .on( "click", function(d){
+      div.transition().duration(300)
+      .text("暖かいね")
+    });;
+    // 円の描画
+    g.append("circle")
+    .attr({
+      "id": function(d,i){return "heat_circle"+i;},
+      "r": 15,
+      "fill": "red",
+    });
+    // テキストの描画
+    g.append("text")
+    .attr({
+      "id": function(d,i){return "heat_text"+i;},
+      "text-anchor": "middle",
+      "dy": ".35em",
+      "fill": "white",
+    })
+    .text(function(d) {
+            return parseInt(d.device_id.slice(-2));
+          });
+
+    // 温度参考バーの表示
+    // 幅（Width）と高さ（ height）
+    var w = 1000;
+    var h = 100;
+    var padding = 30;
+
+    //スケール関数の生成
+    var xScale = d3.scale.linear()
+                     .domain([0, 40])
+                     .range([padding, w - padding *2]);
+
+    // x軸の定義
+    var xAxis = d3.svg.axis()  // ここのsvgは変数名じゃない！；；
+                  .scale(xScale)
+                  .orient("bottom")
+                  .ticks(10);  // 大雑把に目盛りの個数を設定
+
+    // x軸の生成
+    svg2.append("g")
+      .attr("class", "axis")  // "axis" クラスを定義
+      .attr("transform", "translate(0," + (h - padding) + ")")
+      .call(xAxis);
+
+    // 棒グラフの追加
+    temperature = [];
+    for (var i = 0; i < 160; i++) {
+      temperature.push(i/4);
+    };
+    svg2.selectAll("rect.temperature")
+    .data(temperature)
+    .enter()
+    .append("rect")
+    .attr({
+      "x": function(d){ return xScale(d);},
+      "y": padding,
+      "width": (w - padding*3)/temperature.length,
+      "height": h - padding*2 - 10,
+      "fill": function(d){ return thermography(d);},
+    });
+
+  </script>
+  {% endblock content %}
