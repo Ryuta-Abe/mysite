@@ -195,38 +195,47 @@ def sensor_map(request, date_time=d, type="20"):
   gt = today - datetime.timedelta(days = 20)
   # print (lt, gt)
 
-  tmp_date = dt_from_iso_to_str(today)[:8]
-  dt_datas = list(db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False},{"datetime":1}).sort("datetime", DESCENDING))
+  # tmp_date = dt_from_iso_to_str(today)[:8]
+  # dt_datas = list(db.sensor2.find({"datetime":{"$gte":gt, "$lte":lt}, "error_flag":False},{"datetime":1}).sort("datetime", DESCENDING))
   
-  if len(dt_datas) > 0:
-    for i in range(0, len(dt_datas) - 1):
-      dt_data = dt_datas[i]
+  # if len(dt_datas) > 0:
+  #   for i in range(0, len(dt_datas) - 1):
+  #     dt_data = dt_datas[i]
 
-      if str(dt_from_iso_to_str(dt_data["datetime"]))[:8] != tmp_date[:8]:
-        tmp = [dt_data["datetime"]]
-        recent += tmp
-
-      tmp_date = str(dt_from_iso_to_str(dt_data["datetime"]))[:8]
-
-  # for i in range(0,num - 1):
-  #   # start = datetime.datetime.today()
-  #   if len(recent) > i :
-  #     # lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
-  #     # gt = recent[i] - datetime.timedelta(days = 30)
-  #     start = datetime.datetime.today()
-  #     if db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False}).count() != 0:
-  #       end = datetime.datetime.today()
-  #       print ("if:", end - start)
-
-  #       start = datetime.datetime.today()
-  #       tmp = db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False},{"datetime":1}).sort("-datetime")[1]
-  #       end = datetime.datetime.today()
-  #       print ("tmp:", end - start)
-
-  #       tmp = [tmp["datetime"]]
-  #       # print (type(tmp))
+  #     if str(dt_from_iso_to_str(dt_data["datetime"]))[:8] != tmp_date[:8]:
+  #       tmp = [dt_data["datetime"]]
   #       recent += tmp
-      # recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+
+  #     tmp_date = str(dt_from_iso_to_str(dt_data["datetime"]))[:8]
+  #     print (tmp_date)
+
+  # else:
+  #   recent += [today]
+
+  #   print ("aaaaaaaaaaaaaaa", recent)
+  #   pass
+
+
+
+  for i in range(0,num - 1):
+    # start = datetime.datetime.today()
+    if len(recent) > i :
+      # lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
+      # gt = recent[i] - datetime.timedelta(days = 30)
+      # start = datetime.datetime.today()
+      if db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False}).count() != 0:
+        # end = datetime.datetime.today()
+        # print ("if:", end - start)
+
+        # start = datetime.datetime.today()
+        tmp = db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False},{"datetime":1}).sort("-datetime")[1]
+        # end = datetime.datetime.today()
+        # print ("tmp:", end - start)
+
+        tmp = [tmp["datetime"]]
+        # print (type(tmp))
+        recent += tmp
+      recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
     # end = datetime.datetime.today()
     # print ("running:",end - start)
 
@@ -376,10 +385,14 @@ def response_json(request, date_time=d):
     _15min_ago = dt_insert_partition_to_min(_15min_ago)
     _15min_ago = dt_from_str_to_iso(_15min_ago)
 
-    device_list     = [1, 2, 3, 4, 5]
-    ilu_device_list = [4, 8, 9, 18, 20]
-
     # データベースから取り出し
+    aggregated_data = db.sensor2.aggregate([{ "$match" :{"datetime":{"$gte":_15min_ago, "$lte":date_time}, "error_flag":False} },
+     { "$group" : {"device_id":"$device_id", "count" : {"$sum" : 1 } } }])
+   
+    device_list     = aggregated_data["result"]
+    ilu_device_list = [4, 8, 9, 18, 20]
+    print (device_list)
+
     t = []
     up2date = Sensor2.objects(error_flag=False).order_by("-datetime").limit(1).scalar("datetime") # 最新時刻
     for s in device_list:
@@ -408,6 +421,14 @@ def response_json(request, date_time=d):
     # onehour_ago = str(onehour_ago.year)+"-"+("0"+str(onehour_ago.month))[-2:]+"-"+("0"+str(onehour_ago.day))[-2:]+" "+("0"+str(onehour_ago.hour))[-2:]+":"+("0"+str(onehour_ago.minute))[-2:]
 
     # データベースから取り出し
+
+    aggregated_data = db.sensor2.aggregate([{ "$match" :{"datetime":{"$gte":onehour_ago, "$lte":date_time}, "error_flag":False} },
+     { "$group" : {"device_id":"$device_id", "count" : {"$sum" : 1 } } }])
+   
+    device_list     = aggregated_data["result"]
+    ilu_device_list = [4, 8, 9, 18, 20]
+    print (device_list)
+
     t = []
     for s in device_list:
       t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1).scalar("ac","ilu","tu","pos_x","pos_y","device_id","box_id","datetime")
