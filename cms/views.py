@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from cms.forms import SensorForm
-from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db
+from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,Position_Set
 from mongoengine import *
 from pymongo import *
 import requests
@@ -21,14 +21,9 @@ from cms.write_to_mongo import write_to_initial_db, write_to_sensordb
 
 from cms.constmod import ConstClass
 
-device_list     = ConstClass.device_list
+device_list = ConstClass.device_list
 ilu_device_list = ConstClass.ilu_device_list
-
-client = MongoClient()
-db     = client.sensordb
-
-device_list     = [1, 2, 3, 4, 5]
-ilu_device_list = [4, 8, 9, 18, 20]
+number_of_device = 45
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
@@ -47,7 +42,7 @@ def data_list(request, limit=100, date_time=d):
   date_time = datetime_to_12digits(date_time)
 
   # データベースから取り出し
-  t = Sensor2.objects(datetime__gte="2015-06-29 12:40",device_id=66).order_by("-datetime").limit(5500)
+  t = Sensor2.objects(datetime__lte="2015-06-29 12:40").order_by("-datetime").limit(100)
 
   return render_to_response('cms/data_list.html',  # 使用するテンプレート
                               {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
@@ -152,117 +147,149 @@ def save_db(request):
                               {'t': t} )
 
 # センサーマップ画面 http://localhost:8000/cms/sensor_map/
-def sensor_map(request, date_time=d, type="20"):
-
-  import datetime
-
-  # 文字列を12桁に合わせる
-  date_time = datetime_to_12digits(date_time)
-
-  onehour_ago = datetime.datetime(int(date_time[0:4]),int(date_time[5:7]),int(date_time[8:10]),int(date_time[11:13]),int(date_time[14:16]))
-  onehour_ago -= datetime.timedelta(hours = 1)
-  onehour_ago = str(onehour_ago.year)+"-"+("0"+str(onehour_ago.month))[-2:]+"-"+("0"+str(onehour_ago.day))[-2:]+" "+("0"+str(onehour_ago.hour))[-2:]+":"+("0"+str(onehour_ago.minute))[-2:]
-
-  # db.Sensor2.create_index([("device_id",ASCENDING),("datetime",DESCENDING)])
-
-  # データベースから取り出し
-  t = []
-  t_ilu = []
-  # for s in device_list:
-  #   start = datetime.datetime.today()
-  #   if db.sensor2.find({"device_id":s, "datetime":{"$gte":onehour_ago, "$lte":date_time}, "error_flag":False}).count() != 0:
-  #     t += db.sensor2.find({"device_id":s, "datetime":{"$gte":onehour_ago, "$lte":date_time}, "error_flag":False}).sort("datetime")[1]
-  #   # t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1)
-  #   end = datetime.datetime.today()
-  #   print (end - start)
-
-  # for s in ilu_device_list:
-  #   start = datetime.datetime.today()
-  #   if db.sensor2.find({"device_id":s, "datetime":{"$gte":onehour_ago, "$lte":date_time}, "error_flag":False}).count() != 0:
-  #     t_ilu += db.sensor2.find({"device_id":s, "datetime":{"$gte":onehour_ago, "$lte":date_time}, "error_flag":False}).sort("-datetime")[1]
-  #   # t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1)
-  #   end = datetime.datetime.today()
-  #   print (end - start)
+def sensor_map(request, date_time=999, type="20"):
 
   # 最近の取得時間の取り出し
-  db.Sensor2.create_index([("datetime",DESCENDING)])
-
   recent = []
-  num = 10 # 最大取り出し件数
+  num = 20 # 最大取り出し件数
   today = datetime.datetime.today()
-
-  lt = today - datetime.timedelta(hours = today.hour) - datetime.timedelta(minutes = today.minute + 5)
-  gt = today - datetime.timedelta(days = 20)
-  # print (lt, gt)
-
-  # tmp_date = dt_from_iso_to_str(today)[:8]
-  # dt_datas = list(db.sensor2.find({"datetime":{"$gte":gt, "$lte":lt}, "error_flag":False},{"datetime":1}).sort("datetime", DESCENDING))
-  
-  # if len(dt_datas) > 0:
-  #   for i in range(0, len(dt_datas) - 1):
-  #     dt_data = dt_datas[i]
-
-  #     if str(dt_from_iso_to_str(dt_data["datetime"]))[:8] != tmp_date[:8]:
-  #       tmp = [dt_data["datetime"]]
-  #       recent += tmp
-
-  #     tmp_date = str(dt_from_iso_to_str(dt_data["datetime"]))[:8]
-  #     print (tmp_date)
-
-  # else:
-  #   recent += [today]
-
-  #   print ("aaaaaaaaaaaaaaa", recent)
-  #   pass
-
-
-
+  recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
   for i in range(0,num - 1):
-    # start = datetime.datetime.today()
     if len(recent) > i :
-      # lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
-      # gt = recent[i] - datetime.timedelta(days = 30)
-      # start = datetime.datetime.today()
-      if db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False}).count() != 0:
-        # end = datetime.datetime.today()
-        # print ("if:", end - start)
-
-        # start = datetime.datetime.today()
-        tmp = db.sensor2.find({"datetime":{"$lte":lt, "$gte":gt}, "error_flag":False},{"datetime":1}).sort("-datetime")[1]
-        # end = datetime.datetime.today()
-        # print ("tmp:", end - start)
-
-        tmp = [tmp["datetime"]]
-        # print (type(tmp))
-        recent += tmp
+      lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
       recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
-    # end = datetime.datetime.today()
-    # print ("running:",end - start)
 
-  return render_to_response('cms/sensor_map.html',  # 使用するテンプレート
-                              {'t': t, 't_ilu': t_ilu,'recent': recent, 'year':date_time[0:4],'month':date_time[5:7]
-                              ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]
-                              ,'sensor':type[0:1],'visualize':type[1:2]} )
+  # センサーデータの取り出し
+  if date_time == 999:
+    lt = datetime.datetime.today()
+  else:
+    lt = dt_from_str_to_iso(datetime_to_12digits(date_time))
+
+  gt = lt - datetime.timedelta(hours = 1) # 一時間前までのデータを取得
+
+  t = []
+  t_ilu = []
+  exist_list = []
+  db_dataset = []
+  db_dataset += Sensor2.objects(datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(100)
+  for s in device_list:
+    t += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1)
+    exist_list += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("device_id")
+  for s in ilu_device_list:
+    t_ilu += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1)
+
+  # 位置情報の取り出し
+  pos = []
+  for s in exist_list:
+    pos += Position_Set.objects(device_id=s, datetime__lt=lt).order_by("-datetime").limit(1)
+
+  return render_to_response('cms/sensor_map.html'
+  ,  # 使用するテンプレート
+                              {'t': t, 't_ilu': t_ilu, 'pos':pos, 'recent': recent, 'year':lt.year,'month':lt.month
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
+                              ,'sensor':type[0:1],'visualize':type[1:2]} 
+                              )
 
 # センサーグラフ画面 http://localhost:8000/cms/sensor_graph/
-def sensor_graph(request, limit=100, date_time=d, type="101"):
+def sensor_graph(request, limit=100, date_time=999, type="101"):
 
-  # 文字列を12桁に合わせる
-  date_time = datetime_to_12digits(date_time)
+  # センサーデータの取り出し
+  if date_time == 999:
+    lt = datetime.datetime.today()
+  else:
+    lt = dt_from_str_to_iso(datetime_to_12digits(date_time))
 
-  # 直近2日分を取得
-  two_days_ago = dt_from_str_to_iso(date_time)
-  two_days_ago -= datetime.timedelta(days = 2)
-  two_days_ago = dt_from_iso_to_str(two_days_ago)
-  two_days_ago = dt_insert_partition_to_min(two_days_ago)
+  gt1 = lt - datetime.timedelta(days = 1)
+  gt2 = lt - datetime.timedelta(days = 2)
+  gt3 = lt - datetime.timedelta(days = 3)
 
   # データベースから取り出し
-  t = Sensor2.objects(device_id=type[1:4],datetime__gt=two_days_ago, datetime__lte=date_time, error_flag=False).order_by("-datetime").limit(int(limit))
+  t1 = Sensor2.objects(device_id=type[1:3],datetime__gt=gt1, datetime__lte=lt, error_flag=False).order_by("-datetime")
+  t2 = Sensor2.objects(device_id=type[1:3],datetime__gt=gt2, datetime__lte=gt1, error_flag=False).order_by("-datetime")
+  t3 = Sensor2.objects(device_id=type[1:3],datetime__gt=gt3, datetime__lte=gt2, error_flag=False).order_by("-datetime")
 
   return render_to_response('cms/sensor_graph.html',  # 使用するテンプレート
-                              {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
-                              ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]
-                              ,'sensor': type[0:1],'device_id':type[1:4]} )
+                              {'t1': t1, 't2': t2, 't3': t3, 'limit':limit, 'year':lt.year,'month':lt.month
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
+                              ,'sensor': type[0:1],'device_id':type[1:3]} )
+
+# センサーグラフ用JSON http://localhost:8000/cms/position_delete/
+def sensor_graph_json(request, limit, date_time, type="101"):
+  # 文字列を12桁に合わせる
+  date_time = datetime_to_12digits(date_time)
+  date_time = dt_from_str_to_iso(date_time)
+
+  lt = date_time - datetime.timedelta(days = 3)
+  gt = date_time - datetime.timedelta(days = int(limit))
+
+  num = 100 # 最大取り出し件数
+  t = []
+
+  # データベースから取り出し
+  if type[0:1] == "0":
+    t += Sensor2.objects(device_id=type[1:3],datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").skip(int(limit)*2).limit(1).scalar("ac","datetime")
+    for i in range(0,num - 1):
+      if len(t) > i :
+        lt = t[i][1]
+        t += Sensor2.objects(device_id=type[1:3],datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").skip(int(limit)*2).limit(1).scalar("ac","datetime")
+  elif type[0:1] == "1":
+    t += Sensor2.objects(device_id=type[1:3],datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").skip(int(limit)*2).limit(1).scalar("ilu","datetime")
+    for i in range(0,num - 1):
+      if len(t) > i :
+        lt = t[i][1]
+        t += Sensor2.objects(device_id=type[1:3],datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").skip(int(limit)*2).limit(1).scalar("ilu","datetime")
+  else:
+    t += Sensor2.objects(device_id=type[1:3],datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").skip(int(limit)*2).limit(1).scalar("tu","datetime")
+    for i in range(0,num - 1):
+      if len(t) > i :
+        lt = t[i][1]
+        t += Sensor2.objects(device_id=type[1:3],datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").skip(int(limit)*2).limit(1).scalar("tu","datetime")
+
+  # Python辞書オブジェクトとしてdataに格納
+  data = []
+  if type[0:1] == "0":
+    for i in range(0,len(t)):
+      data.append({
+        'ac':t[i][0],
+        'datetime':dt_from_iso_to_jap2(t[i][1]),
+        })
+  elif type[0:1] == "1":
+    for i in range(0,len(t)):
+      data.append({
+        'ilu':t[i][0],
+        'datetime':dt_from_iso_to_jap2(t[i][1]),
+        })
+  else:
+    for i in range(0,len(t)):
+      data.append({
+        'tu':t[i][0],
+        'datetime':dt_from_iso_to_jap2(t[i][1]),
+        })
+  
+  return render_json_response(request, data) # dataをJSONとして出力
+
+# センサーグラフ(2グラフ比較)画面 http://localhost:8000/cms/sensor_graph2/
+def sensor_graph2(request, limit=100, date_time=999, type="ai01"):
+
+  # センサーデータの取り出し
+  if date_time == 999:
+    lt = datetime.datetime.today()
+  else:
+    lt = dt_from_str_to_iso(datetime_to_12digits(date_time))
+
+  gt1 = lt - datetime.timedelta(days = 1)
+  gt2 = lt - datetime.timedelta(days = 2)
+  gt3 = lt - datetime.timedelta(days = 3)
+
+  # データベースから取り出し
+  t1 = Sensor2.objects(device_id=type[2:4],datetime__gt=gt1, datetime__lte=lt, error_flag=False).order_by("-datetime")
+  t2 = Sensor2.objects(device_id=type[2:4],datetime__gt=gt2, datetime__lte=gt1, error_flag=False).order_by("-datetime")
+  t3 = Sensor2.objects(device_id=type[2:4],datetime__gt=gt3, datetime__lte=gt2, error_flag=False).order_by("-datetime")
+
+  return render_to_response('cms/sensor_graph2.html',  # 使用するテンプレート
+                              {'t1': t1, 't2': t2, 't3': t3, 'limit':limit, 'year':lt.year,'month':lt.month
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
+                              ,'sensor': type[0:2],'device_id':type[2:4]} )
 
 def save_db_heat(request): #登録時は下記コメントアウトを解除
   """
@@ -369,30 +396,62 @@ def render_json_response(request, data, status=None): # response を JSON で返
   return response
 
 # JSONを返すビュー http://localhost:8000/cms/response_json/
-def response_json(request, date_time=d):
+def response_json(request, date_time=999):
 
   import datetime
 
-  if (date_time == d):
+  if (date_time == 999): # リアルタイムビューではこちらを実行
     _15min_ago = datetime.datetime.today() - datetime.timedelta(minutes = 15)
     _15min_ago = dt_from_iso_to_str(_15min_ago)
 
     # Sensor2.objects.all().delete()
-    limit = '60' # 親機1台につき取得するデータの件数
+    limit = '25' # 親機1台につき取得するデータの件数
     datetime = _15min_ago + "-" + d
+
+    for num in "6789": # 親機ループ
+
+      r = requests.get('http://api1.ginga-box.com:8080/ginga/sol?mode=getdata&v={box_id:"9CBD9D01000'+num+'", limit:'+limit+'}')
+      t = r.json()
+
+      # 最新データ取り出し
+      latest_data = Sensor2.objects(box_id="9CBD9D01000"+num+"").order_by("-datetime").limit(1)
+
+      if(latest_data.count() == 0):
+        latest_datetime = str("2014-11-10 00:00:00.000")
+        latest_datetime = dt_from_str_to_iso(latest_datetime)
+      else:
+        latest_datetime = latest_data[0]["datetime"]
+
+      # データの加工
+      for i in range(len(t)):
+        t[i] = convert_sensor_data(t[i])
+
+        dt = dt_from_str_to_iso(t[i]["datetime"])
+
+        latest_datetime = shift_time(dt)
+
+        # データ登録
+        if(dt <= latest_datetime):
+          break
+
+        else:
+          # 初期データ
+          if(t[i]["sensor_id"] == "初期データ"):
+            pass
+
+          # エラーデータ
+          elif(t[i]["sensor_id"] == "Error"):
+            pass
+
+          # 計測データ
+          else:
+            write_to_sensordb(t[i])
 
     date_time = dt_insert_partition_to_min(date_time)
     _15min_ago = dt_insert_partition_to_min(_15min_ago)
     _15min_ago = dt_from_str_to_iso(_15min_ago)
 
     # データベースから取り出し
-    aggregated_data = db.sensor2.aggregate([{ "$match" :{"datetime":{"$gte":_15min_ago, "$lte":date_time}, "error_flag":False} },
-     { "$group" : {"device_id":"$device_id", "count" : {"$sum" : 1 } } }])
-   
-    device_list     = aggregated_data["result"]
-    ilu_device_list = [4, 8, 9, 18, 20]
-    print (device_list)
-
     t = []
     up2date = Sensor2.objects(error_flag=False).order_by("-datetime").limit(1).scalar("datetime") # 最新時刻
     for s in device_list:
@@ -421,30 +480,23 @@ def response_json(request, date_time=d):
     # onehour_ago = str(onehour_ago.year)+"-"+("0"+str(onehour_ago.month))[-2:]+"-"+("0"+str(onehour_ago.day))[-2:]+" "+("0"+str(onehour_ago.hour))[-2:]+":"+("0"+str(onehour_ago.minute))[-2:]
 
     # データベースから取り出し
-
-    aggregated_data = db.sensor2.aggregate([{ "$match" :{"datetime":{"$gte":onehour_ago, "$lte":date_time}, "error_flag":False} },
-     { "$group" : {"device_id":"$device_id", "count" : {"$sum" : 1 } } }])
-   
-    device_list     = aggregated_data["result"]
-    ilu_device_list = [4, 8, 9, 18, 20]
-    print (device_list)
-
     t = []
     for s in device_list:
-      t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1).scalar("ac","ilu","tu","pos_x","pos_y","device_id","box_id","datetime")
+      t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1).scalar("ac","ilu","tu","device_id","box_id","datetime")
       
     # Python辞書オブジェクトとしてdataに格納
     data = []
     for i in range(0,len(t)):
+      tmp_pos = Position_Set.objects(device_id=t[i][3],datetime__lt=date_time).order_by("-datetime").limit(1).scalar("pos_x","pos_y")
       data.append({
         'ac':t[i][0],
         'ilu':t[i][1],
         'tu':t[i][2],
-        'pos_x':t[i][3],
-        'pos_y':t[i][4],
-        'device_id':t[i][5],
-        'box_id':t[i][6],
-        'datetime':dt_from_iso_to_jap(t[i][7])
+        'pos_x':tmp_pos[0][0],
+        'pos_y':tmp_pos[0][1],
+        'device_id':t[i][3],
+        'box_id':t[i][4],
+        'datetime':dt_from_iso_to_jap(t[i][5])
         })
 
   return render_json_response(request, data) # dataをJSONとして出力
@@ -453,44 +505,128 @@ def response_json(request, date_time=d):
 def d3jstest(request):
 
   t = []
+  # Sensor2.objects.all().delete()
   for s in device_list:
     t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
 
   return render_to_response('cms/d3jstest.html',  # 使用するテンプレート
                               {'t':t} )      # テンプレートに渡すデータ 
-  
-# センサーマップ画面(英語版) http://localhost:8000/cms/sensor_map_en/
-def sensor_map_en(request, date_time=d, type="20"):
 
-  import datetime
+# 位置情報リスト http://localhost:8000/cms/position_list/
+def position_list(request):
+  # 最近の取得時間の取り出し
+  recent = []
+  num = 20 # 最大取り出し件数
+  today = datetime.datetime.today()
+  recent += Position_Set.objects(datetime__lt=today).order_by("-datetime").limit(1).scalar("datetime")
+  for i in range(0,num - 1):
+    if len(recent) > i :
+      lt = recent[i] - datetime.timedelta(minutes = 1)
+      recent += Position_Set.objects(datetime__lt=lt).order_by("-datetime").limit(1).scalar("datetime")
+  return render_to_response('cms/position_list.html',  # 使用するテンプレート
+                              {'recent':recent} )      # テンプレートに渡すデータ
 
+# 位置情報追加画面 http://localhost:8000/cms/position_add/
+def position_add(request):
+  return render_to_response('cms/position_add.html')
+
+# 位置情報追加画面 http://localhost:8000/cms/position_edit/
+def position_edit(request, date_time):
   # 文字列を12桁に合わせる
   date_time = datetime_to_12digits(date_time)
+  date_time = dt_from_str_to_iso(date_time)
 
-  onehour_ago = datetime.datetime(int(date_time[0:4]),int(date_time[5:7]),int(date_time[8:10]),int(date_time[11:13]),int(date_time[14:16]))
-  onehour_ago -= datetime.timedelta(hours = 1)
-  onehour_ago = str(onehour_ago.year)+"-"+("0"+str(onehour_ago.month))[-2:]+"-"+("0"+str(onehour_ago.day))[-2:]+" "+("0"+str(onehour_ago.hour))[-2:]+":"+("0"+str(onehour_ago.minute))[-2:]
+  lt = date_time + datetime.timedelta(minutes = 1)
+  gt = date_time - datetime.timedelta(seconds = 1)
 
   # データベースから取り出し
   t = []
-  t_ilu = []
+  for s in range(1,number_of_device+1):
+    t += Position_Set.objects(device_id=s, datetime__gt=gt, datetime__lt=lt).order_by("-datetime").limit(1)
+  return render_to_response('cms/position_edit.html',  # 使用するテンプレート
+                              {'t':t} )      # テンプレートに渡すデータ)
 
-  for s in device_list:
-    t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1)
+# 位置情報削除 http://localhost:8000/cms/position_delete/
+def position_delete(request, date_time, id=999):
+  # 文字列を12桁に合わせる
+  date_time = datetime_to_12digits(date_time)
+  date_time = dt_from_str_to_iso(date_time)
 
-  for s in ilu_device_list:
-    t_ilu += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1)
+  lt = date_time + datetime.timedelta(minutes = 1)
+  gt = date_time - datetime.timedelta(seconds = 1)
+  count = Position_Set.objects(datetime__gt=gt, datetime__lt=lt).count()
+
+  if id == 999: # すべてのデバイスの位置情報削除
+    Position_Set.objects(datetime__gt=gt, datetime__lt=lt).delete()
+  else: # 特定のデバイスの位置情報のみを削除
+    Position_Set.objects(datetime__gt=gt, datetime__lt=lt, device_id=id).delete()
+
+  # Python辞書オブジェクトとしてdataに格納
+  data = []
+  data.append({
+    'datetime':dt_from_iso_to_jap(date_time),
+    'count':count
+    })
+
+  return render_json_response(request, data) # dataをJSONとして出力
+
+# 位置情報登録例 localhost:8000/cms/position_save/datetime=201505281111/id=19/pos_x=810/pos_y=11/
+def position_save(request, date_time, id, pos_x, pos_y):
+  date_time = dt_insert_partition_to_min(date_time)
+  date_time = dt_from_str_to_iso(date_time)
+  position_set = Position_Set(
+    date_time,
+    device_id = id,
+    pos_x = pos_x,
+    pos_y = pos_y
+    )
+  position_set.save()
+
+  # Python辞書オブジェクトとしてdataに格納
+  data = []
+  data.append({
+    'datetime':dt_from_iso_to_jap(date_time),
+    'device_id':id,
+    'pos_x':pos_x,
+    'pos_y':pos_y
+    })
+
+  return render_json_response(request, data) # dataをJSONとして出力
+  
+# センサーマップ画面(英語版) http://localhost:8000/cms/sensor_map_en/
+def sensor_map_en(request, date_time=999, type="20"):
 
   # 最近の取得時間の取り出し
   recent = []
-  num = 5 # 最大取り出し件数
+  num = 20 # 最大取り出し件数
   today = datetime.datetime.today()
   recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
-
   for i in range(0,num - 1):
     if len(recent) > i :
       lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
       recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+
+  # センサーデータの取り出し
+  if date_time == 999:
+    lt = datetime.datetime.today()
+  else:
+    lt = dt_from_str_to_iso(datetime_to_12digits(date_time))
+
+  gt = lt - datetime.timedelta(hours = 1) # 一時間前までのデータを取得
+
+  t = []
+  t_ilu = []
+  exist_list = []
+  for s in device_list:
+    t += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1)
+    exist_list += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("device_id")
+  for s in ilu_device_list:
+    t_ilu += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1)
+
+  # 位置情報の取り出し
+  pos = []
+  for s in exist_list:
+    pos += Position_Set.objects(device_id=s, datetime__lt=lt).order_by("-datetime").limit(1)
 
   return render_to_response('cms/sensor_map_en.html',  # 使用するテンプレート
                               {'t': t, 't_ilu': t_ilu,'recent': recent, 'year':date_time[0:4],'month':date_time[5:7]
@@ -516,3 +652,27 @@ def sensor_graph_en(request, limit=100, date_time=d, type="101"):
                               {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
                               ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]
                               ,'sensor': type[0:1],'device_id':type[1:3]} )
+
+# csvリスト
+import csv
+def csv_list(request):
+  f = open('csv/20150716_test.csv', 'r')
+  dataReader = csv.reader(f)
+  count = 0
+  extra = 1 # csvファイルに含まれる余分な要素数
+  data = []
+  for row in dataReader:
+    if count >= extra:
+      data.append({
+        'id':row[0],
+        'mac':row[1],
+        'ble_ap_id':row[2],
+        'rssi':row[3],
+        'v1':row[4],
+        'v2':row[5],
+        'tstamp':row[6]
+        })
+    count += 1
+
+  return render_to_response('cms/csv_list.html',  # 使用するテンプレート
+                              {'data': data})

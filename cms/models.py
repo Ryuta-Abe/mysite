@@ -46,6 +46,13 @@ class Sensor2(Document):
     error_flag = BooleanField()
     rssi = FloatField()
 
+class Position_Set(Document):
+    datetime = DateTimeField()
+    # position_set =  ReferenceField("Position_Set")
+    device_id = IntField()
+    pos_x = IntField()
+    pos_y = IntField()
+
 #一定時間間隔の気温平均データ
 class temp_db(Document):
     device_id = IntField()

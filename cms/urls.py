@@ -36,6 +36,11 @@ urlpatterns = patterns('',
 
     url(r'^sensor_graph/$', views.sensor_graph, name='sensor_graph'),   # センサーグラフ
     url(r'^sensor_graph/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph, name='sensor_graph'),
+    url(r'^sensor_graph_json/$', views.sensor_graph_json, name='sensor_graph_json'),
+    url(r'^sensor_graph_json/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph_json, name='sensor_graph_json'),
+    url(r'^sensor_graph2/$', views.sensor_graph2, name='sensor_graph2'),   # センサーグラフ
+    url(r'^sensor_graph2/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph2, name='sensor_graph2'),
+
 
     # データ一覧
     url(r'^data_list/$', views.data_list, name='data_list'),   
@@ -45,11 +50,25 @@ urlpatterns = patterns('',
     url(r'^data_check/$', views.data_check, name='data_check'),
     url(r'^data_check/datetime=(?P<date_time>\w+)/$', views.data_check, name='data_check'),
 
+    # 位置情報編集関係
+    url(r'^position_list/$', views.position_list, name='position_list'),
+    url(r'^position_add/$', views.position_add, name='position_add'),
+    url(r'^position_edit/$', views.position_edit, name='position_edit'),
+    url(r'^position_edit/datetime=(?P<date_time>\d+)/$', views.position_edit, name='position_edit'),
+    url(r'^position_delete/$', views.position_delete, name='position_delete'),
+    url(r'^position_delete/datetime=(?P<date_time>\d+)/$', views.position_delete, name='position_delete'),
+    url(r'^position_delete/datetime=(?P<date_time>\d+)/id=(?P<id>\d+)/$', views.position_delete, name='position_delete'),
+    url(r'^position_save/$', views.position_save, name='position_save'),
+    url(r'^position_save/datetime=(?P<date_time>\d+)/id=(?P<id>\d+)/pos_x=(?P<pos_x>\d+)/pos_y=(?P<pos_y>\d+)/$', views.position_save, name='position_save'),
+
     #英語版
     url(r'^sensor_map_en/$', views.sensor_map_en, name='sensor_map_en'),   # センサーマップ英語版
     url(r'^sensor_map_en/datetime=(?P<date_time>\d+)/$', views.sensor_map_en, name='sensor_map_en'),
     url(r'^sensor_map_en/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.sensor_map_en, name='sensor_map_en'),
     url(r'^sensor_graph_en/$', views.sensor_graph_en, name='sensor_graph_en'),   # センサーグラフ英語版
     url(r'^sensor_graph_en/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph_en, name='sensor_graph_en'),
+
+    # csv関係
+    url(r'^csv_list/$', views.csv_list, name='csv_list'),
   
 )
