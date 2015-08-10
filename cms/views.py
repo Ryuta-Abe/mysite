@@ -21,8 +21,10 @@ from cms.write_to_mongo import write_to_initial_db, write_to_sensordb
 
 from cms.constmod import ConstClass
 
-device_list = ConstClass.device_list
-ilu_device_list = ConstClass.ilu_device_list
+# device_list = ConstClass.device_list
+# ilu_device_list = ConstClass.ilu_device_list
+device_list      = [1, 2, 3, 4, 5]
+ilu_device_list  = [4, 8, 9,18,20]
 number_of_device = 45
 
 # 今日の日付

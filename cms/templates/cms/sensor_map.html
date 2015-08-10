@@ -44,6 +44,7 @@
   <a id="btn_visualize" onclick="visualize_heat_complement()" class="btn btn-default btn-sm">視覚化</a>
   <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
   <a id="btn_box" onclick="box()" class="btn btn-default btn-sm">親　機</a>
+  <a id="btn_box" onclick="open_position_list()" class="btn btn-default btn-sm">子機の位置</a>
   <a id="btn_RealTime" onclick="RealTime()" class="btn btn-default btn-sm">RealTime</a>
   　　<!-- ボタン間にスペースを -->
   取得日時：<font id="got_datetime" size="4"></font>
@@ -239,7 +240,7 @@
 
       // 既存の円の消去
       for (var i = 0; i < dataset.length; i++) {
-          svg1.selectAll("#g_sensor")
+          svg1.select("#g_sensor"+dataset[i].device_id)
           .transition()
           .duration(500)
           .attr({
@@ -259,7 +260,7 @@
       .enter()
       .append("g")
       .attr({
-        "id": "g_sensor",
+        "id": function(d){return "g_sensor"+d.device_id;},
         transform: function(d) {
           return "translate(" + d.pos_x + "," + d.pos_y + ")";
         },
@@ -351,7 +352,7 @@
 
       // 既存の円の消去
       for (var i = 0; i < dataset.length; i++) {
-          svg1.selectAll("#g_sensor")
+          svg1.select("#g_sensor"+dataset[i].device_id)
           .transition()
           .duration(500)
           .attr({
@@ -371,7 +372,7 @@
       .enter()
       .append("g")
       .attr({
-        "id": "g_sensor",
+        "id": function(d){return "g_sensor"+d.device_id;},
         transform: function(d) {
           return "translate(" + d.pos_x + "," + d.pos_y + ")";
         },
@@ -503,7 +504,7 @@
 
       // 既存の円の消去
       for (var i = 0; i < dataset.length; i++) {
-          svg1.selectAll("#g_sensor")
+          svg1.select("#g_sensor"+dataset[i].device_id)
           .transition()
           .duration(500)
           .attr({
@@ -523,7 +524,7 @@
       .enter()
       .append("g")
       .attr({
-        "id": "g_sensor",
+        "id": function(d){return "g_sensor"+d.device_id;},
         transform: function(d) {
           return "translate(" + d.pos_x + "," + d.pos_y + ")";
         },
@@ -641,14 +642,18 @@
     //  センサーデータセット
     var dataset = [];
     var dataset_illuminance = [];
+    var pos = [];
     {% for s in t %}
-    dataset.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    dataset.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
     {% endfor %}
     {% for s in t_ilu %}
-    dataset_illuminance.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    dataset_illuminance.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    {% endfor %}
+    {% for s in pos %}
+    pos.push({pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
     {% endfor %}
 
-    d3.select("body").append("p").text("　");
+    d3.select("body").append("p").text("");
 
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
@@ -692,6 +697,18 @@
     };
     for (var i = 0; i < dataset_illuminance.length; i++) {
       device_order_illuminance[dataset_illuminance[i]["device_id"]] = i;
+    };
+
+    // データセットに位置情報を紐付け
+    for (var i = 0; i < dataset.length; i++) {
+      dataset[i].pos_x = pos[i].pos_x;
+      dataset[i].pos_y = pos[i].pos_y;
+    };
+    for (var i = 0; i < dataset_illuminance.length; i++) {
+      var px = pos[device_order[dataset_illuminance[i].device_id]].pos_x;
+      var py = pos[device_order[dataset_illuminance[i].device_id]].pos_y;
+      dataset_illuminance[i].pos_x = px;
+      dataset_illuminance[i].pos_y = py;
     };
 
     // マップの座標(目盛り)と温度・照度を追加
@@ -865,6 +882,16 @@
       dataset_illuminance[device_order_illuminance[id]].ilu = json[new_device_order[id]].ilu;
       dataset_illuminance[device_order_illuminance[id]].tu = json[new_device_order[id]].tu;
     }
+    // 座標が変化していた場合
+    if ((dataset[device_order[id]].pos_x != json[new_device_order[id]].pos_x)||(dataset[device_order[id]].pos_y != json[new_device_order[id]].pos_y)){
+      svg1.select("#g_sensor"+id)
+      .transition().duration(1000)
+      .attr({
+        transform:"translate(" + json[new_device_order[id]].pos_x + "," + json[new_device_order[id]].pos_y + ")",
+      });
+      dataset[device_order[id]].pos_x = json[new_device_order[id]].pos_x;
+      dataset[device_order[id]].pos_y = json[new_device_order[id]].pos_y;
+    }
    }
    function delete_value(id,json){
     if (flag_acceleration){
@@ -919,7 +946,7 @@
       .enter()
       .append("g")
       .attr({
-        "id": "g_sensor",
+        "id": function(d){return "g_sensor"+d.device_id;},
         transform: function(d) {
           return "translate(" + d.pos_x + "," + d.pos_y + ")";
         },
@@ -973,7 +1000,7 @@
         .enter()
         .append("g")
         .attr({
-          "id": "g_sensor",
+          "id": function(d){return "g_sensor"+d.device_id;},
           transform: function(d) {
             return "translate(" + d.pos_x + "," + d.pos_y + ")";
           },
@@ -1026,7 +1053,7 @@
       .enter()
       .append("g")
       .attr({
-        "id": "g_sensor",
+        "id": function(d){return "g_sensor"+d.device_id;},
         transform: function(d) {
           return "translate(" + d.pos_x + "," + d.pos_y + ")";
         },
@@ -1216,11 +1243,6 @@
         var type = "2"
       }
       if (flag_RealTime){
-        // var year = parseDate(Real_datetime).getFullYear();
-        // var month = ("0"+parseDate(Real_datetime).getMonth()).slice(-2);
-        // var day = ("0"+parseDate(Real_datetime).getDate()).slice(-2);
-        // var hour = ("0"+parseDate(Real_datetime).getHours()).slice(-2);
-        // var minute = ("0"+parseDate(Real_datetime).getMinutes()).slice(-2);
         var year = Real_datetime.slice(0,4);
         var month = Real_datetime.slice(5,7);
         var day = Real_datetime.slice(8,10);
@@ -1501,6 +1523,11 @@
               .style("opacity",1);
           };
       flag_box = !flag_box;
+    }
+
+    // 位置情報リストを別タブで開く
+    function open_position_list(){
+      window.open("{% url 'cms:position_list' %}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
 
     // 折りたたみ表示
