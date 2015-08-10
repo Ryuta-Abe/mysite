@@ -578,13 +578,13 @@ def position_delete(request, date_time, id=999):
 def position_save(request, date_time, id, pos_x, pos_y):
   date_time = dt_insert_partition_to_min(date_time)
   date_time = dt_from_str_to_iso(date_time)
-  position_set = positionset(
+  positionset = positionset(
     date_time,
     device_id = id,
     pos_x = pos_x,
     pos_y = pos_y
     )
-  position_set.save()
+  positionset.save()
 
   # Python辞書オブジェクトとしてdataに格納
   data = []
