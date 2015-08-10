@@ -94,4 +94,10 @@ for num in "6789": # 親機ループ
 # r = requests.get(url)
 # t = r.json()
 # print(t)
+<<<<<<< .merge_file_QApFma
 print("エラー無しやな")
+=======
+print("エラー無しやな")
+
+# test
+# test2
