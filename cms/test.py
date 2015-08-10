@@ -97,5 +97,9 @@ for num in "6789": # 親機ループ
 print("エラー無しやな")
 
 
+<<<<<<< HEAD
 # test
 # test2
+=======
+# branch test
+>>>>>>> ae2214730cf181bcdcbbbb38fd42fa0a686e0659
