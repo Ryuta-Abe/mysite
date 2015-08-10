@@ -1,0 +1,106 @@
+
+{% extends "base.html" %}
+
+{% block title %}データ一覧{% endblock title %}
+
+{% block extrahead %}
+<style>
+
+</style>
+		<meta charset="utf-8">
+         <title>D3 Test</title>
+         <script type="text/javascript" src="d3/d3.v3.js"></script>
+{% endblock %}
+
+{% block content %}
+<!--script src="http://code.highcharts.com/modules/exporting.js"></script-->
+
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+	      
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+ <script type="text/javascript">
+
+  var data_ilu = [];
+  var data_dt = [];                           // 配列の宣言と初期化
+    {% for s in t %}				// ループを繰り返す
+    {          
+      var newNumber_x = Math.abs(Math.round({{ s.ilu }}*100)/100);
+      var newNumber_t = '{{ s.time }}';  // 0～30のランダムな数を生成
+      data_ilu.push(newNumber_x);
+      data_dt.push(newNumber_t);            // 生成した数を配列に追加
+   }
+   {% endfor %}
+
+
+
+$(function () {
+    $('#container').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: '照度'
+        },
+        xAxis: {
+    
+            categories: data_dt
+
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Total Iluminance'
+            },
+            stackLabels: {
+                enabled: true,
+                style: {
+                    fontWeight: 'bold',
+                    color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
+                }
+            }
+        },
+        legend: {
+            align: 'right',
+            x: -70,
+            verticalAlign: 'top',
+            y: 20,
+            floating: true,
+            backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+            borderColor: '#CCC',
+            borderWidth: 1,
+            shadow: false
+        },
+        tooltip: {
+            formatter: function () {
+                return '<b>' + this.x + '</b><br/>' +
+                    this.series.name + ': ' + this.y + '<br/>' +
+                    'Total: ' + this.point.stackTotal;
+            }
+        },
+        plotOptions: {
+            column: {
+                stacking: 'normal',
+                dataLabels: {
+                    enabled: true,
+                    color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+                    style: {
+                        textShadow: '0 0 3px black, 0 0 3px black'
+                    }
+                }
+            }
+        },
+        series: [
+        {
+            name: 'ilu',
+        	data: data_ilu
+        }
+        ]
+    });
+});
+//各系列の色はHighcharts-4/js/themes/highcharts.jsの E = { colors: "#ffffff, ..." }の記述で変更可能
+
+</script>
+         
+{% endblock content %}

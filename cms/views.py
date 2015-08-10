@@ -21,10 +21,8 @@ from cms.write_to_mongo import write_to_initial_db, write_to_sensordb
 
 from cms.constmod import ConstClass
 
-# device_list = ConstClass.device_list
-# ilu_device_list = ConstClass.ilu_device_list
-device_list      = [1, 2, 3, 4, 5]
-ilu_device_list  = [4, 8, 9,18,20]
+device_list = ConstClass.device_list
+ilu_device_list = ConstClass.ilu_device_list
 number_of_device = 45
 
 # 今日の日付
@@ -156,10 +154,10 @@ def sensor_map(request, date_time=999, type="20"):
   num = 20 # 最大取り出し件数
   today = datetime.datetime.today()
   recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
-  for i in range(0,num - 1):
-    if len(recent) > i :
-      lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
-      recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+  # for i in range(0,num - 1):
+  #   if len(recent) > i :
+  #     lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
+  #     recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
 
   # センサーデータの取り出し
   if date_time == 999:
@@ -167,27 +165,26 @@ def sensor_map(request, date_time=999, type="20"):
   else:
     lt = dt_from_str_to_iso(datetime_to_12digits(date_time))
 
-  gt = lt - datetime.timedelta(hours = 1) # 一時間前までのデータを取得
+  gt = lt - datetime.timedelta(minutes = 10) # 10分前までのデータを取得
 
-  t = []
-  t_ilu = []
   exist_list = []
-  db_dataset = []
-  db_dataset += Sensor2.objects(datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(100)
-  for s in device_list:
-    t += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1)
-    exist_list += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("device_id")
-  for s in ilu_device_list:
-    t_ilu += Sensor2.objects(device_id=s, datetime__gt=gt, datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1)
+  mongo_data = []
+  mongo_data += Sensor2.objects(datetime__gt=gt, datetime__lt=lt,error_flag=False).order_by("device_id","-datetime").limit(500)
+  device_list = [False]*99
+  t = []
+  for i in range(0,len(mongo_data)):
+    if device_list[mongo_data[i]["device_id"]] == False:
+        device_list[mongo_data[i]["device_id"]] = True
+        t.append(mongo_data[i])
 
   # 位置情報の取り出し
   pos = []
-  for s in exist_list:
-    pos += Position_Set.objects(device_id=s, datetime__lt=lt).order_by("-datetime").limit(1)
+  for i in range(0,len(t)):
+    pos += Position_Set.objects(device_id=t[i]["device_id"], datetime__lt=lt).order_by("-datetime").limit(1)
 
   return render_to_response('cms/sensor_map.html'
   ,  # 使用するテンプレート
-                              {'t': t, 't_ilu': t_ilu, 'pos':pos, 'recent': recent, 'year':lt.year,'month':lt.month
+                              {'t': t, 'pos':pos, 'recent': recent, 'year':lt.year,'month':lt.month
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
                               ,'sensor':type[0:1],'visualize':type[1:2]} 
                               )
@@ -478,27 +475,32 @@ def response_json(request, date_time=999):
 
   else:
     date_time = dt_insert_partition_to_min(date_time)
-    onehour_ago = dt_from_str_to_iso(date_time) - datetime.timedelta(hours = 1)
+    onehour_ago = dt_from_str_to_iso(date_time) - datetime.timedelta(minutes = 10)
     # onehour_ago = str(onehour_ago.year)+"-"+("0"+str(onehour_ago.month))[-2:]+"-"+("0"+str(onehour_ago.day))[-2:]+" "+("0"+str(onehour_ago.hour))[-2:]+":"+("0"+str(onehour_ago.minute))[-2:]
 
     # データベースから取り出し
+    mongo_data = []
+    mongo_data += Sensor2.objects(datetime__gt=onehour_ago, datetime__lt=date_time,error_flag=False).order_by("device_id","-datetime").limit(500)
+    device_list = [False]*99
     t = []
-    for s in device_list:
-      t += Sensor2.objects(device_id=s, datetime__gt=onehour_ago, datetime__lt=date_time, error_flag=False).order_by("-datetime").limit(1).scalar("ac","ilu","tu","device_id","box_id","datetime")
+    for i in range(0,len(mongo_data)):
+    	if device_list[mongo_data[i]["device_id"]] == False:
+    		device_list[mongo_data[i]["device_id"]] = True
+    		t.append(mongo_data[i])
       
     # Python辞書オブジェクトとしてdataに格納
     data = []
     for i in range(0,len(t)):
-      tmp_pos = Position_Set.objects(device_id=t[i][3],datetime__lt=date_time).order_by("-datetime").limit(1).scalar("pos_x","pos_y")
+      tmp_pos = Position_Set.objects(device_id=t[i]["device_id"],datetime__lt=date_time).order_by("-datetime").limit(1).scalar("pos_x","pos_y")
       data.append({
-        'ac':t[i][0],
-        'ilu':t[i][1],
-        'tu':t[i][2],
+        'ac':t[i]["ac"],
+        'ilu':t[i]["ilu"],
+        'tu':t[i]["tu"],
         'pos_x':tmp_pos[0][0],
         'pos_y':tmp_pos[0][1],
-        'device_id':t[i][3],
-        'box_id':t[i][4],
-        'datetime':dt_from_iso_to_jap(t[i][5])
+        'device_id':t[i]["device_id"],
+        'box_id':t[i]["box_id"],
+        'datetime':dt_from_iso_to_jap(t[i]["datetime"])
         })
 
   return render_json_response(request, data) # dataをJSONとして出力

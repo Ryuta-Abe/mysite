@@ -169,13 +169,43 @@
   <input type="button" value="back" onclick="slide_DT(1)" class="btn btn-default btn-sm">
   <input type="button" value="forward" onclick="slide_DT(-1)" class="btn btn-default btn-sm">
   </span></div>
-  <div id="layer_2" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close"><text id="recent_text"></text></div>
+  <div id="layer_2" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <script type="text/javascript">
+
+  // 最近の取得時間を表示
+    var recent = [];
+    {% for s in recent %}
+    recent.push("{{ s }}");
+    {% endfor %}
+    // 時間抽出
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+  // 最近の取得時間一覧表
+    document.write("<center>");
+    document.write("<table border>");
+
+    for(var i = 0 ; i < 5 ; i++) {
+      document.write("<tr>");
+
+      for(var j = 0 ; j < 4 ; j++) {
+        if(recent[i+5*j]!=undefined){ // 要素が存在する場合
+          document.write('<td><a onclick="recent_click(new Date('+parseDate(recent[i+5*j]).getFullYear()+','+parseDate(recent[i+5*j]).getMonth()+','+parseDate(recent[i+5*j]).getDate()+','+parseDate(recent[i+5*j]).getHours()+','+parseDate(recent[i+5*j]).getMinutes()+'))">',  recent[i+5*j]  , "</a></td>");}
+      }
+
+    document.write("</tr>");
+
+    }
+
+    document.write("</table>");
+    document.write("</center>");
+  </script>
+  </div>
   <!-- <a onclick="Auto_Animation()" class="btn btn-default btn-sm">animation</a> -->
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
- <image x="0" y="0" width="100%" height="100%" xlink:href="{{ MEDIA_URL }}/static_site/images/809.JPG"></image>
+ <image x="0" y="0" width="100%" height="100%" xlink:href="http://153.127.251.13/~abe/images/809.JPG"></image>
 </svg>
 <div id="tooltip_div"></div>
 <svg id="svg2" width="1000" height="100"></svg>
@@ -212,7 +242,7 @@
 
       // 既存の円の消去
       for (var i = 0; i < dataset.length; i++) {
-          svg1.selectAll("#g_sensor")
+          svg1.select("#g_sensor"+dataset[i].device_id)
           .transition()
           .duration(500)
           .attr({
@@ -324,7 +354,7 @@
 
       // 既存の円の消去
       for (var i = 0; i < dataset.length; i++) {
-          svg1.selectAll("#g_sensor")
+          svg1.select("#g_sensor"+dataset[i].device_id)
           .transition()
           .duration(500)
           .attr({
@@ -476,7 +506,7 @@
 
       // 既存の円の消去
       for (var i = 0; i < dataset.length; i++) {
-          svg1.selectAll("#g_sensor")
+          svg1.select("#g_sensor"+dataset[i].device_id)
           .transition()
           .duration(500)
           .attr({
@@ -614,31 +644,21 @@
     //  センサーデータセット
     var dataset = [];
     var dataset_illuminance = [];
+    var pos = [];
     {% for s in t %}
-    dataset.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    dataset.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
     {% endfor %}
     {% for s in t_ilu %}
-    dataset_illuminance.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    dataset_illuminance.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    {% endfor %}
+    {% for s in pos %}
+    pos.push({pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
     {% endfor %}
 
-    // 最近の取得時間を表示
-    var recent = [];
-    {% for s in recent %}
-    recent.push("{{ s }}");
-    {% endfor %}
+    d3.select("body").append("p").text("");
+
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
-
-    // 最近の取得時間一覧を表示
-    d3.select("#recent_text").selectAll("a.recent")
-    .data(recent)
-    .enter()
-    .append("p")
-    .append("a")
-    .text(function(d){
-      return parseDate(d).getFullYear()+"/"+(parseDate(d).getMonth()+1)+"/"+parseDate(d).getDate()+" "+parseDate(d).getHours()+":"+parseDate(d).getMinutes();})
-    .attr("onclick",function(d){
-      return "recent_click(new Date("+parseDate(d).getFullYear()+","+parseDate(d).getMonth()+","+parseDate(d).getDate()+","+parseDate(d).getHours()+","+parseDate(d).getMinutes()+"))";})
 
     // 最近の取得時間をクリックした時の動作
     function recent_click(d){
@@ -669,6 +689,18 @@
     };
     for (var i = 0; i < dataset_illuminance.length; i++) {
       device_order_illuminance[dataset_illuminance[i]["device_id"]] = i;
+    };
+
+    // データセットに位置情報を紐付け
+    for (var i = 0; i < dataset.length; i++) {
+      dataset[i].pos_x = pos[i].pos_x;
+      dataset[i].pos_y = pos[i].pos_y;
+    };
+    for (var i = 0; i < dataset_illuminance.length; i++) {
+      var px = pos[device_order[dataset_illuminance[i].device_id]].pos_x;
+      var py = pos[device_order[dataset_illuminance[i].device_id]].pos_y;
+      dataset_illuminance[i].pos_x = px;
+      dataset_illuminance[i].pos_y = py;
     };
 
     // マップの座標(目盛り)と温度・照度を追加
@@ -841,6 +873,16 @@
       dataset_illuminance[device_order_illuminance[id]].ac = json[new_device_order[id]].ac;
       dataset_illuminance[device_order_illuminance[id]].ilu = json[new_device_order[id]].ilu;
       dataset_illuminance[device_order_illuminance[id]].tu = json[new_device_order[id]].tu;
+    }
+    // 座標が変化していた場合
+    if ((dataset[device_order[id]].pos_x != json[new_device_order[id]].pos_x)||(dataset[device_order[id]].pos_y != json[new_device_order[id]].pos_y)){
+      svg1.select("#g_sensor"+id)
+      .transition().duration(1000)
+      .attr({
+        transform:"translate(" + json[new_device_order[id]].pos_x + "," + json[new_device_order[id]].pos_y + ")",
+      });
+      dataset[device_order[id]].pos_x = json[new_device_order[id]].pos_x;
+      dataset[device_order[id]].pos_y = json[new_device_order[id]].pos_y;
     }
    }
    function delete_value(id,json){
@@ -1146,13 +1188,8 @@
             if (json.length == 0){
               d3.select("#got_datetime").text("No data");
             } else {
-              d3.select("#got_datetime").text(json[0].up2date);
-              // datetime.setYear(parseInt(json[0].datetime.slice(0,4)));
-              // datetime.setMonth(parseInt(json[0].datetime.slice(5,7)));
-              // datetime.setDate(parseInt(json[0].datetime.slice(8,10)));
-              // datetime.setHours(parseInt(json[0].datetime.slice(11,13)));
-              // datetime.setMinutes(parseInt(json[0].datetime.slice(14,16)));
-              // describe_datetime();
+              Real_datetime = json[0].up2date;
+              d3.select("#got_datetime").text(Real_datetime);
             }
           }
         }
@@ -1472,6 +1509,11 @@
       flag_box = !flag_box;
     }
 
+    // 位置情報リストを別タブで開く
+    function open_position_list(){
+      window.open("{% url 'cms:position_list' %}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+    }
+
     // 折りたたみ表示
     function show(inputData) {
       var objID=document.getElementById( "layer_" + inputData );
@@ -1639,6 +1681,7 @@
     var hour = parseInt({{ hour }});
     var minute = parseInt({{ minute }});
     var datetime = new Date(year,month,day,hour,minute);
+    var Real_datetime;
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
     function describe_datetime(){

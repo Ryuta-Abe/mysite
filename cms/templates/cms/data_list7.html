@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <!-- 軸の属性を決めている。特にfill:none;にしないと真っ黒になる。-->
+    <style>
+        .axis text {
+          font: 10px sans-serif;
+        }
+ 
+.axis path {
+/*
+fillとopacityで半透明な背景色。
+        */
+          fill: Aquamarine;
+          opacity: 0.1;
+          stroke: #000;
+          stroke-width: 1;
+          shape-rendering: crispEdges;
+        }
+ 
+        .axis line {
+          stroke: #000;
+          stroke-width: 1;
+          shape-rendering: crispEdges;
+        }
+ 
+    </style>
+</head>
+<body>    
+ 
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+ 
+    <script>
+ 
+var margin = {top: 20, right: 30, bottom: 30, left: 40},
+    width = 700 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+ 
+var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+ 
+d3.csv("timeseries.csv", function(data){
+ 
+    // yScaleのために、closeの最大値を出す。
+    var yMax = d3.max(data,function(d){ return +d["close"]; });
+ 
+    // "日-月-年"からDateオブジェクトを作る。
+    var format = d3.time.format("%d-%b-%y");
+    // Dateオブジェクトから"年-月-日"に変換する。
+    var newFormat = d3.time.format("%y-%b-%d");
+ 
+    // xScaleには、データレコードの数を最大値に使う。
+    var xScale = d3.scale.linear()
+                    .domain([0,data.length])
+                    .range([width,0]); // データが新-旧順なので、逆にする。
+ 
+    var yScale = d3.scale.linear()
+                    .domain([0,yMax])
+                    .range([height,0]);
+ 
+    var xAxis = d3.svg.axis()
+                    .scale(xScale)
+                    .ticks(6)
+                    .orient("bottom")
+                    .tickSize(6, -height)
+                    .tickFormat(function(i){
+                        var f = format.parse(data[i]["date"]); // dateからDateオブジェクトを作る。
+                        return newFormat(f); // Dateオブジェクトから新しい"年-月-日"の並びに変える。
+                    });
+ 
+    var yAxis = d3.svg.axis()
+                    .ticks(5)
+                    .scale(yScale)
+                    .orient("left")
+                    .tickSize(6, -width);
+ 
+    svg.selectAll("circle")
+        .data(data)
+        .enter()
+         .append("circle")
+         .attr("r",2)
+         .attr("fill", "steelBlue")
+         .attr("cx", function(d,i){ return xScale(i); })
+         .attr("cy", function(d){ return yScale(d["close"]); });
+ 
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text")
+          .attr("y", -10)
+          .attr("x",10)
+          .style("text-anchor", "end")
+          .text("Price($)");
+ 
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+})       
+ 
+    </script>
+ 
+</body>
+</html>

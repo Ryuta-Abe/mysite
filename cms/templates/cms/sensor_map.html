@@ -645,15 +645,16 @@
     var pos = [];
     {% for s in t %}
     dataset.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
-    {% endfor %}
-    {% for s in t_ilu %}
-    dataset_illuminance.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    if (({{ s.device_id }} == 4)||({{ s.device_id }} == 8)||({{ s.device_id }} == 9)||({{ s.device_id }} == 18)||({{ s.device_id }} == 20)){
+      dataset_illuminance.push({ac:{{ s.ac }},ilu:{{ s.ilu }},tu:{{ s.tu }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
+    }
     {% endfor %}
     {% for s in pos %}
     pos.push({pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
     {% endfor %}
 
-    d3.select("body").append("p").text("");
+    // d3.select("body").append("p").text("datasetの長さ = "+dataset.length);
+    // d3.select("body").append("p").text("posの長さ = "+pos.length);
 
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
@@ -1605,7 +1606,7 @@
     .style("height", "35px")
     .style("opacity",0)
 
-    // 親機データのマッピング
+    // 親機posデータのマッピング
     var box_list = [];
     box_list.push({pos_x:890,pos_y:190,box_id:6,slist:[]});
     box_list.push({pos_x:710,pos_y:370,box_id:7,slist:[]});
