@@ -97,4 +97,4 @@ for num in "6789": # 親機ループ
 
 
 # dev test
-# dev test2
+# dev test3
