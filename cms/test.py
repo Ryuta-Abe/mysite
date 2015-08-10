@@ -95,4 +95,6 @@ for num in "6789": # 親機ループ
 # t = r.json()
 # print(t)
 
-print("エラー無しやな")
+
+# dev test
+# dev test3
