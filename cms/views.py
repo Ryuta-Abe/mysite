@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from cms.forms import SensorForm
-from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,Position_Set
+from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,positionset
 from mongoengine import *
 from pymongo import *
 import requests
@@ -180,7 +180,7 @@ def sensor_map(request, date_time=999, type="20"):
   # 位置情報の取り出し
   pos = []
   for i in range(0,len(t)):
-    pos += Position_Set.objects(device_id=t[i]["device_id"], datetime__lt=lt).order_by("-datetime").limit(1)
+    pos += positionset.objects(device_id=t[i]["device_id"], datetime__lt=lt).order_by("-datetime").limit(1)
 
   return render_to_response('cms/sensor_map.html'
   ,  # 使用するテンプレート
@@ -491,7 +491,7 @@ def response_json(request, date_time=999):
     # Python辞書オブジェクトとしてdataに格納
     data = []
     for i in range(0,len(t)):
-      tmp_pos = Position_Set.objects(device_id=t[i]["device_id"],datetime__lt=date_time).order_by("-datetime").limit(1).scalar("pos_x","pos_y")
+      tmp_pos = positionset.objects(device_id=t[i]["device_id"],datetime__lt=date_time).order_by("-datetime").limit(1).scalar("pos_x","pos_y")
       data.append({
         'ac':t[i]["ac"],
         'ilu':t[i]["ilu"],
@@ -522,11 +522,11 @@ def position_list(request):
   recent = []
   num = 20 # 最大取り出し件数
   today = datetime.datetime.today()
-  recent += Position_Set.objects(datetime__lt=today).order_by("-datetime").limit(1).scalar("datetime")
+  recent += positionset.objects(datetime__lt=today).order_by("-datetime").limit(1).scalar("datetime")
   for i in range(0,num - 1):
     if len(recent) > i :
       lt = recent[i] - datetime.timedelta(minutes = 1)
-      recent += Position_Set.objects(datetime__lt=lt).order_by("-datetime").limit(1).scalar("datetime")
+      recent += positionset.objects(datetime__lt=lt).order_by("-datetime").limit(1).scalar("datetime")
   return render_to_response('cms/position_list.html',  # 使用するテンプレート
                               {'recent':recent} )      # テンプレートに渡すデータ
 
@@ -546,7 +546,7 @@ def position_edit(request, date_time):
   # データベースから取り出し
   t = []
   for s in range(1,number_of_device+1):
-    t += Position_Set.objects(device_id=s, datetime__gt=gt, datetime__lt=lt).order_by("-datetime").limit(1)
+    t += positionset.objects(device_id=s, datetime__gt=gt, datetime__lt=lt).order_by("-datetime").limit(1)
   return render_to_response('cms/position_edit.html',  # 使用するテンプレート
                               {'t':t} )      # テンプレートに渡すデータ)
 
@@ -558,12 +558,12 @@ def position_delete(request, date_time, id=999):
 
   lt = date_time + datetime.timedelta(minutes = 1)
   gt = date_time - datetime.timedelta(seconds = 1)
-  count = Position_Set.objects(datetime__gt=gt, datetime__lt=lt).count()
+  count = positionset.objects(datetime__gt=gt, datetime__lt=lt).count()
 
   if id == 999: # すべてのデバイスの位置情報削除
-    Position_Set.objects(datetime__gt=gt, datetime__lt=lt).delete()
+    positionset.objects(datetime__gt=gt, datetime__lt=lt).delete()
   else: # 特定のデバイスの位置情報のみを削除
-    Position_Set.objects(datetime__gt=gt, datetime__lt=lt, device_id=id).delete()
+    positionset.objects(datetime__gt=gt, datetime__lt=lt, device_id=id).delete()
 
   # Python辞書オブジェクトとしてdataに格納
   data = []
@@ -578,13 +578,13 @@ def position_delete(request, date_time, id=999):
 def position_save(request, date_time, id, pos_x, pos_y):
   date_time = dt_insert_partition_to_min(date_time)
   date_time = dt_from_str_to_iso(date_time)
-  position_set = Position_Set(
+  positionset = positionset(
     date_time,
     device_id = id,
     pos_x = pos_x,
     pos_y = pos_y
     )
-  position_set.save()
+  positionset.save()
 
   # Python辞書オブジェクトとしてdataに格納
   data = []
@@ -630,7 +630,7 @@ def sensor_map_en(request, date_time=999, type="20"):
   # 位置情報の取り出し
   pos = []
   for s in exist_list:
-    pos += Position_Set.objects(device_id=s, datetime__lt=lt).order_by("-datetime").limit(1)
+    pos += positionset.objects(device_id=s, datetime__lt=lt).order_by("-datetime").limit(1)
 
   return render_to_response('cms/sensor_map_en.html',  # 使用するテンプレート
                               {'t': t, 't_ilu': t_ilu,'recent': recent, 'year':date_time[0:4],'month':date_time[5:7]

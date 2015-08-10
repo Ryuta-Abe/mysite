@@ -46,7 +46,7 @@ class Sensor2(Document):
     error_flag = BooleanField()
     rssi = FloatField()
 
-class Position_Set(Document):
+class positionset(Document):
     datetime = DateTimeField()
     # position_set =  ReferenceField("Position_Set")
     device_id = IntField()
