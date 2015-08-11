@@ -97,3 +97,4 @@ for num in "6789": # 親機ループ
 
 
 # dev branch test
+# dev test
