@@ -1,5 +1,0 @@
-# pycファイルを無視
-*.pyc
-
-# __pycache__フォルダを無視
-__pycache__/
