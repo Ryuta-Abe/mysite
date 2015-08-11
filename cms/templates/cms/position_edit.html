@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}位置情報編集{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 id="header" class="page-header"></h3>
+<a onclick="execute_edit()" class="btn btn-default btn-sm">変更を確定</a>
+　ステータス：
+<text id="log">未変更</text>
+(<a href="javascript:void(0)" id="category_1" onclick="show('1');">詳細</a>)
+　<!--スペース-->
+<a onclick="delete_from_mongo()" class="btn btn-default btn-sm">削除</a>
+<a href="{% url 'cms:position_list' %}" class="btn btn-default btn-sm">一覧に戻る</a>
+<div id="layer_1" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close"></div>
+<form name="Sample_form" action="Sample.html">
+<table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
+  <thead>       
+    <tr>
+      <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+      <th class="table-filterable">センサー子機ID</th>
+      <th class="table-filterable">x座標</th>
+      <th class="table-filterable">y座標</th>
+    </tr>
+  </thead>
+  <tbody>
+  <script type="text/javascript">
+
+    // 時間抽出
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+    // isodate形式 --> str形式(20140405123456789)
+    function dt_from_iso_to_str(dt){
+      var str_dt = dt.getFullYear()+("0"+(dt.getMonth()+1)).slice(-2)+("0"+dt.getDate()).slice(-2)+("0"+dt.getHours()).slice(-2)+("0"+dt.getMinutes()).slice(-2);
+      return str_dt;
+    }
+    // str形式(201411220123) --> str形式(2014-11-22 01:23)
+    function dt_insert_partition_to_min(dt){
+      var dt = String(dt);
+      var str_dt = dt.slice(0,4)+"年"+dt.slice(4,6)+"月"+dt.slice(6,8)+"日"+" "+dt.slice(8,10)+"時"+dt.slice(10,12)+"分";
+      return str_dt;
+    }
+
+    // 表の描画
+    var number_of_device = 45;
+    for(var i = 1 ; i < number_of_device +1 ; i++) {
+      document.write("<tr>");
+      document.write('<td align="center">'+i+'</td>');
+      document.write('<td><input id="pos_x_'+i+'" type="text" name="pos_x_'+i+'"></td>');
+      document.write('<td><input id="pos_y_'+i+'" type="text" name="pos_y_'+i+'"></td>');
+      document.write("</tr>");
+    }
+  </script>
+  </tbody>
+</table>
+</form>
+
+<script type="text/javascript">
+
+// 位置情報データセット
+var dataset = [];
+{% for s in t %}
+dataset.push({pos_x:"{{ s.pos_x }}",pos_y:"{{ s.pos_y }}",device_id:"{{ s.device_id }}",datetime:"{{ s.datetime }}"});
+{% endfor %}
+
+// ヘッダーに日付情報を記述
+d3.select("#header").text(dataset[0].datetime+" 時点の位置情報編集");
+
+// 表に既存の位置情報を記述
+for (var i = 0; i < dataset.length; i++) {
+  d3.select("#pos_x_"+dataset[i].device_id).attr("value",dataset[i].pos_x);
+  d3.select("#pos_y_"+dataset[i].device_id).attr("value",dataset[i].pos_y);
+};
+
+// 現在のデバイス存在状況を記録
+var device_list = []; // 存在するデバイスリスト(true = デバイス有り)
+var new_device_list = [];
+for (var i = 1; i < 46; i++) {
+  device_list[i] = false;
+};
+for (var i = 0; i < dataset.length; i++) {
+  device_list[dataset[i]["device_id"]] = true;
+}
+
+// 変更を確定
+function execute_edit(){
+  if (window.confirm('変更を確定してよろしいですか？')){
+    var dt = dt_from_iso_to_str(parseDate(dataset[0].datetime));
+    $.ajax({
+      type: 'GET',
+      url: "{% url 'cms:position_delete' %}"+"datetime="+dt,
+      dataType: 'json',
+      success: function(json){
+        save_to_mongo();
+      }
+    });
+  }
+}
+
+
+// テキストボックスの値をmongoDBに保存
+function save_to_mongo(){
+  var extra = 3; // 余分なテキストボックス数
+  var dt = dt_from_iso_to_str(parseDate(dataset[0].datetime));
+  for (var i = 1; i < number_of_device+1 ; i++) {
+    var x = parseInt(Sample_form.elements[(i-1)*2+extra].value);
+    var y = parseInt(Sample_form.elements[(i-1)*2+1+extra].value);
+    if (isNaN(x)||isNaN(y)) {
+      new_device_list[i] = false;
+      compare_list(i);
+    } else { // x,yの両方が数字ならば以下を実行
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'cms:position_save' %}"+"datetime="+dt+"/id="+i+"/pos_x="+x+"/pos_y="+y+"/",
+        dataType: 'json',
+        success: function(json){
+        }
+      });
+      new_device_list[i] = true;
+      compare_list(i);
+    }
+  };
+}
+
+// 削除を行う
+function delete_from_mongo(){
+  var dt = dt_from_iso_to_str(parseDate(dataset[0].datetime));
+  if (window.confirm(dataset[0].datetime+'の位置情報を削除しますか？')){
+    $.ajax({
+      type: 'GET',
+      url: "{% url 'cms:position_delete' %}"+"datetime="+dt,
+      dataType: 'json',
+      success: function(json){
+        var url = "{% url 'cms:position_list' %}";
+        window.open(url,"_self","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+      }
+    });
+  }
+}
+
+// 変更前と変更後のデバイスリストを比較
+function compare_list(i){
+  if (new_device_list[i] != device_list[i]) {
+    d3.select("#log").text("変更済み");
+    if (new_device_list[i]) {
+      var log = "追加";
+    } else {
+      var log = "削除";
+    };
+    d3.select("#layer_1").append("p").text("device_id = "+i+" , 位置情報"+log);
+  };
+}
+
+// 折りたたみ表示
+function show(inputData) {
+  var objID=document.getElementById( "layer_" + inputData );
+  var buttonID=document.getElementById( "category_" + inputData );
+  if (inputData == 1){
+    var opentext = "詳細";
+    var closetext = "詳細非表示";
+  }
+  if(objID.className=='close') {
+  objID.style.display='block';
+  objID.className='open';
+  d3.select("#category_"+inputData).text(closetext);
+  }else{
+  objID.style.display='none';
+  objID.className='close';
+  d3.select("#category_"+inputData).text(opentext);
+}}
+
+// // セレクトボックスの値をdatetimeに合わせる
+// function set_selectbox(){
+//   var year = datetime.getFullYear() - 2014;
+//   var minute = datetime.getMinutes()/5;
+//   document.Sample_form.textbox_year.selectedIndex = year;
+//   document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
+//   document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
+//   document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
+//   document.Sample_form.textbox_minute.selectedIndex = minute;
+// }
+
+// // 取得時間を表示
+// var datetime = new Date();
+// set_selectbox(); // セレクトボックスにdatetimeをセット
+    
+</script>
+  {% endblock content %}

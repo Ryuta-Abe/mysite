@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}センサーマップ{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 id="header" class="page-header">位置情報登録完了！</h3>
+<form name="Sample_form" action="Sample.html">
+<table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
+  <thead>       
+    <tr>
+      <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+      <th class="table-filterable">センサー子機ID</th>
+      <th class="table-filterable">x座標</th>
+      <th class="table-filterable">y座標</th>
+    </tr>
+  </thead>
+  <tbody>
+  <script type="text/javascript">
+    // var number_of_device = 45;
+    // for(var i = 1 ; i < number_of_device +1 ; i++) {
+      document.write("<tr>");
+      document.write('<td align="center">'+"{{ device_id }}"+'</td>');
+      document.write('<td align="center">'+"{{ pos_x }}"+'</td>');
+      document.write('<td align="center">'+"{{ pos_y }}"+'</td>');
+      document.write("</tr>");
+    // }
+  </script>
+  </tbody>
+</table>
+</form>
+
+<script type="text/javascript">
+function btn(){
+  var x = Sample_form.posx_1.value;
+  var y = Sample_form.posy_1.value;
+  if ((x == "")||(y == "")) {
+    alert("入力しろよ(´・ω・｀)");
+  } else {
+    alert("センサー1のx,y座標は("+x+","+y+")");
+  }
+}
+    
+</script>
+  {% endblock content %}

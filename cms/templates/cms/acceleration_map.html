@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}加速度マップ{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: green;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 class="page-header">加速度マップ</h3>
+<a href="{% url 'cms:acceleration_map' %}" class="btn btn-default btn-sm">加速度</a>
+<a href="{% url 'cms:illuminance_map' %}" class="btn btn-default btn-sm">照　度</a>
+<a href="{% url 'cms:heat_map' %}" class="btn btn-default btn-sm">気　温</a>
+<p></p> <!-- ボタンと地図の間にスペースを -->
+<?xml version="1.0" standalone="no"?>
+<svg id="svg1" width="1024" height="560">
+ <image x="0" y="0" width="100%" height="100%" xlink:href="{{ MEDIA_URL }}/static_site/images/809.JPG"></image>
+</svg>
+<div id="tooltip_div">
+<p id="text_ax"></p><p id="text_ay"></p><p id="text_az"></p>
+</div>
+<svg id="svg2" width="500" height="500"></svg>
+<script type="text/javascript">
+
+    // データセットの定義
+    // マップの座標(目盛り)を追加
+    var coordinate = []; 
+    for (var i = 0; i < 11; i++) {
+     for (var j = 0; j < 6; j++) {
+       coordinate.push([i*100, j*100]);
+     }
+   }
+    //  加速度センサーデータ
+    var  acceleration = [];
+    {% for s in t6 %}
+    acceleration.push({ax:{{ s.ax }},ay:{{ s.ay }},az:{{ s.az }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}",box_id:"{{ s.box_id }}"});
+    {% endfor %}
+    {% for s in t7 %}
+    acceleration.push({ax:{{ s.ax }},ay:{{ s.ay }},az:{{ s.az }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}",box_id:"{{ s.box_id }}"});
+    {% endfor %}
+    {% for s in t8 %}
+    acceleration.push({ax:{{ s.ax }},ay:{{ s.ay }},az:{{ s.az }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}",box_id:"{{ s.box_id }}"});
+    {% endfor %}
+    {% for s in t9 %}
+    acceleration.push({ax:{{ s.ax }},ay:{{ s.ay }},az:{{ s.az }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:"{{ s.device_id }}",box_id:"{{ s.box_id }}"});
+    {% endfor %}
+
+    d3.select("body").append("p").text("(´・ω・｀)");
+
+    // svg1 の編集
+    var svg1 = d3.select("#svg1")
+
+    // 座標目盛り(円)の生成
+    svg1.selectAll("circle.coordinate")
+    .data(coordinate)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d) {
+      return d[0];
+    })
+    .attr("cy", function(d) {
+      return d[1];
+    })
+    .attr("r", 3)
+    .attr("fill","purple")
+        // マウスがバーに重なったら説明文を出す
+        .on( "mouseover", function(d){
+          div.transition().duration(300)
+          .style("opacity",1)
+          .style("height", "36px")
+          .style("background","purple")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          text_ax.transition().duration(300)
+          .style("opacity",1).text("x = " + d[0] + " , y = " + d[1])
+        })
+        // マウスがバーから離れたら説明文をけす
+        .on( "mouseout", function(d){
+          div.transition().duration(300)
+          .style("opacity",0)
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          text_ax.transition().duration(300)
+          .style("opacity",0)
+        });
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "140px" )
+    .style("height", "90px")
+    .style("opacity",0)
+
+    var text_ax = d3.select("#text_ax")
+    .attr("fill","white")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .style("opacity",0)
+
+    var text_ay = d3.select("#text_ay")
+    .attr("fill","white")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .style("opacity",0)
+
+    var text_az = d3.select("#text_az")
+    .attr("fill","white")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .style("opacity",0)
+
+    // 加速度データのマッピング(円)
+    svg1.selectAll("circle.acceleration")
+    .data(acceleration)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d) {
+            return d.pos_x; // {{ s.pos_x }}
+          })
+    .attr("cy", function(d) {
+            return d.pos_y; // {{ s.pos_y }}
+          })
+    .attr("r", 8)
+    .attr("fill","green")
+        // マウスがバーに重なったら説明文を出す
+        .on( "mouseover", function(d){
+          div.transition().duration(300)
+          .style("opacity",1)
+          .style("background","green")
+          .style("height", "90px")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          text_ax.transition().duration(300)
+          .style("opacity",1).text("ax = " + d.ax + " m/s² ")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          text_ay.transition().duration(300)
+          .style("opacity",1).text("ay = " + d.ay + " m/s² ")
+          .style("top", (d3.event.pageY + 30) + "px")
+          text_az.transition().duration(300)
+          .style("opacity",1).text("az = " + d.az + " m/s²")
+          .style("top", (d3.event.pageY + 40) + "px")
+        })
+        // マウスがバーから離れたら説明文をけす
+        .on( "mouseout", function(d){
+          div.transition().duration(300)
+          .style("opacity",0)
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          text_ax.transition().duration(300)
+          .style("opacity",0).text("(^_^;)")
+          text_ay.transition().duration(300)
+          .style("opacity",0).text("")
+          .style("top", (d3.event.pageY + 40) + "px")
+          text_az.transition().duration(300)
+          .style("opacity",0).text("")
+          .style("top", (d3.event.pageY + 60) + "px")
+        })
+        // マウスクリック時の動作
+        .on( "click", function(d){
+          text_ax.transition().duration(300)
+          .text("親機ID = " + d.box_id)
+          text_ay.transition().duration(300)
+          .style("opacity",0)
+          text_az.transition().duration(300)
+          .style("opacity",0)
+        });
+
+    // 座標目盛りテキストの生成
+    // svg1.selectAll("text.coordinate")
+    // .data(coordinate)
+    // .enter()
+    // .append("text")
+    // .text(function(d) {
+    //   return d[0] + "," + d[1];
+    // })
+    // .attr("x", function(d) {
+    //   return d[0];
+    // })
+    // .attr("y", function(d) {
+    //   return d[1];
+    // })
+    // .attr("font-family", "sans-serif")
+    // .attr("font-size", "11px")
+    // .attr("fill", "purple");
+
+    // センサー名テキストの生成
+    svg1.selectAll("text.acceleration")
+    .data(acceleration)
+    .enter()
+    .append("text")
+    .text(function(d) {
+            return d.device_id; // {{ s.device_id }}
+          })
+    .attr("x", function(d) {
+            return d.pos_x - 20; // {{ s.pos_x }}
+          })
+    .attr("y", function(d) {
+            if (d.pos_y <= 30){
+              return d.pos_y + 20;
+            } else {
+              return d.pos_y - 10;
+            }
+          })
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "15px")
+    .attr("fill", "green");
+
+    // たくさんのボール
+    // svg
+    var svg = d3.select("#svg2");
+
+    // circle
+    var circle;
+
+    // color
+    var colors = d3.scale.category10().range();
+
+    var ms = 1000;
+
+    var add = function () {
+      var i = Math.floor(Math.random() * 11);
+          circle = svg.append('circle')
+            .attr({ cx: 50, cy: 100, r: 20, fill: colors[i]});
+    };
+
+    var move = function() {
+      add();
+      // transtion 1
+      circle.transition()
+        .duration(ms)
+        .attr('cy', 50)
+        .transition()
+        .duration(ms)
+        .attr('cx', 100)
+        .transition()
+        .duration(ms)
+        .attr('cy', 100)
+      // transtion 2
+        .transition()
+        .duration(ms)
+        .attr({cx: 250, cy: 250})
+        .transition()
+        .duration(ms)
+        .attr('cx', 300)
+        .transition()
+        .duration(ms)
+        .attr('cy', 300)
+        .transition()
+        .duration(ms)
+        .attr('cx', 250)
+      // transtion 3
+        .transition()
+        .duration(ms)
+        .attr({cx: 100, cy: 300})
+        .transition()
+        .duration(ms)
+        .attr('cx', 50)
+        .transition()
+        .duration(ms)
+        .attr('cy', 250)
+        .transition()
+        .duration(ms)
+        .attr('cx', 100)
+      // transtion 4
+        .transition()
+        .duration(ms)
+        .attr({cx: 300, cy: 100})
+        .transition()
+        .duration(ms)
+        .attr('cy', 50)
+        .transition()
+        .duration(ms)
+        .attr('cx', 250)
+        .transition()
+        .duration(ms)
+        .attr('cy', 100)
+      // transtion5
+        .transition()
+        .duration(ms)
+        .ease('back')
+        .attr({cx: 175, cy: 175})
+        .transition()
+        .duration(ms)
+        .attr({r: 100, opacity: 0.5})
+        .each('end', function () {
+          d3.select(this).remove();
+        });
+    };
+
+//    setInterval(move, 1000);
+
+  </script>
+  {% endblock content %}
