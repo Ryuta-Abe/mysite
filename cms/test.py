@@ -96,5 +96,4 @@ for num in "6789": # 親機ループ
 # print(t)
 
 
-# dev test
-# dev test2
+# dev branch test
