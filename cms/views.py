@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from cms.forms import SensorForm
-from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,positionset
+from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, positionset
 from mongoengine import *
 from pymongo import *
 import requests
