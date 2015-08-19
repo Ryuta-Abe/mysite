@@ -174,7 +174,14 @@
 
   // 最近の取得時間を表示
     var recent = [];
-    recent.push({year:2014,month:11,date:11,hour:19,minute:00});
+    // 手動で入力。なんか良いアルゴリズムないかな(´・ω・｀)
+    recent.push({year:2015,month:07,date:04,hour:12,minute:00});
+    recent.push({year:2015,month:06,date:20,hour:12,minute:00});
+    recent.push({year:2015,month:06,date:08,hour:12,minute:00});
+    recent.push({year:2015,month:05,date:30,hour:12,minute:00});
+    recent.push({year:2015,month:05,date:20,hour:12,minute:00});
+    recent.push({year:2015,month:05,date:10,hour:12,minute:00});
+    recent.push({year:2014,month:11,date:13,hour:12,minute:00});
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
 
