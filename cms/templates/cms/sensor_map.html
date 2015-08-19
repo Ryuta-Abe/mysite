@@ -174,9 +174,7 @@
 
   // 最近の取得時間を表示
     var recent = [];
-    {% for s in recent %}
-    recent.push("{{ s }}");
-    {% endfor %}
+    recent.push({year:2014,month:11,date:11,hour:19,minute:00});
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
 
@@ -189,7 +187,7 @@
 
       for(var j = 0 ; j < 4 ; j++) {
         if(recent[i+5*j]!=undefined){ // 要素が存在する場合
-          document.write('<td><a onclick="recent_click(new Date('+parseDate(recent[i+5*j]).getFullYear()+','+parseDate(recent[i+5*j]).getMonth()+','+parseDate(recent[i+5*j]).getDate()+','+parseDate(recent[i+5*j]).getHours()+','+parseDate(recent[i+5*j]).getMinutes()+'))">',  recent[i+5*j]  , "</a></td>");}
+          document.write('<td><a onclick="recent_click(new Date('+recent[i+5*j].year+','+(recent[i+5*j].month - 1)+','+recent[i+5*j].date+','+recent[i+5*j].hour+','+recent[i+5*j].minute+'))">',  recent[i+5*j].year+"年"+recent[i+5*j].month+"月"+recent[i+5*j].date+"日" , "</a></td>");}
       }
 
     document.write("</tr>");
