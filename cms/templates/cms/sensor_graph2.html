@@ -145,6 +145,11 @@
       <a id="two_weeks" onclick="two_weeks()" class="btn btn-default btn-sm">2週間</a>
       <a id="one_month" onclick="one_month()" class="btn btn-default btn-sm">1ヶ月</a>
       <a id="two_months" onclick="two_months()" class="btn btn-default btn-sm">2ヶ月</a> -->
+      <br>
+      <text id="id3">ツール：</text>
+      <a id="judge_button" onclick="judge_waste_of_energy()" class="btn btn-default btn-sm">判定</a>
+      <br>
+      <text id="log"></text>
     </form>
     <svg id="svg1" width="1024" height="280"></svg>
     <svg id="svg2" width="1024" height="280"></svg>
@@ -173,7 +178,24 @@
         t3.push({ac:{{ s.ac }},ilu:{{ s.ilu }},datetime:"{{ s.datetime }}"});
       }
       {% endfor %}
+    } else if("{{ sensor }}" == "ri"){ // rssi+照度グラフ
+      {% for s in t1 %}
+      if(("{{ s.rssi }}"!="None")&&("{{ s.ilu }}"!="None")){
+        t1.push({rssi:{{ s.rssi }},ilu:{{ s.ilu }},datetime:"{{ s.datetime }}"});
+      }
+      {% endfor %}
+      {% for s in t2 %}
+      if(("{{ s.rssi }}"!="None")&&("{{ s.ilu }}"!="None")){
+        t2.push({rssi:{{ s.rssi }},ilu:{{ s.ilu }},datetime:"{{ s.datetime }}"});
+      }
+      {% endfor %}
+      {% for s in t3 %}
+      if(("{{ s.rssi }}"!="None")&&("{{ s.ilu }}"!="None")){
+        t3.push({rssi:{{ s.rssi }},ilu:{{ s.ilu }},datetime:"{{ s.datetime }}"});
+      }
+      {% endfor %}
     } 
+    
 
     // 一日分のデータを表示
     function one_day(){
@@ -183,6 +205,10 @@
       remove_objects();
       if ("{{ sensor }}" == "ai"){
         change_acceleration_graph(1);
+        change_illuminance_graph(2);
+      }
+      if ("{{ sensor }}" == "ri"){
+        change_rssi_graph(1);
         change_illuminance_graph(2);
       }
     }
@@ -196,6 +222,10 @@
         change_acceleration_graph(1);
         change_illuminance_graph(2);
       }
+      if ("{{ sensor }}" == "ri"){
+        change_rssi_graph(1);
+        change_illuminance_graph(2);
+      }
     }
     // 三日分のデータを表示
     function three_days(){
@@ -205,6 +235,10 @@
       remove_objects();
       if ("{{ sensor }}" == "ai"){
         change_acceleration_graph(1);
+        change_illuminance_graph(2);
+      }
+      if ("{{ sensor }}" == "ri"){
+        change_rssi_graph(1);
         change_illuminance_graph(2);
       }
     }
@@ -346,6 +380,9 @@
       acScale = d3.scale.linear()
                      .domain([0,10])
                      .range([h - padding, padding]);
+      rssiScale = d3.scale.linear()
+                     .domain([-90,0])
+                     .range([h - padding, padding]);
       iluScale = d3.scale.linear()
                      .domain([d3.min(t, function(d) {
                               return d.ilu;
@@ -369,6 +406,10 @@
                     .scale(acScale)
                     .orient("left")
                     .ticks(5);  // 大雑把に目盛りの個数を設定
+      rssiAxis = d3.svg.axis()
+                    .scale(rssiScale)
+                    .orient("left")
+                    .ticks(5);  // 大雑把に目盛りの個数を設定
       iluAxis = d3.svg.axis()
                     .scale(iluScale)
                     .orient("left")
@@ -379,6 +420,8 @@
     // ヘッダーの入力
     if ("{{ sensor }}" == "ai"){
       d3.select("#header").text("加速度＋照度変化グラフ sensor "+parseInt("{{ device_id }}".slice(-2)));
+    } else if ("{{ sensor }}" == "ri"){
+      d3.select("#header").text("RSSI＋照度変化グラフ sensor "+parseInt("{{ device_id }}".slice(-2)));
     }
     // マウスオーバーすると出てくる説明文(div要素)
     var div = d3.select("#tooltip_div")
@@ -545,6 +588,105 @@
       .style("opacity",1);
       generate_axis();
     }
+    // rssiグラフの描画
+    function rssi_graph(n){
+      if (n == 1) {
+        rssi_rect = svg1.selectAll("rect.rssi")
+        .data(dataset)
+        .enter()
+        .append("rect")
+      } else if (n == 2){
+        rssi_rect = svg2.selectAll("rect.rssi")
+        .data(dataset)
+        .enter()
+        .append("rect")
+      };
+      rssi_rect.attr({
+        "x": function(d){ return xScale(parseDate(d.datetime));},
+        "y": h - padding,
+        "width": (w - padding*4)/dataset.length,
+        "height": 0,
+        "fill": "purple",
+      })
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"rgb(0,255,0)",
+        });
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","purple")
+        .style("width", "260px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text(d.rssi + " dB　" + d.datetime.slice(5))
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"purple",
+        });
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      .transition().duration(function(d,i){ return i*animation/dataset.length;})
+      .attr({
+        "y": function(d){ return rssiScale(d.rssi);},
+        "height": function(d){ return (h - padding) - rssiScale(d.rssi);},
+      });
+      generate_axis();
+    }
+    function change_rssi_graph(n){
+      if (n == 1) {
+        rssi_rect = svg1.selectAll("rect.rssi")
+        .data(dataset)
+        .enter()
+        .append("rect")
+      } else if (n == 2){
+        rssi_rect = svg2.selectAll("rect.rssi")
+        .data(dataset)
+        .enter()
+        .append("rect")
+      };
+      rssi_rect.attr({
+        "x": function(d){ return xScale(parseDate(d.datetime));},
+        "y": function(d){ return rssiScale(d.rssi);},
+        "width": (w - padding*4)/dataset.length,
+        "height": function(d){ return (h - padding) - rssiScale(d.rssi);},
+        "fill": "green",
+      })
+      .style("opacity",0)
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"rgb(0,255,0)",
+        });
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","purple")
+        .style("width", "260px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text(d.rssi + " dB　" + d.datetime.slice(5))
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"green",
+        });
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      .transition().delay(800)
+      .style("opacity",1);
+      generate_axis();
+    }
     // 照度グラフの描画
     function illuminance_graph(n){
       if (n == 1) {
@@ -697,12 +839,18 @@
     if ("{{ sensor }}" == "ai"){
       acceleration_graph(1);
       illuminance_graph(2);
+    } else if ("{{ sensor }}" == "ri"){
+      rssi_graph(1);
+      illuminance_graph(2);
     }
 
     // xy軸の生成
     function generate_axis(){
       if ("{{ sensor }}" == "ai"){
         yAxis1 = acAxis;
+        yAxis2 = iluAxis;
+      } else if ("{{ sensor }}" == "ri"){
+        yAxis1 = rssiAxis;
         yAxis2 = iluAxis;
       }
       // svg1
@@ -727,6 +875,45 @@
          .attr("class", "y axis")
          .attr("transform", "translate(" + padding*2 + ",0)")
          .call(yAxis2);
+    }
+
+    // 電気つけっぱなし判定
+    function judge_waste_of_energy(){
+      d3.select("#log").append("p").text("判定開始");
+      dataset = t1.concat(t2,t3);
+      d3.select("#log").append("p").text("datasetの長さ = "+dataset.length);
+
+      // 環境に合わせて変化させる値
+      ilu_threshold = 400 // 照明がONであるとみなす照度のしきい値[lx]
+      ac_threshold = 1 // 扉が開いたとみなす加速度のしきい値
+      time_threshold = 120 // 電気つけっぱなしとみなす時間[分]
+      data_interval = 1 // データ取得間隔[分]
+
+      count = 0;
+      flag_waste_of_energy = false;
+      for (var i = 0; i < dataset.length; i++) {
+        // 一定以上明るいかつ扉の開閉がない場合
+        if ((dataset[i].ac < ac_threshold)&&(dataset[i].ilu > ilu_threshold)) {
+          count += 1;
+          if (count == 1) {
+            tmp_datetime = dataset[i].datetime;
+          };
+          // 一定時間以上状態が続いている場合
+          if ((flag_waste_of_energy == false)&&(count >= (time_threshold/data_interval))) {
+            flag_waste_of_energy = true;
+          };
+        } else {
+          if (flag_waste_of_energy) {
+            d3.select("#log").append("p").text((count*data_interval)+"分間 電気つけっぱなし検出 "+tmp_datetime);
+            flag_waste_of_energy = false;
+          };
+          count = 0;
+        };
+      };
+      if (flag_waste_of_energy) {
+            d3.select("#log").append("p").text((count*data_interval)+"分間 電気つけっぱなし検出 "+tmp_datetime);
+          }
+      d3.select("#log").append("p").text("判定終了");
     }
 
     function reload_datetime(){
