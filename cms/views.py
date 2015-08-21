@@ -153,7 +153,7 @@ def sensor_map(request, date_time=999, type="20"):
   recent = []
   num = 20 # 最大取り出し件数
   today = datetime.datetime.today()
-  recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+  # recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
   # for i in range(0,num - 1):
   #   if len(recent) > i :
   #     lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
@@ -184,7 +184,7 @@ def sensor_map(request, date_time=999, type="20"):
 
   return render_to_response('cms/sensor_map.html'
   ,  # 使用するテンプレート
-                              {'t': t, 'pos':pos, 'recent': recent, 'year':lt.year,'month':lt.month
+                              {'t': t, 'pos':pos, 'year':lt.year,'month':lt.month
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
                               ,'sensor':type[0:1],'visualize':type[1:2]} 
                               )
@@ -578,6 +578,7 @@ def position_delete(request, date_time, id=999):
 def position_save(request, date_time, id, pos_x, pos_y):
   date_time = dt_insert_partition_to_min(date_time)
   date_time = dt_from_str_to_iso(date_time)
+  
   position_set = positionset(
     date_time,
     device_id = id,
