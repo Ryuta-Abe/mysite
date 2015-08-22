@@ -25,6 +25,9 @@ device_list = ConstClass.device_list
 ilu_device_list = ConstClass.ilu_device_list
 number_of_device = 45
 
+client = MongoClient()
+db = client.sensordb
+
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[-2:]+("0"+str(int(d.minute/5)*5))[-2:] # 201411201940
@@ -40,7 +43,8 @@ def data_list(request, limit=100, date_time=d):
  
   # 日付をstr12桁に合わせる --> 2014-11-20 19:40
   date_time = datetime_to_12digits(date_time)
-
+  # datetimeにindexをつけ高速化
+  db.Sensor2.create_index([("datetime",DESCENDING)])
   # データベースから取り出し
   t = Sensor2.objects(datetime__lte="2015-06-29 12:40").order_by("-datetime").limit(100)
 
@@ -153,7 +157,7 @@ def sensor_map(request, date_time=999, type="20"):
   recent = []
   num = 20 # 最大取り出し件数
   today = datetime.datetime.today()
-  recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+  # recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
   # for i in range(0,num - 1):
   #   if len(recent) > i :
   #     lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
@@ -184,7 +188,7 @@ def sensor_map(request, date_time=999, type="20"):
 
   return render_to_response('cms/sensor_map.html'
   ,  # 使用するテンプレート
-                              {'t': t, 'pos':pos, 'recent': recent, 'year':lt.year,'month':lt.month
+                              {'t': t, 'pos':pos, 'year':lt.year,'month':lt.month
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
                               ,'sensor':type[0:1],'visualize':type[1:2]} 
                               )
@@ -484,9 +488,9 @@ def response_json(request, date_time=999):
     device_list = [False]*99
     t = []
     for i in range(0,len(mongo_data)):
-    	if device_list[mongo_data[i]["device_id"]] == False:
-    		device_list[mongo_data[i]["device_id"]] = True
-    		t.append(mongo_data[i])
+      if device_list[mongo_data[i]["device_id"]] == False:
+        device_list[mongo_data[i]["device_id"]] = True
+        t.append(mongo_data[i])
       
     # Python辞書オブジェクトとしてdataに格納
     data = []
@@ -578,13 +582,14 @@ def position_delete(request, date_time, id=999):
 def position_save(request, date_time, id, pos_x, pos_y):
   date_time = dt_insert_partition_to_min(date_time)
   date_time = dt_from_str_to_iso(date_time)
+  
   position_set = positionset(
     date_time,
     device_id = id,
     pos_x = pos_x,
     pos_y = pos_y
     )
-  position_set.save()
+  positionset.save()
 
   # Python辞書オブジェクトとしてdataに格納
   data = []
