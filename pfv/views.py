@@ -94,3 +94,6 @@ def sensor_map(request, date_time=999, type="20"):
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
                               ,'sensor':type[0:1],'visualize':type[1:2]} 
                               )
+
+
+  # test
