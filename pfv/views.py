@@ -51,3 +51,46 @@ def data_list(request, limit=100, date_time=d):
                               {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
                               ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
 
+
+# センサーマップ画面 http://localhost:8000/cms/sensor_map/
+def sensor_map(request, date_time=999, type="20"):
+
+  # 最近の取得時間の取り出し
+  recent = []
+  num = 20 # 最大取り出し件数
+  today = datetime.datetime.today()
+  # recent += Sensor2.objects(datetime__lt=today, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+  # for i in range(0,num - 1):
+  #   if len(recent) > i :
+  #     lt = recent[i] - datetime.timedelta(hours = recent[i].hour) - datetime.timedelta(minutes = recent[i].minute + 5)
+  #     recent += Sensor2.objects(datetime__lt=lt, error_flag=False).order_by("-datetime").limit(1).scalar("datetime")
+
+  # センサーデータの取り出し
+  if date_time == 999:
+    lt = datetime.datetime.today()
+  else:
+    lt = dt_from_str_to_iso(datetime_to_12digits(date_time))
+
+  gt = lt - datetime.timedelta(minutes = 10) # 10分前までのデータを取得
+
+  exist_list = []
+  mongo_data = []
+  # mongo_data += Sensor2.objects(datetime__gt=gt, datetime__lt=lt,error_flag=False).order_by("device_id","-datetime").limit(500)
+  # device_list = [False]*99
+  # t = []
+  # for i in range(0,len(mongo_data)):
+  #   if device_list[mongo_data[i]["device_id"]] == False:
+  #       device_list[mongo_data[i]["device_id"]] = True
+  #       t.append(mongo_data[i])
+
+  # 位置情報の取り出し
+  # pos = []
+  # for i in range(0,len(t)):
+    # pos += positionset.objects(device_id=t[i]["device_id"], datetime__lt=lt).order_by("-datetime").limit(1)
+
+  return render_to_response('pfv/sensor_map.html'
+  ,  # 使用するテンプレート
+                              {'year':lt.year,'month':lt.month
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute
+                              ,'sensor':type[0:1],'visualize':type[1:2]} 
+                              )
