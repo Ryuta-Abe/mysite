@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from cms.forms import SensorForm
-from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,positionset
+from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,positionset,Family
 from mongoengine import *
 from pymongo import *
 import requests
@@ -507,11 +507,21 @@ def response_json(request, date_time=999):
 
 # d3.jsテスト画面 http://localhost:8000/cms/d3jstest/
 def d3jstest(request):
+  Family.objects.all().delete()
 
   t = []
+  Family_save = Family(
+    pcwl_id = 2,
+    pos_x = 300,
+    pos_y = 150,
+    next_id = [3,4,5]
+    )
+  Family_save.save()
+
+  t += Family.objects()
   # Sensor2.objects.all().delete()
-  for s in device_list:
-    t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
+  # for s in device_list:
+  #   t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
 
   return render_to_response('cms/d3jstest.html',  # 使用するテンプレート
                               {'t':t} )      # テンプレートに渡すデータ 
