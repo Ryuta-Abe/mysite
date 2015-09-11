@@ -197,11 +197,11 @@
       pfvinfo[i].totalLength = totalLength;
     };
 
-    d3.select("body").append("p").text("pcwlnodeの長さ = "+pcwlnode.length);
-    d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
-    d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
-    d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
-    d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
+    // d3.select("body").append("p").text("pcwlnodeの長さ = "+pcwlnode.length);
+    // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
+    // d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
+    // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
+    // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
 
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
@@ -209,7 +209,6 @@
     // svgの選択
     var svg1 = d3.select("#svg1")
     var svg2 = d3.select("#svg2")
-    svg2.style("opacity",0);
 
     // pcwlnodeのマッピング
     var g = svg1.selectAll("g.pcwlnode")
@@ -226,7 +225,7 @@
     .on( "mouseover", function(d){
         div.transition().duration(300)
         .style("opacity",1).text("x:"+d.pos_x+",y:"+d.pos_y)
-        .style("background","blue")
+        .style("background","purple")
         .style("width", "150px")
         .style("height", "35px")
         .style("left", (d3.event.pageX + 20) + "px")
@@ -246,7 +245,7 @@
     .attr({
       "id": function(d){return "pcwl_circle"+d.pcwl_id;},
       "r": 0.1,
-      "fill": "blue",
+      "fill": "purple",
     })
     .transition().duration(1000)
     .attr("r", 15);;
@@ -476,90 +475,47 @@
       }
     }
 
-    // // 親機posデータのマッピング
-    // var box_list = [];
-    // box_list.push({pos_x:890,pos_y:190,box_id:6,slist:[]});
-    // box_list.push({pos_x:710,pos_y:370,box_id:7,slist:[]});
-    // box_list.push({pos_x:300,pos_y:340,box_id:8,slist:[]});
-    // box_list.push({pos_x:30,pos_y:440,box_id:9,slist:[]});
-    // for (var i = 0; i < dataset.length; i++) {
-    //   if (dataset[i]["box_id"] == "9CBD9D010006"){
-    //     box_list[0].slist.push(dataset[i]["device_id"]);
-    //   } else if (dataset[i]["box_id"] == "9CBD9D010007"){
-    //     box_list[1].slist.push(dataset[i]["device_id"]);
-    //   } else if (dataset[i]["box_id"] == "9CBD9D010008"){
-    //     box_list[2].slist.push(dataset[i]["device_id"]);
-    //   } else if (dataset[i]["box_id"] == "9CBD9D010009"){
-    //     box_list[3].slist.push(dataset[i]["device_id"]);
-    //   }
-    // };
-    // var g_box = svg1.selectAll("g.box")
-    // .data(box_list)
-    // .enter()
-    // .append("g")
-    // .attr({
-    //   "id": "g_box",
-    //   transform: function(d) {
-    //     return "translate(" + (d.pos_x - 15) + "," + (d.pos_y - 15) + ")";
-    //   },
-    // })
-    // // マウスがバーに重なったら説明文を出す
-    // .on( "mouseover", function(d){
-    //   if (flag_box){ // 親機可視状態なら説明を出す
-    //     div.transition().duration(300)
-    //     .style("opacity",1)
-    //     .style("background","brown")
-    //     .style("width", "140px")
-    //     .style("height", "60px")
-    //     .style("left", (d3.event.pageX + 20) + "px")
-    //     .style("top", (d3.event.pageY + 20) + "px")
-    //     .text("接続中の子機：　" + d.slist)
-    //     for (var i = 0; i < d.slist.length; i++) {
-    //       svg1.select("#ac_circle"+device_order[d.slist[i]]).attr("fill","red");
-    //       svg1.select("#ilu_circle"+device_order_illuminance[d.slist[i]]).attr("fill","green");
-    //       svg1.select("#heat_circle"+device_order[d.slist[i]]).attr("fill","blue");
-    //     };
-    //   }
-    // })
-    // // マウスがバーから離れたら説明文をけす
-    // .on( "mouseout", function(d){
-    //   div.transition().duration(300)
-    //   .style("opacity",0)
-    //   for (var i = 0; i < d.slist.length; i++) {
-    //     svg1.select("#ac_circle"+device_order[d.slist[i]]).attr("fill","green");
-    //     svg1.select("#ilu_circle"+device_order_illuminance[d.slist[i]]).attr("fill","blue");
-    //     svg1.select("#heat_circle"+device_order[d.slist[i]]).attr("fill","red");
-    //   };
-    // })
-    // // 四角の描画
-    // g_box.append("rect")
-    // .attr({
-    //   "rx": 5,
-    //   "ry": 5,
-    //   "width": 30,
-    //   "height": 30,
-    //   "fill": "brown",
-    // });
-    // // テキストの描画
-    // g_box.append("text")
-    // .attr({
-    //   "text-anchor": "middle",
-    //   "dx": 15,
-    //   "dy": 20,
-    //   "fill": "white",
-    // })
-    // .text(function(d) {
-    //         return d.box_id;
-    //       });
+    // 人数参考バーの表示
+    // 幅（Width）と高さ（ height）
+    var w = 1000;
+    var h = 100;
+    var padding = 30;
+    var max = 10; // 最大表示人数
 
-    // // デフォルトは気温マップ
-    // if ("{{ sensor }}" == "0"){
-    //   acceleration_map();
-    // } else if ("{{ sensor }}" == "1"){
-    //   illuminance_map();
-    // } else {
-    //   heat_map();
-    // }
+    //スケール関数の生成
+    var xScale = d3.scale.linear()
+                     .domain([0, max])
+                     .range([padding, w - padding *2]);
+
+    // x軸の定義
+    var xAxis = d3.svg.axis()  // ここのsvgは変数名じゃない！；；
+                  .scale(xScale)
+                  .orient("bottom")
+                  .tickFormat(function(d) { return d + "人"; })
+                  .ticks(10);  // 大雑把に目盛りの個数を設定
+
+    // x軸の生成
+    svg2.append("g")
+      .attr("class", "axis")  // "axis" クラスを定義
+      .attr("transform", "translate(0," + (h - padding) + ")")
+      .call(xAxis);
+
+    // 棒グラフの追加
+    var temperature = [];
+    for (var i = 0; i < max; i++) {
+      temperature.push(i);
+    };
+    svg2.selectAll("rect.temperature")
+    .data(temperature)
+    .enter()
+    .append("rect")
+    .attr({
+      "x": function(d){ return xScale(d);},
+      "y": padding,
+      "width": (w - padding*3)/temperature.length,
+      "height": h - padding*2 - 10,
+      "fill": function(d){ return thermography(d);},
+    });
 
     // 取得時間を表示
     var year = parseInt({{ year }});
@@ -568,8 +524,8 @@
     var hour = parseInt({{ hour }});
     var minute = parseInt({{ minute }});
     var datetime = new Date(year,month,day,hour,minute);
-    var Real_datetime;
-    set_selectbox(); // セレクトボックスにdatetimeをセット
+    // var Real_datetime;
+    // set_selectbox(); // セレクトボックスにdatetimeをセット
 
     function describe_datetime(){
       d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2));
