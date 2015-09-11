@@ -85,8 +85,8 @@ class error_db(Document):
     time = StringField(max_length=255)
     datetime = DateTimeField()
 
-#mongoの入れ子テスト
-class Family(Document):
+# PCWLのノード情報
+class pcwlnode(Document):
     pcwl_id = IntField()
     pos_x = IntField()
     pos_y = IntField()

@@ -21,6 +21,10 @@ urlpatterns = patterns('',
     # url(r'^sensor_graph/$', views.sensor_graph, name='sensor_graph'),   # センサーグラフ
     # url(r'^sensor_graph/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph, name='sensor_graph'),
 
+    url(r'^pfv_map/$', views.pfv_map, name='pfv_map'), #pfvマップ
+    url(r'^pfv_map/datetime=(?P<date_time>\d+)/$', views.pfv_map, name='pfv_map'),
+    # url(r'^pfv_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.pfv_map, name='pfv_map'),
+
     # # データ一覧
     url(r'^data_list/$', views.data_list, name='data_list'),   
     url(r'^data_list/limit=(?P<limit>\d+)/$', views.data_list, name='data_list'),

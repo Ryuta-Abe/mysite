@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 # from cms.forms import SensorForm
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
-from pfv.models import pr_req, test
+from pfv.models import pr_req, test, pcwlnode
 from mongoengine import *
 from pymongo import *
 import requests
@@ -50,4 +50,40 @@ def data_list(request, limit=100, date_time=d):
   return render_to_response('pfv/data_list.html',  # 使用するテンプレート
                               {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
                               ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
+
+# pfvマップ画面 http://localhost:8000/cms/pfv_map/
+def pfv_map(request, date_time=999, type="20"):
+
+  lt = datetime.datetime.today()
+
+  # pcwl情報の取り出し
+  _pcwlnode = []
+  _pcwlnode += pcwlnode.objects()
+
+  # pfv情報の取り出し
+  _pfvinfo = []
+  _pfvinfo.append({'direction':[1,2],'size':5})
+  _pfvinfo.append({'direction':[2,3],'size':4})
+  _pfvinfo.append({'direction':[3,4],'size':4})
+  _pfvinfo.append({'direction':[4,5],'size':3})
+  _pfvinfo.append({'direction':[5,6],'size':5})
+  _pfvinfo.append({'direction':[6,7],'size':7})
+  _pfvinfo.append({'direction':[6,23],'size':2})
+  _pfvinfo.append({'direction':[5,22],'size':4})
+  _pfvinfo.append({'direction':[20,22],'size':4})
+  _pfvinfo.append({'direction':[2,1],'size':0})
+  _pfvinfo.append({'direction':[3,2],'size':1})
+  _pfvinfo.append({'direction':[4,3],'size':1})
+  _pfvinfo.append({'direction':[5,4],'size':2})
+  _pfvinfo.append({'direction':[6,5],'size':2})
+  _pfvinfo.append({'direction':[7,6],'size':3})
+  _pfvinfo.append({'direction':[23,6],'size':0})
+  _pfvinfo.append({'direction':[22,5],'size':3})
+  _pfvinfo.append({'direction':[22,20],'size':3})
+
+  return render_to_response('cms/pfv_map.html'
+  ,  # 使用するテンプレート
+                              {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute} 
+                              )
 
