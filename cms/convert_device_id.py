@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # class Convert_device_id(object): 
 #     def __init__(self, str_device_id, tmp_pos_x, tmp_pos_y): 
 #         self.str_device_id = str_device_id 

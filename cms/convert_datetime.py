@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 
 # 今日の日付
