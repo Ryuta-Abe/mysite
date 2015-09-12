@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from cms.forms import SensorForm
-from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, positionset
+from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,positionset,pcwlnode
 from mongoengine import *
 from pymongo import *
 import requests
@@ -25,9 +25,6 @@ device_list = ConstClass.device_list
 ilu_device_list = ConstClass.ilu_device_list
 number_of_device = 45
 
-client = MongoClient()
-db = client.sensordb
-
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[-2:]+("0"+str(int(d.minute/5)*5))[-2:] # 201411201940
@@ -43,8 +40,7 @@ def data_list(request, limit=100, date_time=d):
  
   # 日付をstr12桁に合わせる --> 2014-11-20 19:40
   date_time = datetime_to_12digits(date_time)
-  # datetimeにindexをつけ高速化
-  db.Sensor2.create_index([("datetime",DESCENDING)])
+
   # データベースから取り出し
   t = Sensor2.objects(datetime__lte="2015-06-29 12:40").order_by("-datetime").limit(100)
 
@@ -488,9 +484,9 @@ def response_json(request, date_time=999):
     device_list = [False]*99
     t = []
     for i in range(0,len(mongo_data)):
-      if device_list[mongo_data[i]["device_id"]] == False:
-        device_list[mongo_data[i]["device_id"]] = True
-        t.append(mongo_data[i])
+    	if device_list[mongo_data[i]["device_id"]] == False:
+    		device_list[mongo_data[i]["device_id"]] = True
+    		t.append(mongo_data[i])
       
     # Python辞書オブジェクトとしてdataに格納
     data = []
@@ -513,9 +509,10 @@ def response_json(request, date_time=999):
 def d3jstest(request):
 
   t = []
+  t += pcwlnode.objects()
   # Sensor2.objects.all().delete()
-  for s in device_list:
-    t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
+  # for s in device_list:
+  #   t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
 
   return render_to_response('cms/d3jstest.html',  # 使用するテンプレート
                               {'t':t} )      # テンプレートに渡すデータ 
@@ -589,7 +586,7 @@ def position_save(request, date_time, id, pos_x, pos_y):
     pos_x = pos_x,
     pos_y = pos_y
     )
-  positionset.save()
+  position_set.save()
 
   # Python辞書オブジェクトとしてdataに格納
   data = []

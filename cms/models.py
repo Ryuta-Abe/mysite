@@ -84,3 +84,10 @@ class error_db(Document):
     date = StringField(max_length=255)
     time = StringField(max_length=255)
     datetime = DateTimeField()
+
+# PCWLのノード情報
+class pcwlnode(Document):
+    pcwl_id = IntField()
+    pos_x = IntField()
+    pos_y = IntField()
+    next_id = ListField(IntField())

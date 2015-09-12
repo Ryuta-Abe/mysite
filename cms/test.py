@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import requests
 
 import convert_device_id
@@ -97,5 +96,5 @@ for num in "6789": # 親機ループ
 # print(t)
 
 
-# dev branch test
 # dev test
+# dev test3

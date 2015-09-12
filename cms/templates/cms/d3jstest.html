@@ -140,6 +140,15 @@
 <script type="text/javascript">
     
     // データセットの定義
+    dataset = [];
+    {% for s in t %}
+    dataset.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},next_id:{{ s.next_id }}});
+    {% endfor %}
+
+    d3.select("body").append("p").text("datasetの長さ = "+dataset.length);
+    d3.select("body").append("p").text("pcwl_id = "+dataset[0].pcwl_id);
+    d3.select("body").append("p").text("next_id = "+dataset[0].next_id);
+    d3.select("body").append("p").text("next_id[1] = "+dataset[0].next_id[1]);
     // マップの座標(目盛り)を追加
     var coordinate = []; 
     for (var i = 0; i < 11; i++) {
@@ -147,11 +156,6 @@
        coordinate.push({cx:i*100, cy:j*100,x:0,y:0});
      }
    }
-   // //  センサーデータセット
-   //  var dataset = [];
-   //  {% for s in t %}
-   //  dataset.push({ax:{{ s.ax }},ay:{{ s.ay }},az:{{ s.az }},ilu:{{ s.ilu }},tu:{{ s.tu }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},device_id:{{ s.device_id }},"box_id":"{{ s.box_id }}",datetime:"{{ s.datetime }}"});
-   //  {% endfor %}
 
     // svg1 の編集
     var svg1 = d3.select("#svg1")
