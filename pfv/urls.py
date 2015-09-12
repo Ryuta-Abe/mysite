@@ -14,9 +14,9 @@ urlpatterns = patterns('',
     # url(r'^save_db_heat/$', views.save_db_heat, name='save_db_heat'), #データ登録(1hごとの温度データ)
     # # url(r'^save_initial_data/$', views.save_initial_data, name='save_initial_data'), #データ登録(初期データ)
 
-    url(r'^sensor_map/$', views.sensor_map, name='sensor_map'), #センサーマップ
-    url(r'^sensor_map/datetime=(?P<date_time>\d+)/$', views.sensor_map, name='sensor_map'),
-    url(r'^sensor_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.sensor_map, name='sensor_map'),
+    # url(r'^sensor_map/$', views.sensor_map, name='sensor_map'), #センサーマップ
+    # url(r'^sensor_map/datetime=(?P<date_time>\d+)/$', views.sensor_map, name='sensor_map'),
+    # url(r'^sensor_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.sensor_map, name='sensor_map'),
 
     # url(r'^sensor_graph/$', views.sensor_graph, name='sensor_graph'),   # センサーグラフ
     # url(r'^sensor_graph/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph, name='sensor_graph'),
