@@ -24,6 +24,7 @@ urlpatterns = patterns('',
     url(r'^pfv_map/$', views.pfv_map, name='pfv_map'), #pfvマップ
     url(r'^pfv_map/datetime=(?P<date_time>\d+)/$', views.pfv_map, name='pfv_map'),
     # url(r'^pfv_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.pfv_map, name='pfv_map'),
+    url(r'^analyze/$', views.analyze_dir, name='analyze_dir'),
 
     # # データ一覧
     url(r'^data_list/$', views.data_list, name='data_list'),   

@@ -5,6 +5,7 @@ from django.template import RequestContext
 # from cms.forms import SensorForm
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
 from pfv.models import pr_req, test, pcwlnode
+from pfv.convert_nodeid import *
 from mongoengine import *
 from pymongo import *
 import requests
@@ -39,9 +40,11 @@ def data_list(request, limit=100, date_time=d):
   date_time = datetime_to_12digits(date_time)
 
   # データベースから取り出し
-  # t = test.objects().limit(10000)
+  t = test.objects().limit(100)
+  ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
+  ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
   # t = test.objects(node_id=1244).limit(25000)
-  t = test.objects(get_time_no__gte=20150603114000).limit(1000)
+  # t = test.objects(get_time_no__gte=20150603114000).limit(1000)
 
   # for i in len(t):
   #   t[i]["get_time_no"] = str(t[i]["get_time_no"])[8:14]
@@ -59,6 +62,9 @@ def pfv_map(request, date_time=999, type="20"):
   # pcwl情報の取り出し
   _pcwlnode = []
   _pcwlnode += pcwlnode.objects()
+
+  n_id = convert_nodeid(1240)
+  ag = test._get_collection().aggregate([{"$group":{"_id":{"mac":"$mac", "get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
 
   # pfv情報の取り出し
   _pfvinfo = []
@@ -83,9 +89,40 @@ def pfv_map(request, date_time=999, type="20"):
   _pfvinfo.append({'direction':[22,5],'size':3,'datetime':lt})
   _pfvinfo.append({'direction':[22,20],'size':3,'datetime':lt})
 
-  return render_to_response('cms/pfv_map.html'
-  ,  # 使用するテンプレート
+  return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute} 
                               )
 
+def analyze_dir(request):
+  # ag = test._get_collection().aggregate([{"$group":{"_id":{"node_id":"$node_id"}, "count":{"$sum":1}}}])["result"]
+  ag = test._get_collection().aggregate([{"$limit":10},
+                                          {"$project":
+                                            {"mac":"$mac", 
+                                            "get_time_no":"$get_time_no", 
+                                            "list": {"node_id":"$node_id", 
+                                                      "dbm":"$dbm"
+                                                    }
+                                            }
+                                          },
+                                            {"$group":
+                                              {"_id":
+                                                {"mac":"$mac", "get_time_no":"$get_time_no"},
+                                              "max":
+                                                {"$max":"$list.dbm"}
+
+                                                }},
+                                            # {"$group":
+                                            #   {"_id":
+                                            #     {"mac":"$mac", "get_time_no":"$get_time_no"}}}
+                                            # {"$project":{"node_id":"$node_id"}}
+                                          ])["result"]
+
+  import pdb; pdb.set_trace()  # breakpoint 51c2958c //
+  for jdata in ag:
+    jdata['id'] = jdata['_id']
+    del(jdata['_id'])
+
+  return render_to_response('pfv/analyze_dir.html',  # 使用するテンプレート
+                              {'ag': ag} 
+                            )
