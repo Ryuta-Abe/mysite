@@ -39,6 +39,7 @@
 <form name="Sample_form" action="Sample.html">
   <a id="btn_visualize" onclick="visualize_heat_complement()" class="btn btn-default btn-sm">視覚化</a>
   <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
+  <a id="btn_RealTime" onclick="RealTime()" class="btn btn-default btn-sm">RealTime</a>
   　　<!-- ボタン間にスペースを -->
   取得日時：<font id="got_datetime" size="4"></font>
   　(<a href="javascript:void(0)" id="category_1" onclick="show('1');">選択</a>)
@@ -531,5 +532,96 @@
       d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2));
     }
     describe_datetime();
+
+    /***********************************
+                Ajax関係 
+   ************************************/
+
+   // datetimeに対応したJSONをajaxで読み込む
+    function Load_JSON(datetime){
+      var year = datetime.getFullYear();
+      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+      var day = ("0"+datetime.getDate()).slice(-2);
+      var hour = ("0"+datetime.getHours()).slice(-2);
+      var minute = ("0"+datetime.getMinutes()).slice(-2);
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute,
+        dataType: 'json',
+        success: function(json){
+          d3.select("body").append("p").text("jsonの長さ = "+json.length);
+          // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
+          // d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
+          // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
+          // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
+        }
+      });
+    }
+
+    // リアルタイムビューに切り替える
+    d3.select("#btn_RealTime").style("color","black");
+    var flag_RealTime = false;
+    var Timer;
+    function RealTime(){
+      if (flag_RealTime) {
+        flag_RealTime = !flag_RealTime;
+        d3.select("#btn_RealTime").style("color","black");
+        clearInterval(Timer);
+        Load_Form();
+      } else {
+        flag_RealTime = !flag_RealTime;
+        RealTime_Ajax();
+        d3.select("#btn_RealTime").style("color","blue");
+        d3.select("#got_datetime").text("データ取得中…");
+        Timer = setInterval(RealTime_Ajax,5000);
+      };
+    }
+    function RealTime_Ajax(){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:pfv_map_json' %}",
+        dataType: 'json',
+        success: function(json){
+          if (flag_RealTime){
+            datetime = new Date();
+            describe_datetime();
+            Reload_pfvinfo(json);
+          }
+        }
+      });
+    }
+    function Reload_pfvinfo(json){
+      // pfvinfoの更新
+      for (var i = 0; i < pfvinfo.length; i++) {
+        pfvinfo[i].size = json[i].size;
+      };
+      // 画面の更新
+      marker.selectAll("path")
+          .transition().duration(1000)
+          .attr({
+            fill: function(d){return thermography(d.size);}
+          });
+      path.transition().duration(1000).attr({
+        'stroke': function(d){return thermography(d.size);},
+      })
+      // 0人ならば矢印を見えなくする
+      .style("opacity",function(d){
+        if (d.size == 0) {
+          return 0;
+        } else {
+          return 1;
+        };
+      })
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+          div.transition().duration(300)
+          .style("opacity",1).text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size+"人")
+          .style("background",thermography(d.size))
+          .style("width", "150px")
+          .style("height", "35px")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+      })
+    }
   </script>
   {% endblock content %}

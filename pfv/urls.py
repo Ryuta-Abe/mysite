@@ -23,7 +23,8 @@ urlpatterns = patterns('',
 
     url(r'^pfv_map/$', views.pfv_map, name='pfv_map'), #pfvマップ
     url(r'^pfv_map/datetime=(?P<date_time>\d+)/$', views.pfv_map, name='pfv_map'),
-    # url(r'^pfv_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.pfv_map, name='pfv_map'),
+    url(r'^pfv_map_json/$', views.pfv_map_json, name='pfv_map_json'), #pfvマップ用JSON
+    url(r'^pfv_map_json/datetime=(?P<date_time>\d+)/$', views.pfv_map_json, name='pfv_map_json'),
 
     # # データ一覧
     url(r'^data_list/$', views.data_list, name='data_list'),   

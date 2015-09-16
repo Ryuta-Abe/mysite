@@ -52,7 +52,7 @@ def data_list(request, limit=100, date_time=d):
                               ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
-def pfv_map(request, date_time=999, type="20"):
+def pfv_map(request, date_time=999):
 
   lt = datetime.datetime.today()
 
@@ -61,31 +61,145 @@ def pfv_map(request, date_time=999, type="20"):
   _pcwlnode += pcwlnode.objects()
 
   # pfv情報の取り出し
+  import random
   _pfvinfo = []
-  _pfvinfo.append({'direction':[1,2],'size':5,'datetime':lt})
-  _pfvinfo.append({'direction':[2,3],'size':4,'datetime':lt})
-  _pfvinfo.append({'direction':[3,4],'size':4,'datetime':lt})
-  _pfvinfo.append({'direction':[4,5],'size':3,'datetime':lt})
-  _pfvinfo.append({'direction':[5,6],'size':5,'datetime':lt})
-  _pfvinfo.append({'direction':[6,7],'size':7,'datetime':lt})
-  _pfvinfo.append({'direction':[6,23],'size':2,'datetime':lt})
-  _pfvinfo.append({'direction':[5,22],'size':4,'datetime':lt})
-  _pfvinfo.append({'direction':[7,8],'size':9,'datetime':lt})
-  _pfvinfo.append({'direction':[20,22],'size':4,'datetime':lt})
-  _pfvinfo.append({'direction':[2,1],'size':0,'datetime':lt})
-  _pfvinfo.append({'direction':[3,2],'size':1,'datetime':lt})
-  _pfvinfo.append({'direction':[4,3],'size':1,'datetime':lt})
-  _pfvinfo.append({'direction':[5,4],'size':2,'datetime':lt})
-  _pfvinfo.append({'direction':[6,5],'size':2,'datetime':lt})
-  _pfvinfo.append({'direction':[7,6],'size':3,'datetime':lt})
-  _pfvinfo.append({'direction':[8,7],'size':6,'datetime':lt})
-  _pfvinfo.append({'direction':[23,6],'size':0,'datetime':lt})
-  _pfvinfo.append({'direction':[22,5],'size':3,'datetime':lt})
-  _pfvinfo.append({'direction':[22,20],'size':3,'datetime':lt})
+
+  _pfvinfo.append({'direction':[1,2],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[2,3],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[3,4],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[4,5],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[5,6],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[6,7],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[6,23],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[5,22],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[7,8],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[8,27],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[27,9],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[9,10],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[10,11],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[20,22],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[8,24],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[24,16],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[9,12],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[13,12],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[12,14],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[14,15],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[15,16],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[16,17],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[17,18],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[18,19],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[19,20],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[20,21],'size':random.randint(0, 10),'datetime':lt})
+
+  _pfvinfo.append({'direction':[2,1],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[3,2],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[4,3],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[5,4],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[6,5],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[7,6],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[8,7],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[23,6],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[22,5],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[27,8],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[9,27],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[10,9],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[11,10],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[22,20],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[24,8],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[16,24],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[12,9],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[12,13],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[14,12],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[15,14],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[16,15],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[17,16],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[18,17],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[19,18],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[20,19],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo.append({'direction':[21,20],'size':random.randint(0, 10),'datetime':lt})
 
   return render_to_response('cms/pfv_map.html'
   ,  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute} 
                               )
+
+# pfvマップ用JSON
+def pfv_map_json(request, date_time=999):
+
+  lt = datetime.datetime.today()
+
+  # pfv情報の取り出し
+  import random
+  _pfvinfo = []
+
+  _pfvinfo.append({'direction':[1,2],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[2,3],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[3,4],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[4,5],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[5,6],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[6,7],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[6,23],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[5,22],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[7,8],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[8,27],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[27,9],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[9,10],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[10,11],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[20,22],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[8,24],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[24,16],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[9,12],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[13,12],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[12,14],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[14,15],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[15,16],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[16,17],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[17,18],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[18,19],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[19,20],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[20,21],'size':random.randint(0, 10)})
+
+  _pfvinfo.append({'direction':[2,1],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[3,2],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[4,3],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[5,4],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[6,5],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[7,6],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[8,7],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[23,6],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[22,5],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[27,8],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[9,27],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[10,9],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[11,10],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[22,20],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[24,8],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[16,24],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[12,9],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[12,13],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[14,12],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[15,14],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[16,15],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[17,16],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[18,17],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[19,18],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[20,19],'size':random.randint(0, 10)})
+  _pfvinfo.append({'direction':[21,20],'size':random.randint(0, 10)})
+  
+  return render_json_response(request, _pfvinfo) # dataをJSONとして出力
+
+# JSON出力
+def render_json_response(request, data, status=None): # response を JSON で返却
+  
+  json_str = json.dumps(data, ensure_ascii=False, indent=2)
+  callback = request.GET.get('callback')
+  if not callback:
+      callback = request.REQUEST.get('callback')  # POSTでJSONPの場合
+  if callback:
+      json_str = "%s(%s)" % (callback, json_str)
+      response = HttpResponse(json_str, content_type='application/javascript; charset=UTF-8', status=status)
+  else:
+      response = HttpResponse(json_str, content_type='application/json; charset=UTF-8', status=status)
+  return response
 
