@@ -1,4 +1,4 @@
-import math
+# -*- coding: utf-8 -*-import math
 from cms.convert_device_id    import convert_device_id
 
 def convert_sensor_data(s):

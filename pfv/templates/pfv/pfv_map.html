@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}PFVマップ{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 id="header" class="page-header">PFVマップ</h3>
+<form name="Sample_form" action="Sample.html">
+  <a id="btn_visualize" onclick="visualize_heat_complement()" class="btn btn-default btn-sm">視覚化</a>
+  <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
+  　　<!-- ボタン間にスペースを -->
+  取得日時：<font id="got_datetime" size="4"></font>
+  　(<a href="javascript:void(0)" id="category_1" onclick="show('1');">選択</a>)
+  <div id="layer_1" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <span id="selected_datetime">
+  <select name="textbox_year">
+        <option id="year2014" value="2014"/>2014</option>
+        <option id="year2015" value="2015"/>2015</option>
+  </select>
+  年
+  <select name="textbox_month">
+        <option id="month01" value="01"/>1</option>
+        <option id="month02" value="02"/>2</option>
+        <option id="month03" value="03"/>3</option>
+        <option id="month04" value="04"/>4</option>
+        <option id="month05" value="05"/>5</option>
+        <option id="month06" value="06"/>6</option>
+        <option id="month07" value="07"/>7</option>
+        <option id="month08" value="08"/>8</option>
+        <option id="month09" value="09"/>9</option>
+        <option id="month10" value="10"/>10</option>
+        <option id="month11" value="11"/>11</option>
+        <option id="month12" value="12"/>12</option>
+  </select>
+  月
+  <select name="textbox_day">
+        <option id="day01" value="01"/>1</option>
+        <option id="day02" value="02"/>2</option>
+        <option id="day03" value="03"/>3</option>
+        <option id="day04" value="04"/>4</option>
+        <option id="day05" value="05"/>5</option>
+        <option id="day06" value="06"/>6</option>
+        <option id="day07" value="07"/>7</option>
+        <option id="day08" value="08"/>8</option>
+        <option id="day09" value="09"/>9</option>
+        <option id="day10" value="10"/>10</option>
+        <option id="day11" value="11"/>11</option>
+        <option id="day12" value="12"/>12</option>
+        <option id="day13" value="13"/>13</option>
+        <option id="day14" value="14"/>14</option>
+        <option id="day15" value="15"/>15</option>
+        <option id="day16" value="16"/>16</option>
+        <option id="day17" value="17"/>17</option>
+        <option id="day18" value="18"/>18</option>
+        <option id="day19" value="19"/>19</option>
+        <option id="day20" value="20"/>20</option>
+        <option id="day21" value="21"/>21</option>
+        <option id="day22" value="22"/>22</option>
+        <option id="day23" value="23"/>23</option>
+        <option id="day24" value="24"/>24</option>
+        <option id="day25" value="25"/>25</option>
+        <option id="day26" value="26"/>26</option>
+        <option id="day27" value="27"/>27</option>
+        <option id="day28" value="28"/>28</option>
+        <option id="day29" value="29"/>29</option>
+        <option id="day30" value="30"/>30</option>
+        <option id="day31" value="31"/>31</option>
+  </select>
+  日
+  <select name="textbox_hour">
+        <option id="hour00" value="00"/>0</option>
+        <option id="hour01" value="01"/>1</option>
+        <option id="hour02" value="02"/>2</option>
+        <option id="hour03" value="03"/>3</option>
+        <option id="hour04" value="04"/>4</option>
+        <option id="hour05" value="05"/>5</option>
+        <option id="hour06" value="06"/>6</option>
+        <option id="hour07" value="07"/>7</option>
+        <option id="hour08" value="08"/>8</option>
+        <option id="hour09" value="09"/>9</option>
+        <option id="hour10" value="10"/>10</option>
+        <option id="hour11" value="11"/>11</option>
+        <option id="hour12" value="12"/>12</option>
+        <option id="hour13" value="13"/>13</option>
+        <option id="hour14" value="14"/>14</option>
+        <option id="hour15" value="15"/>15</option>
+        <option id="hour16" value="16"/>16</option>
+        <option id="hour17" value="17"/>17</option>
+        <option id="hour18" value="18"/>18</option>
+        <option id="hour19" value="19"/>19</option>
+        <option id="hour20" value="20"/>20</option>
+        <option id="hour21" value="21"/>21</option>
+        <option id="hour22" value="22"/>22</option>
+        <option id="hour23" value="23"/>23</option>
+  </select>
+  時
+  <select name="textbox_minute">
+        <option id="minute00" value="00"/>0</option>
+        <option id="minute05" value="05"/>5</option>
+        <option id="minute10" value="10"/>10</option>
+        <option id="minute15" value="15"/>15</option>
+        <option id="minute20" value="20"/>20</option>
+        <option id="minute25" value="25"/>25</option>
+        <option id="minute30" value="30"/>30</option>
+        <option id="minute35" value="35"/>35</option>
+        <option id="minute40" value="40"/>40</option>
+        <option id="minute45" value="45"/>45</option>
+        <option id="minute50" value="50"/>50</option>
+        <option id="minute55" value="55"/>55</option>
+  </select>
+  分
+  <input type="button" value="更新" onclick="Load_Form()" class="btn btn-default btn-sm">
+  </span>
+  　　<!-- ボタン間にスペースを -->
+  <span>
+    <select name="textbox_interval">
+        <option value="min05"/>5分</option>
+        <option value="min10"/>10分</option>
+        <option value="min20"/>20分</option>
+        <option value="min30"/>30分</option>
+        <option value="hou01"/>1時間</option>
+        <option value="hou02"/>2時間</option>
+        <option value="hou03"/>3時間</option>
+        <option value="hou06"/>6時間</option>
+        <option value="day01"/>1日</option>
+        <option value="day02"/>2日</option>
+        <option value="day03"/>3日</option>
+        <option value="day07"/>1週間</option>
+  </select>
+  <input type="button" value="戻る" onclick="slide_DT(1)" class="btn btn-default btn-sm">
+  <input type="button" value="進む" onclick="slide_DT(-1)" class="btn btn-default btn-sm">
+  </span></div>
+  <!-- <a onclick="Auto_Animation()" class="btn btn-default btn-sm">animation</a> -->
+</form>
+<br><!-- ボタンと地図の間にスペースを -->
+<?xml version="1.0" standalone="no"?>
+<svg id="svg1" width="1024" height="560">
+ <image x="0" y="0" width="100%" height="100%" xlink:href="http://160.16.74.119/~abe/images/6F_west2.jpg"></image>
+</svg>
+<div id="tooltip_div"></div>
+<svg id="svg2" width="1000" height="100"></svg>
+
+<script type="text/javascript">
+
+    // データセットの定義
+    var pcwlnode = [];
+    var pfvinfo = [];
+    {% for s in pcwlnode %}
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},next_id:{{ s.next_id }}});
+    {% endfor %}
+    {% for s in pfvinfo %}
+    pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }}});
+    {% endfor %}
+
+    // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+    var pcwlnode_id = [];
+    for (var i = 0; i < pcwlnode.length; i++) {
+      pcwlnode_id[pcwlnode[i].pcwl_id] = i;
+    };
+
+    // pfvinfoにノード間距離情報追加
+    for (var i = 0; i < pfvinfo.length; i++) {
+      var c1 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[0]]];
+      var c2 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[1]]];
+      var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
+      pfvinfo[i].totalLength = totalLength;
+    };
+
+    // d3.select("body").append("p").text("pcwlnodeの長さ = "+pcwlnode.length);
+    // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
+    // d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
+    // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
+    // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
+
+    // 時間抽出
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+    // svgの選択
+    var svg1 = d3.select("#svg1")
+    var svg2 = d3.select("#svg2")
+
+    // pcwlnodeのマッピング
+    var g = svg1.selectAll("g.pcwlnode")
+    .data(pcwlnode)
+    .enter()
+    .append("g")
+    .attr({
+      "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+      transform: function(d) {
+        return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      },
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+        div.transition().duration(300)
+        .style("opacity",1).text("x:"+d.pos_x+",y:"+d.pos_y)
+        .style("background","purple")
+        .style("width", "150px")
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0).text("　")
+    })
+    // // クリック時の動作
+    // .on( "click", function(d){
+    //   jump_graph(d.pcwl_id);
+    // });
+    // 円の描画
+    g.append("circle")
+    .attr({
+      "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+      "r": 0.1,
+      "fill": "purple",
+    })
+    .transition().duration(1000)
+    .attr("r", 15);;
+    // テキストの描画
+    g.append("text")
+    .attr({
+      "id": function(d){return "pcwl_text"+d.pcwl_id;},
+      "text-anchor": "middle",
+      "dy": ".35em",
+      "fill": "white",
+    })
+    .text(function(d) {
+            return d.pcwl_id;
+    });
+
+    // 矢印の描画
+    // pathの計算で使うので、半径と矢印の微調整パラメータを別定義にしている。
+    var r1 = 15;
+    var r2 = 15;
+    var ref1 = 7;
+
+    // defs/markerという構造で、svgの下に矢印を定義
+    var marker = svg1.append("defs").selectAll("g.marker").data(pfvinfo).enter().append("marker")
+        .attr({
+          'id': function(d,i){return "arrowhead"+i;},
+          'refX': ref1,
+          'refY': 2,
+          'markerWidth': 4,
+          'markerHeight': 4,
+          'orient': "auto"
+        });
+    // 矢印の形をpathで定義
+    marker.append("path")
+        .attr({
+          d: "M 2,0.5 V 3.5 L4,2 Z",
+          fill: function(d){return thermography(d.size);}
+        });
+
+    // line関数を定義
+    var line = d3.svg.line()
+        .interpolate('basis')
+        .x(function(d) {return d.pos_x;})
+        .y(function(d) {return d.pos_y;});
+
+    // path要素を作成
+    svg1.append("g").attr("id","g_arrow").style("opacity",1);
+    var path = svg1.select("#g_arrow").selectAll("g.arrow")
+    .data(pfvinfo)
+    .enter()
+    .append("path")
+    .attr({
+      'd': function(d){
+        var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+        var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+        var carray = [c1,c2];
+        return line(carray);
+      },
+      'stroke': function(d){return thermography(d.size);},
+      'stroke-width': 5,
+      'fill': 'none',
+      // pathの属性として、上で定義した矢印を指定します
+      'marker-end':function(d,i){return "url(#arrowhead"+i+")";},
+      // 破線の指定を行います。
+      'stroke-dasharray': function(d){
+        var t = d.totalLength - (r1+r2+ref1);
+        return "0 " + r1 + " " + t + " " + r2;
+      },
+      // 破線の開始相対位置を指定します
+      'stroke-dashoffset': 0,
+    })
+    // 0人ならば矢印を見えなくする
+    .style("opacity",function(d){
+      if (d.size == 0) {
+        return 0;
+      } else {
+        return 1;
+      };
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+        div.transition().duration(300)
+        .style("opacity",1).text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size+"人")
+        .style("background",thermography(d.size))
+        .style("width", "150px")
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0).text("　")
+    });
+    // 2本の矢印をアニメーション付きでずらす
+    path.transition().duration(1000).attr({
+      transform: function(d){
+        var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+        var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+        var interval = 6; // 2本の矢印間の間隔
+        var trans_x = +1 * interval * (c1.pos_y - c2.pos_y) / d.totalLength;
+        var trans_y = -1 * interval * (c1.pos_x - c2.pos_x) / d.totalLength;
+        return "translate("+trans_x+","+trans_y+")";
+      },
+    })
+
+    // マップの座標(目盛り)と温度・照度を追加
+    var coordinate_width = 50; // 座標間の幅
+    var coordinate = []; 
+    for (var i = 0; i*coordinate_width < 1024; i++) {
+     for (var j = 0; j*coordinate_width < 560; j++) {
+      var x = i*coordinate_width;
+      var y = j*coordinate_width;
+      coordinate.push({x:x, y:y});
+     }
+   }
+
+    // 座標目盛りの透明度をトグルで切り替える
+    var flag_opacity = false;
+    function opacity(){
+        if (flag_opacity) {
+          d3.select("#btn_opacity").style("color","black");
+          svg1.select("#g_coordinate")
+              .transition()
+              .duration(1000)
+              .style("opacity",0);
+        } else {
+          d3.select("#btn_opacity").style("color","blue");
+          svg1.select("#g_coordinate")
+              .transition()
+              .duration(1000)
+              .style("opacity",1);
+          };
+      flag_opacity = !flag_opacity;
+    }
+
+    // 折りたたみ表示
+    function show(inputData) {
+      var objID=document.getElementById( "layer_" + inputData );
+      var buttonID=document.getElementById( "category_" + inputData );
+      if (inputData == 1){
+        var opentext = "選択";
+        var closetext = "選択非表示";
+      } else if (inputData == 2){
+        var opentext = "最近";
+        var closetext = "最近非表示";
+      }
+      if(objID.className=='close') {
+      objID.style.display='block';
+      objID.className='open';
+      d3.select("#category_"+inputData).text(closetext);
+      }else{
+      objID.style.display='none';
+      objID.className='close';
+      d3.select("#category_"+inputData).text(opentext);
+    }}
+
+    // 座標目盛り(円)の生成
+    svg1.append("g").attr("id","g_coordinate").style("opacity",0);
+    svg1.select("#g_coordinate").selectAll("g.coordinate")
+    .data(coordinate)
+    .enter()
+    .append("circle")
+    .attr({
+      "cx": function(d) { return d.x;},
+      "cy": function(d) { return d.y;},
+      "r": 3,
+      "fill": "purple",
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+      if (flag_opacity){ // 座標可視状態なら説明を出す
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","purple")
+        .style("width", "150px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text("x = " + d.x + " , y = " + d.y)
+      }
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0)
+    });
+
+    // // 視覚化補完用エリアの生成
+    // svg1.append("g").attr("id","complement_area");
+    // var complement = svg1.select("#complement_area")
+    // .selectAll("complement.area")
+    // .data(coordinate)
+    // .enter()
+    // .append("rect")
+    // .style("opacity",0)
+    // .attr({
+    //   "x": function(d){ return d.x;},
+    //   "y": function(d){ return d.y;},
+    //   "width": 0,
+    //   "height": 0,
+    //   "fill": "white",
+    // })
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
+    // 気温に対応した色を返す(サーモグラフィ風)
+    function thermography(tu){
+      threshold_H = 8.0; // この温度以上は赤色
+      threshold_L = 1.0; // この温度以下は青色
+      if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 0 + ")"; // 黄～赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 2.0 / 4.0 ) ) {
+        return  "rgb(" + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ", " + 0 + ")"; // 緑～黄  
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 1.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ")"; // 水～緑
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 0.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ")"; // 青～水
+      }else {
+        return  "rgb(" + 0 + ", " + 0 + ", " + 255 + ")"; // 青
+      }
+    }
+
+    // 人数参考バーの表示
+    // 幅（Width）と高さ（ height）
+    var w = 1000;
+    var h = 100;
+    var padding = 30;
+    var max = 10; // 最大表示人数
+
+    //スケール関数の生成
+    var xScale = d3.scale.linear()
+                     .domain([0, max])
+                     .range([padding, w - padding *2]);
+
+    // x軸の定義
+    var xAxis = d3.svg.axis()  // ここのsvgは変数名じゃない！；；
+                  .scale(xScale)
+                  .orient("bottom")
+                  .tickFormat(function(d) { return d + "人"; })
+                  .ticks(10);  // 大雑把に目盛りの個数を設定
+
+    // x軸の生成
+    svg2.append("g")
+      .attr("class", "axis")  // "axis" クラスを定義
+      .attr("transform", "translate(0," + (h - padding) + ")")
+      .call(xAxis);
+
+    // 棒グラフの追加
+    var temperature = [];
+    for (var i = 0; i < max; i++) {
+      temperature.push(i);
+    };
+    svg2.selectAll("rect.temperature")
+    .data(temperature)
+    .enter()
+    .append("rect")
+    .attr({
+      "x": function(d){ return xScale(d);},
+      "y": padding,
+      "width": (w - padding*3)/temperature.length,
+      "height": h - padding*2 - 10,
+      "fill": function(d){ return thermography(d);},
+    });
+
+    // 取得時間を表示
+    var year = parseInt({{ year }});
+    var month = parseInt({{ month }})-1;
+    var day = parseInt({{ day }});
+    var hour = parseInt({{ hour }});
+    var minute = parseInt({{ minute }});
+    var datetime = new Date(year,month,day,hour,minute);
+    // var Real_datetime;
+    // set_selectbox(); // セレクトボックスにdatetimeをセット
+
+    function describe_datetime(){
+      d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2));
+    }
+    describe_datetime();
+  </script>
+  {% endblock content %}

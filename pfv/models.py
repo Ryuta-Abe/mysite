@@ -13,6 +13,21 @@ class pr_req(Document):
     sequence    = IntField()
     timestamp   = IntField()
 
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+# PCWLのノード情報
+class pcwlnode(Document):
+    pcwl_id = IntField()
+    pos_x = IntField()
+    pos_y = IntField()
+    next_id = ListField(IntField())
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 class test(Document):
     id          = StringField(max_length=255)
     node_id     = IntField()

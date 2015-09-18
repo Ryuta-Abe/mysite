@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from cms.forms import SensorForm
-from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, positionset
+from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db,positionset,pcwlnode
 from mongoengine import *
 from pymongo import *
 import requests
@@ -509,9 +509,10 @@ def response_json(request, date_time=999):
 def d3jstest(request):
 
   t = []
+  t += pcwlnode.objects()
   # Sensor2.objects.all().delete()
-  for s in device_list:
-    t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
+  # for s in device_list:
+  #   t += list(Sensor2.objects(device_id=s).order_by("-datetime").limit(1))
 
   return render_to_response('cms/d3jstest.html',  # 使用するテンプレート
                               {'t':t} )      # テンプレートに渡すデータ 
@@ -585,7 +586,7 @@ def position_save(request, date_time, id, pos_x, pos_y):
     pos_x = pos_x,
     pos_y = pos_y
     )
-  positionset.save()
+  position_set.save()
 
   # Python辞書オブジェクトとしてdataに格納
   data = []

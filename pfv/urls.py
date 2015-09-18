@@ -14,12 +14,19 @@ urlpatterns = patterns('',
     # url(r'^save_db_heat/$', views.save_db_heat, name='save_db_heat'), #データ登録(1hごとの温度データ)
     # # url(r'^save_initial_data/$', views.save_initial_data, name='save_initial_data'), #データ登録(初期データ)
 
-    url(r'^sensor_map/$', views.sensor_map, name='sensor_map'), #センサーマップ
-    url(r'^sensor_map/datetime=(?P<date_time>\d+)/$', views.sensor_map, name='sensor_map'),
-    url(r'^sensor_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.sensor_map, name='sensor_map'),
+    # url(r'^sensor_map/$', views.sensor_map, name='sensor_map'), #センサーマップ
+    # url(r'^sensor_map/datetime=(?P<date_time>\d+)/$', views.sensor_map, name='sensor_map'),
+    # url(r'^sensor_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.sensor_map, name='sensor_map'),
 
     # url(r'^sensor_graph/$', views.sensor_graph, name='sensor_graph'),   # センサーグラフ
     # url(r'^sensor_graph/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph, name='sensor_graph'),
+
+    url(r'^pfv_map/$', views.pfv_map, name='pfv_map'), #pfvマップ
+    url(r'^pfv_map/datetime=(?P<date_time>\d+)/$', views.pfv_map, name='pfv_map'),
+    url(r'^pfv_map_json/$', views.pfv_map_json, name='pfv_map_json'), #pfvマップ用JSON
+    url(r'^pfv_map_json/datetime=(?P<date_time>\d+)/$', views.pfv_map_json, name='pfv_map_json'),
+    # url(r'^pfv_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.pfv_map, name='pfv_map'),
+    url(r'^analyze/$', views.analyze_dir, name='analyze_dir'),
 
     # # データ一覧
     url(r'^data_list/$', views.data_list, name='data_list'),   
