@@ -96,29 +96,54 @@ def pfv_map(request, date_time=999, type="20"):
 
 def analyze_dir(request):
   # ag = test._get_collection().aggregate([{"$group":{"_id":{"node_id":"$node_id"}, "count":{"$sum":1}}}])["result"]
-  ag = test._get_collection().aggregate([{"$limit":10},
-                                          {"$project":
-                                            {"mac":"$mac", 
-                                            "get_time_no":"$get_time_no", 
-                                            "list": {"node_id":"$node_id", 
-                                                      "dbm":"$dbm"
-                                                    }
-                                            }
+  ag = test._get_collection().aggregate([
+                                          {"$limit":10000},
+                                          # {"$project":
+                                          #   {"mac":"$mac", 
+                                          #   "get_time_no":"$get_time_no", 
+                                          #   "list": {"node_id":"$node_id", 
+                                          #             "dbm":"$dbm"
+                                          #           }
+                                          #   }
+                                          # },
+                                          # {"$sort":{"dbm":-1}},
+                                          {"$group":
+                                            {"_id":
+                                              {"mac":"$mac", 
+                                              "get_time_no":"$get_time_no",
+                                              },
+                                              "list":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
+                                              # "max": {"$max":"$list.dbm"},
+                                            },
                                           },
-                                            {"$group":
-                                              {"_id":
-                                                {"mac":"$mac", "get_time_no":"$get_time_no"},
-                                              "max":
-                                                {"$max":"$list.dbm"}
+                                          # {"$group":
+                                          #   {"_id":
+                                          #     {"mac":"$_id.mac", 
+                                          #     "get_time_no":"$_id.get_time_no",
+                                          #     },
+                                          #     "list":"$list",
+                                          #     # "max": {"$max":"$list.dbm"},
+                                          #   },
+                                          # },
 
-                                                }},
-                                            # {"$group":
-                                            #   {"_id":
-                                            #     {"mac":"$mac", "get_time_no":"$get_time_no"}}}
-                                            # {"$project":{"node_id":"$node_id"}}
-                                          ])["result"]
+                                          # {"$sort":{"list.dbm":1}},
+                                          # {"$match":
+                                          #   {"list.dbm": {"$max":"$list.dbm"}},
+                                          # }
+                                          # {"$group":
+                                          #   {"_id":
+                                          #     {"mac":"$mac", "get_time_no":"$get_time_no"}
+                                          #   }
+                                          # },
+                                          # {"$project":{"node_id":"$node_id"}},
+                                      ],
+                                      # {"allowDiskUse" : "true"}
+                                      # {
+                                        # "allowDiskUse" = "true",
+                                      #   # "cursor":{}                                      
+                                      # }
+                                      )["result"]
 
-  import pdb; pdb.set_trace()  # breakpoint 51c2958c //
   for jdata in ag:
     jdata['id'] = jdata['_id']
     del(jdata['_id'])
