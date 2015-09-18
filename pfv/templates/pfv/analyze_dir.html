@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+
+{% block title %}データ一覧{% endblock title %}
+
+{% block extrahead %}
+<style>
+table {
+  margin-top: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <h3> 分析終了 </h3>
+    {% for s in ag %}
+    <table>
+      <tbody>
+        <tr>
+          <!-- <td>{{s.count}}</td> -->
+          <!-- <td>---{{s.id}} </td> -->
+        </tr>
+      </tbody>
+    </table>
+    {% endfor %}
+{% endblock content %}

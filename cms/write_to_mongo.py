@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from cms.forms import SensorForm
 from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db
