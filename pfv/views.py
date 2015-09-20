@@ -223,11 +223,14 @@ def aggregate_data(request):
                             )
 
 def analyze_direction(request):
+  from datetime import datetime
+
   ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150603120000}}).limit(10000).sort("_id.mac").sort("_id.get_time_no",-1)
   ana_list = []
   for jdata in ag:
     # mac         = jdata["_id"]["mac"]
     jdata['id'] = jdata['_id']
+    jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
     jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
     for list_data in jdata['nodelist']:
       pass
