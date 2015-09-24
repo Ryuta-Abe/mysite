@@ -37,9 +37,8 @@
 {% block content %}
 <h3 id="header" class="page-header">PFVマップ</h3>
 <form name="Sample_form" action="Sample.html">
-  <a id="btn_simple" onclick="simple_color()" class="btn btn-default btn-sm">単　色</a>
+  <a id="btn_visualize" onclick="visualize_heat_complement()" class="btn btn-default btn-sm">視覚化</a>
   <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
-  <a id="btn_RealTime" onclick="RealTime()" class="btn btn-default btn-sm">RealTime</a>
   　　<!-- ボタン間にスペースを -->
   取得日時：<font id="got_datetime" size="4"></font>
   　(<a href="javascript:void(0)" id="category_1" onclick="show('1');">選択</a>)
@@ -167,7 +166,7 @@
 <br><!-- ボタンと地図の間にスペースを -->
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
- <image x="0" y="0" opacity="0.5" width="100%" height="100%" xlink:href="http://160.16.74.119/~abe/images/6F_west2.jpg"></image>
+ <image x="0" y="0" width="100%" height="100%" opacity="0.7" xlink:href="http://160.16.74.119/~abe/images/6F_west2.jpg"></image>
 </svg>
 <div id="tooltip_div"></div>
 <svg id="svg2" width="1000" height="100"></svg>
@@ -434,6 +433,22 @@
       .style("opacity",0)
     });
 
+    // // 視覚化補完用エリアの生成
+    // svg1.append("g").attr("id","complement_area");
+    // var complement = svg1.select("#complement_area")
+    // .selectAll("complement.area")
+    // .data(coordinate)
+    // .enter()
+    // .append("rect")
+    // .style("opacity",0)
+    // .attr({
+    //   "x": function(d){ return d.x;},
+    //   "y": function(d){ return d.y;},
+    //   "width": 0,
+    //   "height": 0,
+    //   "fill": "white",
+    // })
+
     // マウスオーバーすると出てくる説明文(div要素)
     var div = d3.select("#tooltip_div")
     .attr("class","tooltip")
@@ -502,32 +517,6 @@
       "fill": function(d){ return thermography(d);},
     });
 
-    // 単色表示
-    function simple_color(){
-      // 画面の更新
-      marker.selectAll("path")
-          .transition().duration(1000)
-          .attr({
-            fill: "red"
-          });
-      path.transition().duration(1000).attr({
-        'stroke': "red",
-      })
-      // 人数で透明度を変える
-      .style("opacity",function(d){
-        if ((d.size / 10) >= 1) {
-          return 1;
-        } else {
-          return d.size / 10;
-        };
-      })
-      // 人数表示バーの更新
-      svg2.selectAll("rect")
-      .transition().duration(1000)
-      .attr("fill","red")
-      .style("opacity",function(d){return d/10;})
-    }
-
     // 取得時間を表示
     var year = parseInt({{ year }});
     var month = parseInt({{ month }})-1;
@@ -542,86 +531,5 @@
       d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2));
     }
     describe_datetime();
-
-    /***********************************
-                Ajax関係 
-   ************************************/
-
-   // datetimeに対応したJSONをajaxで読み込む
-    function Load_JSON(datetime){
-      var year = datetime.getFullYear();
-      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
-      var day = ("0"+datetime.getDate()).slice(-2);
-      var hour = ("0"+datetime.getHours()).slice(-2);
-      var minute = ("0"+datetime.getMinutes()).slice(-2);
-      $.ajax({
-        type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute,
-        dataType: 'json',
-        success: function(json){
-          d3.select("body").append("p").text("jsonの長さ = "+json.length);
-          // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
-          // d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
-          // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
-          // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
-        }
-      });
-    }
-
-    // リアルタイムビューに切り替える
-    d3.select("#btn_RealTime").style("color","black");
-    var flag_RealTime = false;
-    var Timer;
-    function RealTime(){
-      if (flag_RealTime) {
-        flag_RealTime = !flag_RealTime;
-        d3.select("#btn_RealTime").style("color","black");
-        clearInterval(Timer);
-        Load_Form();
-      } else {
-        flag_RealTime = !flag_RealTime;
-        RealTime_Ajax();
-        d3.select("#btn_RealTime").style("color","blue");
-        d3.select("#got_datetime").text("データ取得中…");
-        Timer = setInterval(RealTime_Ajax,5000);
-      };
-    }
-    function RealTime_Ajax(){
-      $.ajax({
-        type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}",
-        dataType: 'json',
-        success: function(json){
-          if (flag_RealTime){
-            datetime = new Date();
-            describe_datetime();
-            Reload_pfvinfo(json);
-          }
-        }
-      });
-    }
-    function Reload_pfvinfo(json){
-      // pfvinfoの更新
-      for (var i = 0; i < pfvinfo.length; i++) {
-        pfvinfo[i].size = json[i].size;
-      };
-      // 画面の更新
-      marker.selectAll("path")
-          .transition().duration(1000)
-          .attr({
-            fill: function(d){return thermography(d.size);}
-          });
-      path.transition().duration(1000).attr({
-        'stroke': function(d){return thermography(d.size);},
-      })
-      // 0人ならば矢印を見えなくする
-      .style("opacity",function(d){
-        if (d.size == 0) {
-          return 0;
-        } else {
-          return 1;
-        };
-      })
-    }
   </script>
   {% endblock content %}

@@ -1,0 +1,42 @@
+
+{% extends "base.html" %}
+
+{% block title %}データ一覧{% endblock title %}
+
+{% block extrahead %}
+<style>
+table {
+  margin-top: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <h3> 分析終了 </h3>
+    <table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
+    <thead>    
+      <tr>
+        <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+        <th class="table-filterable">mac</th>
+        <th class="table-filterable">get_time_no</th>
+<!--         <th>nodelist_nodeid</th>
+        <th>nodelist_dbm</th> -->
+        <th>node1</th>
+        <th>node2</th>
+        <th>node3</th>
+      </tr>
+    </thead>
+    {% for s in ag %}
+      <tbody>
+        <tr>
+          <td align="center">{{s.id.mac}}</td>
+          <td align="center">{{s.id.get_time_no}}</td>
+          <!-- <td>{{s.nodelist}} </td> -->
+          <td align="right">{{s.nodelist.0.node_id}}({{s.nodelist.0.dbm}}dB)　　　　　　　　</td>
+          <td align="right">{{s.nodelist.1.node_id}}({{s.nodelist.1.dbm}}dB)　　　　　　　　</td>
+          <td align="right">{{s.nodelist.2.node_id}}({{s.nodelist.2.dbm}}dB)　　　　　　　　</td>
+        </tr>
+      </tbody>
+    {% endfor %}
+    </table>
+{% endblock content %}
