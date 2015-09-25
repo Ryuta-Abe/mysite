@@ -29,7 +29,7 @@ class pcwlnode(Document):
     }
 
 class test(Document):
-    id          = StringField(max_length=255)
+    _id          = StringField(max_length=255)
     node_id     = IntField()
     get_time_no = IntField()
     mac         = StringField(max_length=255)
@@ -40,4 +40,19 @@ class test(Document):
 
     meta = {
     	"db_alias" : "nm4bd",
+    }
+
+class tmpcol(Document):
+    _id = StringField()
+    # nodelist = ListField(DictField())
+    # mac         = StringField(max_length=255)
+    # rssi        = IntField()
+    # get_time_no = IntField()
+    # node_id     = IntField()
+    mac         = ListField()
+    get_time_no = ListField()
+    nodelist    = ListField()
+
+    meta = {
+        "db_alias" : "nm4bd",
     }
