@@ -195,15 +195,10 @@ def render_json_response(request, data, status=None): # response を JSON で返
   return response
 
 def aggregate_data(request):
-  # ag = db.command("test")
-  # ag = db.test.runCommand()
-  # ag = test._get_collection().aggregate([{"$group":{"_id":{"node_id":"$node_id"}, "count":{"$sum":1}}}])["result"]
   ag = test._get_collection().aggregate([
                                           # {"$limit":1000},
                                           {"$group":
                                             {"_id":
-                                             # "mac":{"$push":"$mac"},
-                                             # "get_time_no":{"$push":"$get_time_no"},
                                               {"mac":"$mac", 
                                                "get_time_no":"$get_time_no",
                                               },
@@ -213,9 +208,7 @@ def aggregate_data(request):
                                           {"$out": "tmpcol"},
                                         ],
                                       allowDiskUse=True,
-                                      # cursor={"batchSize":0},
-                                      # useCursor=True,
-                                      # explain=True
+                                      # cursor={"batchSize":0}, useCursor=True,
                                       )
 
   return render_to_response('pfv/aggregate_data.html',  # 使用するテンプレート
@@ -225,20 +218,74 @@ def aggregate_data(request):
 def analyze_direction(request):
   from datetime import datetime
 
-  ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150603122000}}).limit(5000).sort("_id.mac").sort("_id.get_time_no",-1)
+  ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925182000}}).limit(7500).sort("_id.mac").sort("_id.get_time_no",-1)
   ana_list = []
   for jdata in ag:
-    # mac         = jdata["_id"]["mac"]
     jdata['id'] = jdata['_id']
     jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
     jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
     for list_data in jdata['nodelist']:
-      pass
       list_data['node_id'] = convert_nodeid(list_data['node_id'])
     del(jdata['_id'])
     ana_list.append(jdata)
-    # get_time_no = jdata["_id"]["get_time_no"]
-    # nodelist    = jdata["nodelist"]
   return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
                               {'ag': ana_list} 
                             )
+
+def get_start_end(request):
+  from datetime import datetime
+  tmp_mac     = ""
+  tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
+  tmp_node_id   = 0
+  data_lists = []
+  count = 0
+
+  datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
+  for data in datas:
+    data['id'] = data['_id']
+
+    if (data["id"]["mac"] == tmp_mac):
+      # tmp_mac = data["id"]["mac"]
+      # tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
+
+      data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
+
+      if ((data['id']['get_time_no'] - tmp_startdt).seconds  < 60):
+        tmp_enddt   = data['id']['get_time_no']
+
+        data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
+
+        for list_data in data['nodelist']:
+          list_data['node_id'] = convert_nodeid(list_data['node_id'])
+        del(data['_id'])
+        # data['nodelist'] = data['nodelist'][0]
+
+        se_data =  {"mac":data["id"]["mac"],
+                    "start_time":tmp_startdt,
+                    "end_time"  :tmp_enddt,
+                    "interval"  :(tmp_enddt - tmp_startdt).seconds,
+                    "start_node":tmp_node_id,
+                    "end_node"  :data["nodelist"][0]["node_id"],
+                    }
+
+        # print(tmp_enddt - tmp_startdt)
+        data_lists.append(se_data)
+        tmp_node_id = data["nodelist"][0]["node_id"]
+        tmp_startdt = data['id']['get_time_no']
+        count += 1
+      else:
+        tmp_startdt = data['id']['get_time_no']
+        tmp_node_id = 0
+
+    else:
+      tmp_mac = data["id"]["mac"]
+      data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
+      tmp_startdt = data['id']['get_time_no']
+      tmp_node_id = 0
+
+    # data_lists.reverse()
+    data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
+
+  return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
+                              {"datas":data_lists, "c":count} 
+                            )  
