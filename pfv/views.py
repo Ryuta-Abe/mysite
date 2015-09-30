@@ -25,7 +25,7 @@ db = client.nm4bd
 
 # データリスト画面 http://localhost:8000/cms/data_list/
 def data_list(request, limit=100, date_time=d):
- 
+
   # 日付をstr12桁に合わせる --> 2014-11-20 19:40
   date_time = datetime_to_12digits(date_time)
 
@@ -112,7 +112,7 @@ def pfv_map(request, date_time=999):
 
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
-                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute} 
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute}
                               )
 
 # pfvマップ用JSON
@@ -177,12 +177,12 @@ def pfv_map_json(request, date_time=999):
   _pfvinfo.append({'direction':[19,18],'size':random.randint(0, 10)})
   _pfvinfo.append({'direction':[20,19],'size':random.randint(0, 10)})
   _pfvinfo.append({'direction':[21,20],'size':random.randint(0, 10)})
-  
+
   return render_json_response(request, _pfvinfo) # dataをJSONとして出力
 
 # JSON出力
 def render_json_response(request, data, status=None): # response を JSON で返却
-  
+
   json_str = json.dumps(data, ensure_ascii=False, indent=2)
   callback = request.GET.get('callback')
   if not callback:
@@ -204,7 +204,7 @@ def aggregate_data(request):
                                             {"_id":
                                              # "mac":{"$push":"$mac"},
                                              # "get_time_no":{"$push":"$get_time_no"},
-                                              {"mac":"$mac", 
+                                              {"mac":"$mac",
                                                "get_time_no":"$get_time_no",
                                               },
                                              "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
@@ -219,13 +219,13 @@ def aggregate_data(request):
                                       )
 
   return render_to_response('pfv/aggregate_data.html',  # 使用するテンプレート
-                              {} 
+                              {}
                             )
 
 def analyze_direction(request):
   from datetime import datetime
 
-  ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150603122000}}).limit(5000).sort("_id.mac").sort("_id.get_time_no",-1)
+  ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150603122000}}).limit(100).sort("_id.mac").sort("_id.get_time_no",-1)
   ana_list = []
   for jdata in ag:
     # mac         = jdata["_id"]["mac"]
@@ -239,6 +239,7 @@ def analyze_direction(request):
     ana_list.append(jdata)
     # get_time_no = jdata["_id"]["get_time_no"]
     # nodelist    = jdata["nodelist"]
+  test = "aaaaa"
   return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
-                              {'ag': ana_list} 
+                              {'ag': ana_list, "test":test}
                             )

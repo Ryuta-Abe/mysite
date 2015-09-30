@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from pfv import views
+from pfv import views, make_pfvinfo
 
 urlpatterns = patterns('',
-     
+
     # url(r'^d3jstest/$', views.d3jstest, name=''),   #練習用
 
     # url(r'^response_json/$', views.response_json, name='response_json'),   # JSONを返すURL
@@ -28,9 +28,10 @@ urlpatterns = patterns('',
     # url(r'^pfv_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.pfv_map, name='pfv_map'),
     url(r'^aggregate/$', views.aggregate_data, name='aggregate_data'),
     url(r'^analyze/$', views.analyze_direction, name='analyze_direction'),
+    url(r'^XXX/$', make_pfvinfo.XXX, name='XXX'),
 
     # # データ一覧
-    url(r'^data_list/$', views.data_list, name='data_list'),   
+    url(r'^data_list/$', views.data_list, name='data_list'),
     url(r'^data_list/limit=(?P<limit>\d+)/$', views.data_list, name='data_list'),
     url(r'^data_list/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.data_list, name='data_list'),
     # # データ件数確認用
@@ -43,5 +44,5 @@ urlpatterns = patterns('',
     # url(r'^sensor_map_en/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.sensor_map_en, name='sensor_map_en'),
     # url(r'^sensor_graph_en/$', views.sensor_graph_en, name='sensor_graph_en'),   # センサーグラフ英語版
     # url(r'^sensor_graph_en/limit=(?P<limit>\d+)/datetime=(?P<date_time>\d+)/type=(?P<type>\w+)/$', views.sensor_graph_en, name='sensor_graph_en'),
-  
+
 )
