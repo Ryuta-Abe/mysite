@@ -269,22 +269,25 @@ def get_start_end(request):
                     }
 
         # print(tmp_enddt - tmp_startdt)
+        # if (se_data["start_node"] != 0):
         data_lists.append(se_data)
+        count += 1
+          
         tmp_node_id = data["nodelist"][0]["node_id"]
         tmp_startdt = data['id']['get_time_no']
-        count += 1
       else:
         tmp_startdt = data['id']['get_time_no']
-        tmp_node_id = 0
+        # tmp_node_id = 0
 
     else:
       tmp_mac = data["id"]["mac"]
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
       tmp_startdt = data['id']['get_time_no']
-      tmp_node_id = 0
+      # tmp_node_id = 0
 
     # data_lists.reverse()
     data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
+    # data_lists.remove({"start_node":0})
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists, "c":count} 
