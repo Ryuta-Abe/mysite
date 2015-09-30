@@ -40,14 +40,15 @@ def XXX(request):
   mod_d = 0
   mod_k = 0
   j = 0
-  for i in range(len(time_list)-1):
-    result["datetime"] = time_list[i+1]
-    sa = time_list[i+1] - time_list[i]
+  for i in range(1, len(time_list)):
+    result["datetime"] = time_list[i]
+    sa = time_list[i] - time_list[i-1]
     sabun =sa.total_seconds()
     kyori = sabun * d_t
     if mod_d == 0:
       if node_d[j] >= kyori:
         #size +1
+        a = "first"
         mod_d = node_d[j] - kyori
         if mod_d == 0:
           j = j + 1
@@ -58,9 +59,9 @@ def XXX(request):
         if node_d[j] >= mod_k:
           #size + round(mod_k / kyori, 1)
           #size + round(node_d[j-1] / kyori, 1)
-          if mod_k == 0:
+          b = "second"
+          if mod_k == node_d[j]:
             j = j + 1
-          break
         else:
           mod_k = mod_k - node_d[j]
           j = j + 1
@@ -68,25 +69,27 @@ def XXX(request):
           #size + round(mod_k / kyori, 1)
           #size + round(node_d[j-1] / kyori, 1)
           #size + round(node_d[j-2] / kyori, 1)
+            c = "third"
             if mod_k == 0:
               j= j + 1
-          break
+            else: break
     else:
       if mod_d >= kyori:
         mod_d = mod_d - kyori
         #size + 1
+        d = "fourth"
         if mod_d == 0:
           j = j + 1
-        else: break
       else:
         mod_k = kyori - mod_d
         j = j + 1
         if node_d[j] >= mod_k:
           #size + round(mod_k / kyori, 1)
           #size + round(mod_d / kyori, 1)
+          e = "fifth"
           if mod_k == 0:
             j = j + 1
-          break
+          else: break
         else:
           mod_k = mod_k - node_d[j]
           j = j + 1
@@ -94,9 +97,10 @@ def XXX(request):
           #size + round(mod_k / kyori, 1)
           #size + round(node_d[j-1] / kyori, 1)
           #size + round(mod_d / kyori, 1)
+            f = "sixth"
             if mod_k == 0:
               j= j + 1
-              break
+            else: break
 
 
 
@@ -125,5 +129,5 @@ def XXX(request):
   #  test += x
 
   return render_to_response('pfv/make_pfvinfo.html',  # 使用するテンプレート
-                              {"time":time}
+                              {"time":time, "kyori":kyori}
                             )
