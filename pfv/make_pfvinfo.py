@@ -22,85 +22,105 @@ d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[
 
 client = MongoClient()
 db = client.nm4bd
+# connect("nm4bd")
 
+class pcwlroute(Document):
+  query = ListField(IntField())
+  dlist = ListField(ListField(DictField()))
+
+  meta = {
+    "db_alias" : "nm4bd"
+  }
 def XXX(request):
+  st = 1
+  ed = 3
+  # route_list = db.pcwlroute.find({"query":[]})
+  datas = test.objects().limit(100)
+  datas2 = []
+  datas2+= pcwlroute.objects(query__all = [st, ed])
+  # route_list = []
+  # route_list += pcwlroute.objects()
   result ={}
   start_time = datetime.datetime(2014,11,10,11,10,40)
   end_time =  datetime.datetime(2014,11,10,11,11,19)
-  distance = 40
+  distance = 0
+  for r_list in datas2[0]["dlist"]:
+    for r_info in r_list:
+      distance += r_info["distance"]
+
   ab_time = end_time - start_time
   time = ab_time.total_seconds()
   d_t = distance / time
   time_list = [start_time,
-  datetime.datetime(2014,11,10,11,10,49),
-  datetime.datetime(2014,11,10,11,10,59),
-  datetime.datetime(2014,11,10,11,11,9),
-  end_time]
+                datetime.datetime(2014,11,10,11,10,49),
+                datetime.datetime(2014,11,10,11,10,59),
+                datetime.datetime(2014,11,10,11,11,9),
+                end_time]
   node_d = [20, 5, 15]
   mod_d = 0
   mod_k = 0
   j = 0
-  for i in range(1, len(time_list)):
-    result["datetime"] = time_list[i]
-    sa = time_list[i] - time_list[i-1]
-    sabun =sa.total_seconds()
-    kyori = sabun * d_t
-    if mod_d == 0:
-      if node_d[j] >= kyori:
-        #size +1
-        a = "first"
-        mod_d = node_d[j] - kyori
-        if mod_d == 0:
-          j = j + 1
-        else: break
-      else:
-        mod_k = kyori - node_d[j]
-        j = j + 1
-        if node_d[j] >= mod_k:
-          #size + round(mod_k / kyori, 1)
-          #size + round(node_d[j-1] / kyori, 1)
-          b = "second"
-          if mod_k == node_d[j]:
-            j = j + 1
-        else:
-          mod_k = mod_k - node_d[j]
-          j = j + 1
-          if node_d[j] >= mod_k:
-          #size + round(mod_k / kyori, 1)
-          #size + round(node_d[j-1] / kyori, 1)
-          #size + round(node_d[j-2] / kyori, 1)
-            c = "third"
-            if mod_k == 0:
-              j= j + 1
-            else: break
-    else:
-      if mod_d >= kyori:
-        mod_d = mod_d - kyori
-        #size + 1
-        d = "fourth"
-        if mod_d == 0:
-          j = j + 1
-      else:
-        mod_k = kyori - mod_d
-        j = j + 1
-        if node_d[j] >= mod_k:
-          #size + round(mod_k / kyori, 1)
-          #size + round(mod_d / kyori, 1)
-          e = "fifth"
-          if mod_k == 0:
-            j = j + 1
-          else: break
-        else:
-          mod_k = mod_k - node_d[j]
-          j = j + 1
-          if node_d[j] >= mod_k:
-          #size + round(mod_k / kyori, 1)
-          #size + round(node_d[j-1] / kyori, 1)
-          #size + round(mod_d / kyori, 1)
-            f = "sixth"
-            if mod_k == 0:
-              j= j + 1
-            else: break
+  # for i in range(1, len(time_list)-1):
+  #   result["datetime"] = time_list[i]
+  #   sa = time_list[i] - time_list[i-1]
+  #   sabun =sa.total_seconds()
+  #   kyori = sabun * d_t
+  #   if mod_d == 0:
+  #     if node_d[j] >= kyori:
+  #       #size +1
+  #       a = "first"
+  #       mod_d = node_d[j] - kyori
+  #       if mod_d == 0:
+  #         j = j + 1
+  #       # else: break
+  #     else:
+  #       mod_k = kyori - node_d[j]
+  #       j = j + 1
+  #       if node_d[j] >= mod_k:
+  #         #size + round(mod_k / kyori, 1)
+  #         #size + round(node_d[j-1] / kyori, 1)
+  #         b = "second"
+  #         if mod_k == node_d[j]:
+  #           j = j + 1
+  #       else:
+  #         mod_k = mod_k - node_d[j]
+  #         j = j + 1
+  #         if node_d[j] >= mod_k:
+  #         #size + round(mod_k / kyori, 1)
+  #         #size + round(node_d[j-1] / kyori, 1)
+  #         #size + round(node_d[j-2] / kyori, 1)
+  #           c = "third"
+  #           if mod_k == 0:
+  #             j= j + 1
+  #           # else: break
+  #   else:
+  #     if mod_d >= kyori:
+  #       mod_d = mod_d - kyori
+  #       #size + 1
+  #       d = "fourth"
+  #       if mod_d == 0:
+  #         j = j + 1
+  #     else:
+  #       mod_k = kyori - mod_d
+  #       j = j + 1
+  #       if node_d[j] >= mod_k:
+  #         #size + round(mod_k / kyori, 1)
+  #         #size + round(mod_d / kyori, 1)
+  #         e = "fifth"
+  #         if mod_k == 0:
+  #           j = j + 1
+  #         # else: break
+  #       else:
+  #         mod_k = mod_k - node_d[j]
+  #         j = j + 1
+  #         if node_d[j] >= mod_k:
+  #         #size + round(mod_k / kyori, 1)
+  #         #size + round(node_d[j-1] / kyori, 1)
+  #         #size + round(mod_d / kyori, 1)
+  #           f = "sixth"
+  #           if mod_k == 0:
+  #             j= j + 1
+  #           # else: break
 
 
 
@@ -129,5 +149,8 @@ def XXX(request):
   #  test += x
 
   return render_to_response('pfv/make_pfvinfo.html',  # 使用するテンプレート
-                              {"time":time, "kyori":kyori}
+                              {"time":time,
+                              # "kyori":kyori,
+                              # "pcwlroute":pcwlroute,
+                              }
                             )
