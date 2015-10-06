@@ -218,7 +218,8 @@ def aggregate_data(request):
 def analyze_direction(request):
   from datetime import datetime
 
-  ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925182000}}).limit(7500).sort("_id.mac").sort("_id.get_time_no",-1)
+  ag = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925174000,"$lte":20150925181000}}).sort("_id.mac").sort("_id.get_time_no",-1)
+  # ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925183500}}).limit(10000).sort("_id.mac").sort("_id.get_time_no",-1)
   ana_list = []
   for jdata in ag:
     jdata['id'] = jdata['_id']
