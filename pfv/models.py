@@ -28,6 +28,15 @@ class pcwlnode(Document):
         "db_alias" : "nm4bd",
     }
 
+# 人流情報
+class pfvinfo(Document):
+    plist = DictField()
+    datetime = DateTimeField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 class test(Document):
     _id          = StringField(max_length=255)
     node_id     = IntField()
