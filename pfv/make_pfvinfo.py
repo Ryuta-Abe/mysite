@@ -58,8 +58,46 @@ def XXX(request):
                 end_time]
   node_d = [20, 5, 15]
   mod_d = 0
-  mod_k = 0
+  #mod_k = 0
   j = 0
+  k = 1
+#new
+  node_l =[] #ノード番号を入れるリスト
+  #各時刻ごとに最も近いノードを決定
+  for i in range(0, len(time_list)-1):
+    if time_list[i] == start_time:
+      node_l.append(st)
+    elif time_list[i] == end_time:
+      node_l.append(ed)
+    else:
+      sa = time_list[i] - time_list[i-1]
+      sabun =sa.total_seconds()
+      kyori = sabun * d_t
+      while j >= 0:
+        if node_d[j] >= kyori:
+          if node_d[j]/2 > kyori:
+            #node_l.append()   #今のノード番号を入れる
+            break
+          else:
+            #node_l.append()   #次のノード番号を入れる
+            break
+        else:
+          kyori = kyori - node_d[j]
+          j = j + 1
+          break #エラー回避用 本来不要
+#同じ場所に留まっているか判定＋人数追加
+  for i in range(0, len(node_l)-1):
+    if node_l[i] == node_l[i+1]:
+      #time_list[k] size:+1
+      a = a
+    else:
+      k = k + 1
+
+
+
+
+
+#old
   # for i in range(1, len(time_list)-1):
   #   result["datetime"] = time_list[i]
   #   sa = time_list[i] - time_list[i-1]
@@ -150,7 +188,7 @@ def XXX(request):
 
   return render_to_response('pfv/make_pfvinfo.html',  # 使用するテンプレート
                               {"time":time,
-                              # "kyori":kyori,
+                               "kyori":kyori,
                               # "pcwlroute":pcwlroute,
                               }
                             )
