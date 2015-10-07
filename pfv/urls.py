@@ -28,6 +28,7 @@ urlpatterns = patterns('',
     # url(r'^pfv_map/datetime=(?P<date_time>\d+)/type=(?P<type>\d{2})/$', views.pfv_map, name='pfv_map'),
     url(r'^aggregate/$', views.aggregate_data, name='aggregate_data'),
     url(r'^analyze/$', views.analyze_direction, name='analyze_direction'),
+    url(r'^get_start_end/$', views.get_start_end, name='get_start_end'),
     url(r'^XXX/$', make_pfvinfo.XXX, name='XXX'),
 
     # # データ一覧
