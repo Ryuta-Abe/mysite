@@ -3,32 +3,37 @@ import math
 
 # mongoDBに接続
 from mongoengine import *
-connect('nm4bd')
+from pymongo import *
 
-# PCWLのノード情報
-class pcwlnode(Document):
-    pcwl_id = IntField()
-    pos_x = IntField()
-    pos_y = IntField()
-    next_id = ListField(IntField())
+from pfv.models import pcwlnode, pfvinfo, pcwlroute
+# connect('nm4bd')
+client = MongoClient()
+db = client.nm4bd
 
-# PCWLの経路情報
-class pcwlroute(Document):
-    query = ListField(IntField())
-    dlist = ListField(ListField(DictField()))
+# # PCWLのノード情報
+# class pcwlnode(Document):
+#     pcwl_id = IntField()
+#     pos_x = IntField()
+#     pos_y = IntField()
+#     next_id = ListField(IntField())
 
-    # meta = {
-    #     "db_alias" : "nm4bd",
-    # }
+# # PCWLの経路情報
+# class pcwlroute(Document):
+#     query = ListField(IntField())
+#     dlist = ListField(ListField(DictField()))
 
-# 人流情報
-class pfvinfo(Document):
-    plist = ListField(DictField())
-    datetime = DateTimeField()
+#     # meta = {
+#     #     "db_alias" : "nm4bd",
+#     # }
 
-    # meta = {
-    #     "db_alias" : "nm4bd",
-    # }
+# # 人流情報
+# class pfvinfo(Document):
+#     plist = ListField(DictField())
+#     datetime = DateTimeField()
+
+#     # meta = {
+#     #     "db_alias" : "nm4bd",
+#     # }
 
 # 一旦初期化(位置情報全削除)
 pfvinfo.objects.all().delete()
@@ -86,7 +91,7 @@ def optimize_direction(st,ed,route_info):
 def make_pfvinfo(dataset):
 
 	for data in dataset:
-		interval = int(data["interval"])
+		interval = round(data["interval"])
 		tmp_plist = []
 		tmp_plist += pfvinfo.objects(datetime = data["start_time"]).scalar("plist")
 		if len(tmp_plist) == 0: # この時間の情報がまだDBに登録されていない場合
@@ -94,12 +99,19 @@ def make_pfvinfo(dataset):
 			tmp_plist += pfvinfo.objects(datetime = data["start_time"]).scalar("plist")
 		tmp_plist = tmp_plist[0]
 		route_info = [] # 経路情報の取り出し
-		route_info += pcwlroute.objects(query__all = [data["start_node"], data["end_node"]])
+		# route_info += pcwlroute.objects(query__all = [data["start_node"], data["end_node"]])
+		route_info += db.pcwlroute.find({"$and": [
+													{"query" : data["start_node"]}, 
+													{"query" : data["end_node"]}
+												]})
+		if route_info == []:
+			import pdb; pdb.set_trace()  # breakpoint 167eb304 //
+			pass
 		route_info = optimize_direction(data["start_node"],data["end_node"],route_info[0]["dlist"])
 		print("[出発点,到着点] = "+str([data["start_node"], data["end_node"]])+" , 間隔 = "+str(interval)+" 秒")
 
 		# 10秒間隔の場合
-		if interval == 10:
+		if round(interval / 10) == 1:
 			for route in route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 				for node in route:
 					add = 1/len(route_info) # 足す人数(重み付けを考慮した小数の値,今はどの経路も同じ重み)
@@ -108,9 +120,12 @@ def make_pfvinfo(dataset):
 					save_pfvinfo(tmp_plist,data["start_time"])
 			print(str(data["start_time"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
+		elif (round(interval / 10) == 0):
+			break
+
 		# 20秒以上の間隔の場合
 		else:
-			num = int(interval / 10) # 40秒間隔の場合, num = 4
+			num = round(interval / 10) # 40秒間隔の場合, num = 4
 			tlist = [data["start_time"], # tlistは時間情報のDBから取り出すように後で変える
 					datetime.datetime(2014,11,10,11,10,19),
 					datetime.datetime(2014,11,10,11,10,29),
@@ -144,6 +159,9 @@ def make_pfvinfo(dataset):
 						t_count += 1
 					else :
 						n_count += 1
+				if (st_ed_info == []):
+					pass
+					import pdb; pdb.set_trace()  # breakpoint 9909a52f //
 				st_ed_info.append({"st":st_ed_info[-1]["ed"],"ed":data["end_node"]}) # st_ed_infoの完成,例：[{'ed': 2, 'st': 1}, {'ed': 3, 'st': 2}]
 				print("st_ed_info = "+str(st_ed_info))
 
@@ -157,7 +175,13 @@ def make_pfvinfo(dataset):
 							tmp_plist += pfvinfo.objects(datetime = tlist[j]).scalar("plist")
 						tmp_plist = tmp_plist[0]
 						j_route_info = [] # j番目の時刻の経路情報
-						j_route_info += pcwlroute.objects(query__all = [st_ed_info[j]["st"], st_ed_info[j]["ed"]])
+						# j_route_info += pcwlroute.objects(query__all = [st_ed_info[j]["st"], st_ed_info[j]["ed"]])
+						j_route_info += db.pcwlroute.find({"$and": [
+																	{"query" : st_ed_info[j]["st"]}, 
+																	{"query" : st_ed_info[j]["ed"]}
+																	]})
+							# [st_ed_info[j]["st"], st_ed_info[j]["ed"]])
+						
 						j_route_info = optimize_direction(st_ed_info[j]["st"],st_ed_info[j]["ed"],j_route_info[0]["dlist"])
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:

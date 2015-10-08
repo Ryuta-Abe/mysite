@@ -4,8 +4,9 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 # from cms.forms import SensorForm
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
-from pfv.models import pr_req, test, pcwlnode, tmpcol
+from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo
 from pfv.convert_nodeid import *
+from pfv.save_pfvinfo import make_pfvinfo
 from mongoengine import *
 from pymongo import *
 import requests
@@ -30,9 +31,21 @@ def data_list(request, limit=100, date_time=d):
   date_time = datetime_to_12digits(date_time)
 
   # データベースから取り出し
-  t = test.objects().limit(100)
-  ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
-  ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
+  t = test.objects(get_time_no__lte=20150603071300).order_by("-get_time_no").limit(100)
+  ag = test._get_collection().aggregate([
+                                          # {"$limit":1000},
+                                          {"$group":
+                                            {"_id":
+                                              {"get_time_no":"$get_time_no",}
+                                            },
+                                          },
+                                          {"$out": "pcwltime"},
+                                        ],
+                                      allowDiskUse=True,
+                                      # cursor={"batchSize":0}, useCursor=True,
+                                      )
+  # ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
+  # ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
   # t = test.objects(node_id=1244).limit(25000)
   # t = test.objects(get_time_no__gte=20150603114000).limit(1000)
 
@@ -237,11 +250,14 @@ def get_start_end(request):
   from datetime import datetime
   tmp_mac     = ""
   tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
-  tmp_node_id   = 0
+  # tmp_node_id   = 0
   data_lists = []
   count = 0
+  count_all = 0
 
-  datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
+  # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
+  datas = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925182000}}).limit(10000).sort("_id.get_time_no",-1).sort("_id.mac")
+  tmp_node_id = convert_nodeid(datas[0]['nodelist'][0]['node_id'])
   for data in datas:
     data['id'] = data['_id']
 
@@ -251,33 +267,38 @@ def get_start_end(request):
 
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
 
+      data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
+
+      for list_data in data['nodelist']:
+        list_data['node_id'] = convert_nodeid(list_data['node_id'])
+
       if ((data['id']['get_time_no'] - tmp_startdt).seconds  < 60):
         tmp_enddt   = data['id']['get_time_no']
 
-        data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
-
-        for list_data in data['nodelist']:
-          list_data['node_id'] = convert_nodeid(list_data['node_id'])
         del(data['_id'])
         # data['nodelist'] = data['nodelist'][0]
 
-        se_data =  {"mac":data["id"]["mac"],
-                    "start_time":tmp_startdt,
-                    "end_time"  :tmp_enddt,
-                    "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                    "start_node":tmp_node_id,
-                    "end_node"  :data["nodelist"][0]["node_id"],
-                    }
+        if (data["nodelist"][0]["node_id"] != tmp_node_id):
+          pass
 
-        # print(tmp_enddt - tmp_startdt)
-        # if (se_data["start_node"] != 0):
-        data_lists.append(se_data)
-        count += 1
+          se_data =  {"mac":data["id"]["mac"],
+                      "start_time":tmp_startdt,
+                      "end_time"  :tmp_enddt,
+                      "interval"  :(tmp_enddt - tmp_startdt).seconds,
+                      "start_node":tmp_node_id,
+                      "end_node"  :data["nodelist"][0]["node_id"],
+                      }
+
+          # print(tmp_enddt - tmp_startdt)
+          # if (se_data["start_node"] != 0):
+          data_lists.append(se_data)
+          count += 1
           
-        tmp_node_id = data["nodelist"][0]["node_id"]
-        tmp_startdt = data['id']['get_time_no']
-      else:
-        tmp_startdt = data['id']['get_time_no']
+      tmp_node_id = data["nodelist"][0]["node_id"]
+      tmp_startdt = data['id']['get_time_no']
+      # else:
+        # tmp_node_id = data["nodelist"][0]["node_id"]
+        # tmp_startdt = data['id']['get_time_no']
         # tmp_node_id = 0
 
     else:
@@ -287,9 +308,11 @@ def get_start_end(request):
       # tmp_node_id = 0
 
     # data_lists.reverse()
-    data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
+    count_all += 1
+  data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
     # data_lists.remove({"start_node":0})
+  make_pfvinfo(data_lists)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
-                              {"datas":data_lists, "c":count} 
+                              {"datas":data_lists, "count":count, "count_all":count_all} 
                             )  
