@@ -73,3 +73,11 @@ class pcwlroute(Document):
     meta = {
         "db_alias" : "nm4bd",
     }
+
+class pcwltime(Document):
+    _id = StringField()
+    datetime = DateTimeField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
