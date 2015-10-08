@@ -90,6 +90,7 @@ def optimize_direction(st,ed,route_info):
 
 def make_pfvinfo(dataset):
 	pfvinfo.objects.all().delete()
+
 	for data in dataset:
 		interval = round(data["interval"])
 		tmp_plist = []
@@ -126,7 +127,12 @@ def make_pfvinfo(dataset):
 		# 20秒以上の間隔の場合
 		else:
 			num = round(interval / 10) # 40秒間隔の場合, num = 4
-			tlist = pcwltime.objects(datetime = data["start_time"]).limit(num).scalar("datetime")
+			# tlist = [data["start_time"], # tlistは時間情報のDBから取り出すように後で変える
+			# 		datetime.datetime(2014,11,10,11,10,19),
+			# 		datetime.datetime(2014,11,10,11,10,29),
+			# 		datetime.datetime(2014,11,10,11,10,39),
+			# 		datetime.datetime(2014,11,10,11,10,49)]
+			tlist = pcwltime.objects()
 
 			for route in route_info: # ある経路に対して以下を実行
 
@@ -155,6 +161,9 @@ def make_pfvinfo(dataset):
 						t_count += 1
 					else :
 						n_count += 1
+				if (st_ed_info == []):
+					pass
+					import pdb; pdb.set_trace()  # breakpoint 9909a52f //
 				st_ed_info.append({"st":st_ed_info[-1]["ed"],"ed":data["end_node"]}) # st_ed_infoの完成,例：[{'ed': 2, 'st': 1}, {'ed': 3, 'st': 2}]
 				print("st_ed_info = "+str(st_ed_info))
 
@@ -185,13 +194,13 @@ def make_pfvinfo(dataset):
 					print(str(tlist[j])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
 # 出発時刻、出発点、到着時刻、到着点のデータセット
-dataset = []
-dataset.append({"mac":"a","start_node":11,"start_time":datetime.datetime(2014,11,10,11,10,9),"end_node":1,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
-dataset.append({"mac":"b","start_node":1,"start_time":datetime.datetime(2014,11,10,11,10,9),"end_node":5,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
-dataset.append({"mac":"c","start_node":2,"start_time":datetime.datetime(2014,11,10,11,10,59),"end_node":4,"end_time":datetime.datetime(2014,11,10,11,11,9),"interval":10})
-dataset.append({"mac":"d","start_node":4,"start_time":datetime.datetime(2014,11,10,11,11,9),"end_node":16,"end_time":datetime.datetime(2014,11,10,11,11,19),"interval":10})
+# dataset = []
+# dataset.append({"mac":"a","start_node":11,"start_time":datetime.datetime(2014,11,10,11,10,9),"end_node":1,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
+# dataset.append({"mac":"b","start_node":1,"start_time":datetime.datetime(2014,11,10,11,10,9),"end_node":5,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
+# dataset.append({"mac":"c","start_node":2,"start_time":datetime.datetime(2014,11,10,11,10,59),"end_node":4,"end_time":datetime.datetime(2014,11,10,11,11,9),"interval":10})
+# dataset.append({"mac":"d","start_node":4,"start_time":datetime.datetime(2014,11,10,11,11,9),"end_node":16,"end_time":datetime.datetime(2014,11,10,11,11,19),"interval":10})
 
-# 保存テスト
-make_pfvinfo(dataset)
+# # 保存テスト
+# make_pfvinfo(dataset)
 
 print("エラー無しやな")

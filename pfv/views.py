@@ -46,8 +46,8 @@ def data_list(request, limit=100, date_time=d):
                                       # cursor={"batchSize":0}, useCursor=True,
                                       )
   jdatas = db.tmppcwltime.find()
-  # pcwltime.objects.all().delete()
-
+  pcwltime.objects.all().delete()
+  
   for jdata in jdatas:
     jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
     del(jdata['_id'])
