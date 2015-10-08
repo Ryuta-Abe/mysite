@@ -30,7 +30,7 @@ class pcwlnode(Document):
 
 # 人流情報
 class pfvinfo(Document):
-    plist = DictField()
+    plist = ListField(DictField())
     datetime = DateTimeField()
 
     meta = {
@@ -61,6 +61,14 @@ class tmpcol(Document):
     mac         = ListField()
     get_time_no = ListField()
     nodelist    = ListField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+class pcwlroute(Document):
+    query = ListField(IntField())
+    dlist = ListField(ListField(DictField()))
 
     meta = {
         "db_alias" : "nm4bd",
