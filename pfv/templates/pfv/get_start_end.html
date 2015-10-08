@@ -1,0 +1,39 @@
+
+{% extends "base.html" %}
+
+{% block title %}データ一覧{% endblock title %}
+
+{% block extrahead %}
+<style>
+table {
+  margin-top: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <h3> 分析終了 {{count}}件 / {{count_all}}件中</h3>
+    <table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
+    <thead>    
+      <tr>
+        <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+        <th class="table-filterable">mac</th>
+        <th class="table-filterable">start_time</th>
+        <th class="table-filterable">end_time</th>
+        <th class="table-filterable">node_dorection</th>
+        <th class="table-filterable">interval[sec]</th>
+      </tr>
+    </thead><!-- 
+    {% for s in datas %}
+      <tbody>
+        <tr>
+          <td align="center">{{s.mac}}</td>
+          <td align="center">{{s.start_time}}</td>
+          <td align="center">{{s.end_time}}</td>
+          <td align="center">{{s.start_node}}→{{s.end_node}}</td>
+          <td align="center">{{s.interval}}</td>
+        </tr>
+      </tbody>
+    {% endfor %} -->
+    </table>
+{% endblock content %}

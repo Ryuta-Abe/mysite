@@ -28,6 +28,15 @@ class pcwlnode(Document):
         "db_alias" : "nm4bd",
     }
 
+# 人流情報
+class pfvinfo(Document):
+    plist = ListField(DictField())
+    datetime = DateTimeField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 class test(Document):
     _id          = StringField(max_length=255)
     node_id     = IntField()
@@ -52,6 +61,22 @@ class tmpcol(Document):
     mac         = ListField()
     get_time_no = ListField()
     nodelist    = ListField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+class pcwlroute(Document):
+    query = ListField(IntField())
+    dlist = ListField(ListField(DictField()))
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+class pcwltime(Document):
+    _id = StringField()
+    datetime = DateTimeField()
 
     meta = {
         "db_alias" : "nm4bd",
