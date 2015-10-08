@@ -268,7 +268,9 @@ def get_start_end(request):
   count_all = 0
 
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
-  datas = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925182000}}).sort("_id.get_time_no",-1).sort("_id.mac")
+  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
+  # tmp = []
+  # tmp += datas
   tmp_node_id = convert_nodeid(datas[0]['nodelist'][0]['node_id'])
   for data in datas:
     data['id'] = data['_id']

@@ -122,17 +122,12 @@ def make_pfvinfo(dataset):
 			print(str(data["start_time"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
 		elif (round(interval / 10) == 0):
-			break
+			print("ばーか")
 
 		# 20秒以上の間隔の場合
 		else:
 			num = round(interval / 10) # 40秒間隔の場合, num = 4
-			# tlist = [data["start_time"], # tlistは時間情報のDBから取り出すように後で変える
-			# 		datetime.datetime(2014,11,10,11,10,19),
-			# 		datetime.datetime(2014,11,10,11,10,29),
-			# 		datetime.datetime(2014,11,10,11,10,39),
-			# 		datetime.datetime(2014,11,10,11,10,49)]
-			tlist = pcwltime.objects()
+			tlist = pcwltime.objects(datetime__gte = data["start_time"]).order_by("datetime").limit(num).scalar("datetime")
 
 			for route in route_info: # ある経路に対して以下を実行
 
