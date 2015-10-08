@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 # from cms.forms import SensorForm
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
-from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo
+from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pcwltime
 from pfv.convert_nodeid import *
 from pfv.save_pfvinfo import make_pfvinfo
 from mongoengine import *
@@ -26,6 +26,7 @@ db = client.nm4bd
 
 # データリスト画面 http://localhost:8000/cms/data_list/
 def data_list(request, limit=100, date_time=d):
+  from datetime import datetime
  
   # 日付をstr12桁に合わせる --> 2014-11-20 19:40
   date_time = datetime_to_12digits(date_time)
@@ -39,11 +40,22 @@ def data_list(request, limit=100, date_time=d):
                                               {"get_time_no":"$get_time_no",}
                                             },
                                           },
-                                          {"$out": "pcwltime"},
+                                          {"$out": "tmppcwltime"},
                                         ],
                                       allowDiskUse=True,
                                       # cursor={"batchSize":0}, useCursor=True,
                                       )
+  jdatas = db.tmppcwltime.find()
+  # pcwltime.objects.all().delete()
+
+  for jdata in jdatas:
+    jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
+    del(jdata['_id'])
+    timedata = pcwltime(
+                      datetime = jdata['datetime'],
+                      )
+    timedata.save()
+
   # ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
   # ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
   # t = test.objects(node_id=1244).limit(25000)
@@ -256,7 +268,7 @@ def get_start_end(request):
   count_all = 0
 
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
-  datas = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925182000}}).limit(10000).sort("_id.get_time_no",-1).sort("_id.mac")
+  datas = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925182000}}).sort("_id.get_time_no",-1).sort("_id.mac")
   tmp_node_id = convert_nodeid(datas[0]['nodelist'][0]['node_id'])
   for data in datas:
     data['id'] = data['_id']
