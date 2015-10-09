@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}PFVマップ{% endblock title %}
+{% block title %}人流マップ{% endblock title %}
 
 {% block extrahead %}
 <style>
@@ -39,7 +39,6 @@
 <form name="Sample_form" action="Sample.html">
   <a id="btn_simple" onclick="simple_color()" class="btn btn-default btn-sm">単　色</a>
   <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
-  <a id="btn_RealTime" onclick="RealTime()" class="btn btn-default btn-sm">RealTime</a>
   　　<!-- ボタン間にスペースを -->
   取得日時：<font id="got_datetime" size="4"></font>
   　(<a href="javascript:void(0)" id="category_1" onclick="show('1');">選択</a>)
@@ -352,6 +351,10 @@
     .on( "mouseout", function(d){
       div.transition().duration(300)
       .style("opacity",0).text("　")
+    })
+    // クリック時の動作
+    .on( "click", function(d){
+      jump_graph(d.direction);
     });
     // 2本の矢印をアニメーション付きでずらす
     path.transition().duration(1000).attr({
@@ -541,6 +544,21 @@
       .style("opacity",function(d){return d/10;})
     }
 
+    // 矢印クリック時の動作
+    function jump_graph(dir){
+
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+
+      var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
+      
+      window.open("{% url 'pfv:pfv_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/direction=" + direction,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+    }
+
     // セレクトボックスの値をdatetimeに合わせる
     function set_selectbox(){
       var year = datetime.getFullYear() - 2014;
@@ -594,7 +612,7 @@
       });
     }
 
-    // JSONをajaxで読み込む
+    // セレクトボックスの日付のJSONをajaxで読み込む
     function Load_Form(){
       if (flag_RealTime){ // リアルタイムビュー状態ならそれを中断する
         d3.select("#btn_RealTime").style("color","black");
@@ -616,6 +634,7 @@
       Load_JSON(datetime);
     }
 
+    // xx秒戻るor進む
     function slide_DT(s){ // s=1なら戻る,s=-1なら進む
       if (flag_RealTime){ // リアルタイムビュー状態ならそれを中断する
         d3.select("#btn_RealTime").style("color","black");

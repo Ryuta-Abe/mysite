@@ -68,7 +68,7 @@ def data_list(request, limit=100, date_time=d):
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
 def pfv_map(request, date_time=999):
 
-  lt = datetime.datetime.today()
+  # lt = datetime.datetime.today()
   lt = datetime.datetime(2015,6,3,12,10,30)
   gt = lt - datetime.timedelta(seconds = 10) # 10秒前までのデータを取得
 
@@ -82,8 +82,16 @@ def pfv_map(request, date_time=999):
   # pfv情報の取り出し
   _pfvinfo = []
   _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
-  _pfvinfo = _pfvinfo[0]["plist"]
-
+  if len(_pfvinfo) == 1:
+    _pfvinfo = _pfvinfo[0]["plist"]
+  elif len(_pfvinfo) > 1: # 1秒ズレなどで2つ以上のpfvinfoを取り出した場合、2つを合成
+    for i in range(1,len(_pfvinfo)):
+      for j in range(0,len(_pfvinfo[i]["plist"])):
+        _pfvinfo[i]["plist"][j]["size"] += _pfvinfo[i-1]["plist"][j]["size"]
+    _pfvinfo = _pfvinfo[-1]["plist"]
+  else :
+    _pfvinfo = []
+  
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
                               ,'day':lt.day,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
@@ -98,7 +106,15 @@ def pfv_map_json(request, date_time=999):
   # pfv情報の取り出し
   _pfvinfo = []
   _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
-  _pfvinfo = _pfvinfo[0]["plist"]
+  if len(_pfvinfo) == 1:
+    _pfvinfo = _pfvinfo[0]["plist"]
+  elif len(_pfvinfo) > 1: # 1秒ズレなどで2つ以上のpfvinfoを取り出した場合、2つを合成
+    for i in range(1,len(_pfvinfo)):
+      for j in range(0,len(_pfvinfo[i]["plist"])):
+        _pfvinfo[i]["plist"][j]["size"] += _pfvinfo[i-1]["plist"][j]["size"]
+    _pfvinfo = _pfvinfo[-1]["plist"]
+  else :
+    _pfvinfo = []
   
   return render_json_response(request, _pfvinfo) # dataをJSONとして出力
 
@@ -115,6 +131,30 @@ def render_json_response(request, data, status=None): # response を JSON で返
   else:
       response = HttpResponse(json_str, content_type='application/json; charset=UTF-8', status=status)
   return response
+
+# pfvグラフ
+def pfv_graph(request, date_time=999, direction="2205"):
+
+  lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
+
+  # DBクエリ指定テスト
+  st = int(direction[0:2])
+  ed = int(direction[2:4])
+  _pfvinfo_list = []
+  _pfvinfo_list += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  for i in range(0,len(_pfvinfo_list[0]["plist"])):
+    if (_pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (_pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
+      num = i
+  pfvgraph_info = []
+  for _pfvinfo in _pfvinfo_list:
+    pfvgraph_info.append({"datetime":_pfvinfo["datetime"],"size":_pfvinfo["plist"][num]["size"]})
+
+  return render_to_response('pfv/pfv_graph.html',  # 使用するテンプレート
+                              {'pfvgraph_info': pfvgraph_info, 'start_node':st, 'end_node':ed
+                              ,'year':lt.year,'month':lt.month,'day':lt.day
+                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                              )
 
 def aggregate_data(request):
   ag = test._get_collection().aggregate([
