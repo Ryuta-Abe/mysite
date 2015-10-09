@@ -15,7 +15,7 @@ import json
 import math
 import datetime
 import locale
-from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift_time, dt_from_iso_to_str, dt_insert_partition_to_min, dt_from_iso_to_jap
+from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift_time, dt_from_iso_to_str, dt_insert_partition_to_min, dt_from_iso_to_jap, dt_from_14digits_to_iso
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
@@ -69,139 +69,36 @@ def data_list(request, limit=100, date_time=d):
 def pfv_map(request, date_time=999):
 
   lt = datetime.datetime.today()
+  lt = datetime.datetime(2015,6,3,12,10,30)
+  gt = lt - datetime.timedelta(seconds = 10) # 10秒前までのデータを取得
 
   # pcwl情報の取り出し
   _pcwlnode = []
   _pcwlnode += pcwlnode.objects()
 
-  n_id = convert_nodeid(1240)
-  ag = test._get_collection().aggregate([{"$group":{"_id":{"mac":"$mac", "get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
+  # n_id = convert_nodeid(1240)
+  # ag = test._get_collection().aggregate([{"$group":{"_id":{"mac":"$mac", "get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
 
   # pfv情報の取り出し
-  import random
   _pfvinfo = []
-
-  _pfvinfo.append({'direction':[1,2],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[2,3],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[3,4],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[4,5],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[5,6],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[6,7],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[6,23],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[5,22],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[7,8],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[8,27],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[27,9],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[9,10],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[10,11],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[20,22],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[8,24],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[24,16],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[9,12],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[13,12],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[12,14],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[14,15],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[15,16],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[16,17],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[17,18],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[18,19],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[19,20],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[20,21],'size':random.randint(0, 10),'datetime':lt})
-
-  _pfvinfo.append({'direction':[2,1],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[3,2],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[4,3],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[5,4],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[6,5],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[7,6],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[8,7],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[23,6],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[22,5],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[27,8],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[9,27],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[10,9],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[11,10],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[22,20],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[24,8],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[16,24],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[12,9],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[12,13],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[14,12],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[15,14],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[16,15],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[17,16],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[18,17],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[19,18],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[20,19],'size':random.randint(0, 10),'datetime':lt})
-  _pfvinfo.append({'direction':[21,20],'size':random.randint(0, 10),'datetime':lt})
+  _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  _pfvinfo = _pfvinfo[0]["plist"]
 
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
-                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute} 
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
 
 # pfvマップ用JSON
-def pfv_map_json(request, date_time=999):
+def pfv_map_json(request, date_time=999):  
 
-  lt = datetime.datetime.today()
+  lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = 10) # 10秒前までのデータを取得  
 
   # pfv情報の取り出し
-  import random
   _pfvinfo = []
-
-  _pfvinfo.append({'direction':[1,2],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[2,3],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[3,4],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[4,5],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[5,6],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[6,7],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[6,23],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[5,22],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[7,8],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[8,27],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[27,9],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[9,10],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[10,11],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[20,22],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[8,24],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[24,16],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[9,12],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[13,12],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[12,14],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[14,15],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[15,16],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[16,17],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[17,18],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[18,19],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[19,20],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[20,21],'size':random.randint(0, 10)})
-
-  _pfvinfo.append({'direction':[2,1],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[3,2],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[4,3],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[5,4],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[6,5],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[7,6],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[8,7],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[23,6],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[22,5],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[27,8],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[9,27],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[10,9],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[11,10],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[22,20],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[24,8],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[16,24],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[12,9],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[12,13],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[14,12],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[15,14],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[16,15],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[17,16],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[18,17],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[19,18],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[20,19],'size':random.randint(0, 10)})
-  _pfvinfo.append({'direction':[21,20],'size':random.randint(0, 10)})
+  _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  _pfvinfo = _pfvinfo[0]["plist"]
   
   return render_json_response(request, _pfvinfo) # dataをJSONとして出力
 

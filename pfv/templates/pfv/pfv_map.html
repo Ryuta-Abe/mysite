@@ -141,11 +141,24 @@
         <option id="minute55" value="55"/>55</option>
   </select>
   分
+  <select name="textbox_second">
+        <option id="second00" value="00"/>0</option>
+        <option id="second10" value="10"/>10</option>
+        <option id="second20" value="20"/>20</option>
+        <option id="second30" value="30"/>30</option>
+        <option id="second40" value="40"/>40</option>
+        <option id="second50" value="50"/>50</option>
+  </select>
+  秒
   <input type="button" value="更新" onclick="Load_Form()" class="btn btn-default btn-sm">
   </span>
   　　<!-- ボタン間にスペースを -->
   <span>
     <select name="textbox_interval">
+        <option value="sec10"/>10秒</option>
+        <option value="sec20"/>20秒</option>
+        <option value="sec30"/>30秒</option>
+        <option value="min01"/>1分</option>
         <option value="min05"/>5分</option>
         <option value="min10"/>10分</option>
         <option value="min20"/>20分</option>
@@ -328,7 +341,7 @@
     // マウスがバーに重なったら説明文を出す
     .on( "mouseover", function(d){
         div.transition().duration(300)
-        .style("opacity",1).text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size+"人")
+        .style("opacity",1).text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1)+"人")
         .style("background",thermography(d.size))
         .style("width", "150px")
         .style("height", "35px")
@@ -528,18 +541,33 @@
       .style("opacity",function(d){return d/10;})
     }
 
+    // セレクトボックスの値をdatetimeに合わせる
+    function set_selectbox(){
+      var year = datetime.getFullYear() - 2014;
+      var minute = datetime.getMinutes()/5;
+      var second = datetime.getSeconds()/10;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
+      document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
+      document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+      document.Sample_form.textbox_second.selectedIndex = second;
+    }
+
+
     // 取得時間を表示
     var year = parseInt({{ year }});
     var month = parseInt({{ month }})-1;
     var day = parseInt({{ day }});
     var hour = parseInt({{ hour }});
     var minute = parseInt({{ minute }});
-    var datetime = new Date(year,month,day,hour,minute);
+    var second = parseInt({{ second }});
+    var datetime = new Date(year,month,day,hour,minute,second);
     // var Real_datetime;
-    // set_selectbox(); // セレクトボックスにdatetimeをセット
+    set_selectbox(); // セレクトボックスにdatetimeをセット
 
     function describe_datetime(){
-      d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2));
+      d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2)+":"+("0"+datetime.getSeconds()).slice(-2));
     }
     describe_datetime();
 
@@ -554,18 +582,62 @@
       var day = ("0"+datetime.getDate()).slice(-2);
       var hour = ("0"+datetime.getHours()).slice(-2);
       var minute = ("0"+datetime.getMinutes()).slice(-2);
+      var second = ("0"+datetime.getSeconds()).slice(-2);
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute,
+        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute + second,
         dataType: 'json',
         success: function(json){
-          d3.select("body").append("p").text("jsonの長さ = "+json.length);
-          // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
-          // d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
-          // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
-          // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
+          describe_datetime();
+          Reload_pfvinfo(json);
         }
       });
+    }
+
+    // JSONをajaxで読み込む
+    function Load_Form(){
+      if (flag_RealTime){ // リアルタイムビュー状態ならそれを中断する
+        d3.select("#btn_RealTime").style("color","black");
+        clearInterval(Timer);
+        flag_RealTime = !flag_RealTime;
+      }
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+      datetime.setYear(parseInt(year));
+      datetime.setMonth(parseInt(month)-1);
+      datetime.setDate(parseInt(day));
+      datetime.setHours(parseInt(hour));
+      datetime.setMinutes(parseInt(minute));
+      datetime.setSeconds(parseInt(second));
+      Load_JSON(datetime);
+    }
+
+    function slide_DT(s){ // s=1なら戻る,s=-1なら進む
+      if (flag_RealTime){ // リアルタイムビュー状態ならそれを中断する
+        d3.select("#btn_RealTime").style("color","black");
+        clearInterval(Timer);
+        flag_RealTime = !flag_RealTime;
+      }
+      var value = Sample_form.textbox_interval.value;
+      var num = s * parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        datetime.setSeconds(datetime.getSeconds() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "min"){
+        datetime.setMinutes(datetime.getMinutes() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "hou") {
+        datetime.setHours(datetime.getHours() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "day") {
+        datetime.setDate(datetime.getDate() - num);
+        Load_JSON(datetime);
+      }
+      set_selectbox();
     }
 
     // リアルタイムビューに切り替える

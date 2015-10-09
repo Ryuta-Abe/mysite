@@ -36,7 +36,7 @@ db = client.nm4bd
 #     # }
 
 # 一旦初期化(位置情報全削除)
-pfvinfo.objects.all().delete()
+# pfvinfo.objects.all().delete()
 
 # 位置情報保存
 def save_pfvinfo(p,d):
