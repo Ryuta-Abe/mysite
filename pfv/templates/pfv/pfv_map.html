@@ -173,8 +173,8 @@
   </select>
   <input type="button" value="戻る" onclick="slide_DT(1)" class="btn btn-default btn-sm">
   <input type="button" value="進む" onclick="slide_DT(-1)" class="btn btn-default btn-sm">
+  <a onclick="Auto_Animation()" class="btn btn-default btn-sm" id="btn_Auto">animation</a>
   </span></div>
-  <!-- <a onclick="Auto_Animation()" class="btn btn-default btn-sm">animation</a> -->
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
 <?xml version="1.0" standalone="no"?>
@@ -713,6 +713,27 @@
           return 1;
         };
       })
+    }
+
+    d3.select("#Auto_Animation").style("color","black");
+    var flag_Auto = false;
+    var Timer;
+    function Auto_Animation(){
+      if (flag_Auto) {
+        flag_Auto = !flag_Auto;
+        d3.select("#btn_Auto").style("color","black");
+        clearInterval(Timer);
+        // Load_Form();
+        describe_datetime();
+      } else {
+        flag_Auto = !flag_Auto;
+        Auto_Ajax();
+        d3.select("#btn_Auto").style("color","blue");
+        Timer = setInterval(Auto_Ajax,1000);
+      };
+    }
+    function Auto_Ajax(){
+      slide_DT(-1);
     }
   </script>
   {% endblock content %}
