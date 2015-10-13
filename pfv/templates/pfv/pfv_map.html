@@ -174,6 +174,16 @@
   <input type="button" value="戻る" onclick="slide_DT(1)" class="btn btn-default btn-sm">
   <input type="button" value="進む" onclick="slide_DT(-1)" class="btn btn-default btn-sm">
   <a onclick="Auto_Animation()" class="btn btn-default btn-sm" id="btn_Auto">animation</a>
+  </span>
+  　　<!-- ボタン間にスペースを -->
+  <span>
+    <select name="selectbox_timerange">
+        <option value="sec10"/>10秒</option>
+        <option value="sec20"/>20秒</option>
+        <option value="sec30"/>30秒</option>
+        <option value="sec60"/>60秒</option>
+  </select>
+  間の人流データを表示
   </span></div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
@@ -601,9 +611,10 @@
       var hour = ("0"+datetime.getHours()).slice(-2);
       var minute = ("0"+datetime.getMinutes()).slice(-2);
       var second = ("0"+datetime.getSeconds()).slice(-2);
+      var timerange = Sample_form.selectbox_timerange.value.slice(-2);
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute + second,
+        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute + second + "/timerange=" + timerange,
         dataType: 'json',
         success: function(json){
           describe_datetime();

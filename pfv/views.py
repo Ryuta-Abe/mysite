@@ -66,55 +66,45 @@ def data_list(request, limit=100, date_time=d):
                               ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
-def pfv_map(request, date_time=999):
+def pfv_map(request, date_time=999, timerange=10):
 
   # lt = datetime.datetime.today()
   lt = datetime.datetime(2015,6,3,12,10,30)
-  gt = lt - datetime.timedelta(seconds = 10) # 10秒前までのデータを取得
+  gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
 
   # pcwl情報の取り出し
   _pcwlnode = []
   _pcwlnode += pcwlnode.objects()
 
-  # n_id = convert_nodeid(1240)
-  # ag = test._get_collection().aggregate([{"$group":{"_id":{"mac":"$mac", "get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
-
   # pfv情報の取り出し
   _pfvinfo = []
   _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
-  if len(_pfvinfo) == 1:
-    _pfvinfo = _pfvinfo[0]["plist"]
-  elif len(_pfvinfo) > 1: # 1秒ズレなどで2つ以上のpfvinfoを取り出した場合、2つを合成
-    for i in range(1,len(_pfvinfo)):
+  if len(_pfvinfo) >= 1:
+    for i in range(1,len(_pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(_pfvinfo[i]["plist"])):
         _pfvinfo[i]["plist"][j]["size"] += _pfvinfo[i-1]["plist"][j]["size"]
     _pfvinfo = _pfvinfo[-1]["plist"]
-  else :
-    _pfvinfo = []
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
-                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                              {'pcwlnode': _pcwlnode,'pfvinfo': _pfvinfo
+                              ,'year':lt.year,'month':lt.month,'day':lt.day
+                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
 
 # pfvマップ用JSON
-def pfv_map_json(request, date_time=999):  
+def pfv_map_json(request, date_time=999, timerange=10):  
 
   lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(seconds = 10) # 10秒前までのデータを取得  
+  gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
 
   # pfv情報の取り出し
   _pfvinfo = []
   _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
-  if len(_pfvinfo) == 1:
-    _pfvinfo = _pfvinfo[0]["plist"]
-  elif len(_pfvinfo) > 1: # 1秒ズレなどで2つ以上のpfvinfoを取り出した場合、2つを合成
-    for i in range(1,len(_pfvinfo)):
+  if len(_pfvinfo) >= 1:
+    for i in range(1,len(_pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(_pfvinfo[i]["plist"])):
         _pfvinfo[i]["plist"][j]["size"] += _pfvinfo[i-1]["plist"][j]["size"]
     _pfvinfo = _pfvinfo[-1]["plist"]
-  else :
-    _pfvinfo = []
   
   return render_json_response(request, _pfvinfo) # dataをJSONとして出力
 
