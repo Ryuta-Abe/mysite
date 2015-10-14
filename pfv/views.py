@@ -23,6 +23,14 @@ d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[
 
 client = MongoClient()
 db = client.nm4bd
+db.pfvinfo.create_index([("datetime", ASCENDING)])
+
+### データ登録方法 ###
+# 1.http://127.0.0.1:8000/pfv/data_list/
+# 2.http://127.0.0.1:8000/pfv/aggregate/
+# 3.http://127.0.0.1:8000/pfv/analyze/
+# 4.http://127.0.0.1:8000/pfv/get_start_end/
+# 5.http://127.0.0.1:8000/pfv/pfv_map/
 
 # データリスト画面 http://localhost:8000/cms/data_list/
 def data_list(request, limit=100, date_time=d):
@@ -34,7 +42,6 @@ def data_list(request, limit=100, date_time=d):
   # データベースから取り出し
   t = test.objects(get_time_no__lte=20150603071300).order_by("-get_time_no").limit(100)
   ag = test._get_collection().aggregate([
-                                          # {"$limit":1000},
                                           {"$group":
                                             {"_id":
                                               {"get_time_no":"$get_time_no",}
@@ -80,8 +87,10 @@ def pfv_map(request, date_time=999):
   # ag = test._get_collection().aggregate([{"$group":{"_id":{"mac":"$mac", "get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
 
   # pfv情報の取り出し
+  # db.pfvinfo.create_index([("datetime", ASCENDING)])
   _pfvinfo = []
-  _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  _pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  # _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
   if len(_pfvinfo) == 1:
     _pfvinfo = _pfvinfo[0]["plist"]
   elif len(_pfvinfo) > 1: # 1秒ズレなどで2つ以上のpfvinfoを取り出した場合、2つを合成
