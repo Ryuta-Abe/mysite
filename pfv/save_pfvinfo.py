@@ -109,14 +109,20 @@ def make_pfvinfo(dataset):
 			pass
 		route_info = optimize_direction(data["start_node"],data["end_node"],route_info[0]["dlist"])
 		print("[出発点,到着点] = "+str([data["start_node"], data["end_node"]])+" , 間隔 = "+str(interval)+" 秒")
-
 		d_total = 0 #全経路の総距離
 		for route in route_info:
 			for node in route:
 				d_total += node["distance"]
-
 		# 10秒間隔の場合
 		if round(interval / 10) == 1:
+			add_total = 0
+			if len(route_info) != 1:
+				for route in route_info:
+					d_route = 0 #一つの経路の距離
+					for node in route:
+						d_route += node["distance"]
+					tmp_add = (d_total - d_route) / d_total / (len(route_info) - 1)
+					add_total += tmp_add * tmp_add
 			for route in route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 				if len(route_info) == 1:
 					add = 1
@@ -124,7 +130,9 @@ def make_pfvinfo(dataset):
 					d_route = 0 #一つの経路の距離
 					for node in route:
 						d_route += node["distance"]
-					add = (d_total - d_route) / d_total / (len(route_info) - 1)
+					tmp_add = (d_total - d_route) / d_total / (len(route_info) - 1)
+					add = tmp_add * tmp_add / add_total
+					import pdb; pdb.set_trace()  # breakpoint e7ba7931 //
 				# for node in route:
 				# 	#add = 1 / len(route_info)
 				# 	tmp_plist = add_size(node["direction"][0],node["direction"][1],add,tmp_plist)
@@ -139,9 +147,15 @@ def make_pfvinfo(dataset):
 		else:
 			num = round(interval / 10) # 40秒間隔の場合, num = 4
 			tlist = pcwltime.objects(datetime__gte = data["start_time"]).order_by("datetime").limit(num).scalar("datetime")
-
+			add_total = 0
+			if len(route_info) != 1:
+				for route in route_info:
+					d_route = 0 #一つの経路の距離
+					for node in route:
+						d_route += node["distance"]
+					tmp_add = (d_total - d_route) / d_total / (len(route_info) - 1)
+					add_total += tmp_add * tmp_add
 			for route in route_info: # ある経路に対して以下を実行
-
 				# 抜けている出発到着情報の補完
 				total_distance = 0 # 経路の合計距離
 				for node in route:
@@ -149,7 +163,9 @@ def make_pfvinfo(dataset):
 				if len(route_info) == 1:
 					add = 1
 				else:
-					add = (d_total - total_distance) / d_total / (len(route_info) - 1)
+					tmp_add = (d_total - total_distance) / d_total / (len(route_info) - 1)
+					add = tmp_add * tmp_add / add_total
+					import pdb; pdb.set_trace()  # breakpoint 1b21c334 //
 				# tmp_distance = 0 # 推定に用いる一時累計距離
 				# st_ed_info = [] # 欠落した出発到着情報を補完するリスト
 				# n_count = 0 # ノード情報のカウンター
