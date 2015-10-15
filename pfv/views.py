@@ -84,9 +84,57 @@ def pfv_map(request, date_time=999, timerange=10):
       for j in range(0,len(_pfvinfo[i]["plist"])):
         _pfvinfo[i]["plist"][j]["size"] += _pfvinfo[i-1]["plist"][j]["size"]
     _pfvinfo = _pfvinfo[-1]["plist"]
+
+  # 滞留端末情報の取り出し
+  _stayinfo = []
+  # DBを未作成なので適当な値
+  s1 = []
+  s2 = []
+  # 時間s1の滞留データ
+  s1.append({"pcwl_id":1,"size":3,"mac_list":["a","b","c"]})
+  s1.append({"pcwl_id":2,"size":1,"mac_list":["d"]})
+  s1.append({"pcwl_id":3,"size":2,"mac_list":["e","f"]})
+  s1.append({"pcwl_id":4,"size":3,"mac_list":["g","h","i"]})
+  for i in range(5,25):
+    s1.append({"pcwl_id":i,"size":0,"mac_list":[]})
+  s1.append({"pcwl_id":27,"size":3,"mac_list":["x","y","z"]})
+  # 時間s2の滞留データ
+  s2.append({"pcwl_id":1,"size":4,"mac_list":["a","b","d","e"]})
+  s2.append({"pcwl_id":2,"size":0,"mac_list":[]})
+  s2.append({"pcwl_id":3,"size":3,"mac_list":["f","b","g"]})
+  s2.append({"pcwl_id":4,"size":2,"mac_list":["j","k"]})
+  for i in range(5,25):
+    s2.append({"pcwl_id":i,"size":0,"mac_list":[]})
+  s2.append({"pcwl_id":27,"size":3,"mac_list":["x","y","z"]})
+
+  _stayinfo = [s1]
+  # 適当な値ここまで
+
+  # 複数の滞留端末情報の合成
+  if len(_pfvinfo) >= 1:
+    for i in range(1,len(_stayinfo)):
+      for j in range(0,len(_stayinfo[i])):
+        _stayinfo[i][j]["size"] += _stayinfo[i-1][j]["size"]
+        for mac in _stayinfo[i][j]["mac_list"]:
+          if mac in _stayinfo[i-1][j]["mac_list"]:
+            _stayinfo[i][j]["size"] -= 1
+          else :
+            _stayinfo[i-1][j]["mac_list"] += [mac]
+        _stayinfo[i][j]["mac_list"] = _stayinfo[i-1][j]["mac_list"]
+    _stayinfo = _stayinfo[-1]
+
+  # 滞留端末情報をPCWL情報にひも付け
+  _pcwlnode_with_stayinfo = []
+  for i in range(0,len(_pcwlnode)):
+    _pcwlnode_with_stayinfo.append({
+      "pcwl_id":_pcwlnode[i]["pcwl_id"],
+      "pos_x":_pcwlnode[i]["pos_x"],
+      "pos_y":_pcwlnode[i]["pos_y"],
+      "size":_stayinfo[i]["size"]
+      })
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode,'pfvinfo': _pfvinfo
+                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': _pfvinfo
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
@@ -105,8 +153,46 @@ def pfv_map_json(request, date_time=999, timerange=10):
       for j in range(0,len(_pfvinfo[i]["plist"])):
         _pfvinfo[i]["plist"][j]["size"] += _pfvinfo[i-1]["plist"][j]["size"]
     _pfvinfo = _pfvinfo[-1]["plist"]
+
+  # 滞留端末情報の取り出し
+  _stayinfo = []
+  s1 = []
+  s2 = []
+
+  s1.append({"pcwl_id":1,"size":3,"mac_list":["a","b","c"]})
+  s1.append({"pcwl_id":2,"size":1,"mac_list":["d"]})
+  s1.append({"pcwl_id":3,"size":2,"mac_list":["e","f"]})
+  s1.append({"pcwl_id":4,"size":3,"mac_list":["g","h","i"]})
+  for i in range(5,25):
+    s1.append({"pcwl_id":i,"size":0,"mac_list":[]})
+  s1.append({"pcwl_id":27,"size":3,"mac_list":["x","y","z"]})
+
+  s2.append({"pcwl_id":1,"size":4,"mac_list":["a","b","d","e"]})
+  s2.append({"pcwl_id":2,"size":0,"mac_list":[]})
+  s2.append({"pcwl_id":3,"size":3,"mac_list":["f","b","g"]})
+  s2.append({"pcwl_id":4,"size":2,"mac_list":["j","k"]})
+  for i in range(5,25):
+    s2.append({"pcwl_id":i,"size":0,"mac_list":[]})
+  s2.append({"pcwl_id":27,"size":3,"mac_list":["x","y","z"]})
+
+  _stayinfo = [s1,s2]
+
+  # 複数の対流端末情報の合成
+  if len(_pfvinfo) >= 1:
+    for i in range(1,len(_stayinfo)):
+      for j in range(0,len(_stayinfo[i])):
+        _stayinfo[i][j]["size"] += _stayinfo[i-1][j]["size"]
+        for mac in _stayinfo[i][j]["mac_list"]:
+          if mac in _stayinfo[i-1][j]["mac_list"]:
+            _stayinfo[i][j]["size"] -= 1
+          else :
+            _stayinfo[i-1][j]["mac_list"] += [mac]
+        _stayinfo[i][j]["mac_list"] = _stayinfo[i-1][j]["mac_list"]
+    _stayinfo = _stayinfo[-1]
+
+  dataset = {"pfvinfo":_pfvinfo,"stayinfo":_stayinfo}
   
-  return render_json_response(request, _pfvinfo) # dataをJSONとして出力
+  return render_json_response(request, dataset) # dataをJSONとして出力
 
 # JSON出力
 def render_json_response(request, data, status=None): # response を JSON で返却

@@ -5,10 +5,13 @@ import math
 from mongoengine import *
 from pymongo import *
 
-from pfv.models import pcwlnode, pfvinfo, pcwlroute, pcwltime
-# connect('nm4bd')
+from pfv.models import pcwlnode, pfvinfo, pcwlroute, pcwltime, stayinfo
+
 client = MongoClient()
 db = client.nm4bd
+
+# ここからコメントアウト
+# connect('nm4bd')
 
 # # PCWLのノード情報
 # class pcwlnode(Document):
@@ -35,8 +38,33 @@ db = client.nm4bd
 #     #     "db_alias" : "nm4bd",
 #     # }
 
-# 一旦初期化(位置情報全削除)
-# pfvinfo.objects.all().delete()
+# # 残留端末情報
+# class stayinfo(Document):
+#     plist = ListField(DictField())
+#     datetime = DateTimeField()
+
+#     # meta = {
+#     #     "db_alias" : "nm4bd",
+#     # }
+
+# class pcwltime(Document):
+#     _id = StringField()
+#     datetime = DateTimeField()
+
+#     # meta = {
+#     #     "db_alias" : "nm4bd",
+#     # }
+
+# ここまでコメントアウト
+
+# PCWLノード情報取り出し
+_pcwlnode = []
+_pcwlnode += pcwlnode.objects()
+
+# PCWL順番を登録(id番のPCWLは_pcwlnode_id[id]番目に保存されている)
+_pcwlnode_id = [0]*99
+for i in range(0,len(_pcwlnode)):
+	_pcwlnode_id[_pcwlnode[i]["pcwl_id"]] = i
 
 # 位置情報保存
 def save_pfvinfo(p,d):
@@ -45,10 +73,6 @@ def save_pfvinfo(p,d):
 		datetime = d
 		)
 	_pfvinfo.save()
-
-# PCWLノード情報取り出し
-_pcwlnode = []
-_pcwlnode += pcwlnode.objects()
 
 # 空のpfvinfoを作成
 def make_empty_pfvinfo(dt):
@@ -188,14 +212,65 @@ def make_pfvinfo(dataset):
 								save_pfvinfo(tmp_plist,tlist[j])
 					print(str(tlist[j])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
-# 出発時刻、出発点、到着時刻、到着点のデータセット
-# dataset = []
-# dataset.append({"mac":"a","start_node":11,"start_time":datetime.datetime(2014,11,10,11,10,9),"end_node":1,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
-# dataset.append({"mac":"b","start_node":1,"start_time":datetime.datetime(2014,11,10,11,10,9),"end_node":5,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
-# dataset.append({"mac":"c","start_node":2,"start_time":datetime.datetime(2014,11,10,11,10,59),"end_node":4,"end_time":datetime.datetime(2014,11,10,11,11,9),"interval":10})
-# dataset.append({"mac":"d","start_node":4,"start_time":datetime.datetime(2014,11,10,11,11,9),"end_node":16,"end_time":datetime.datetime(2014,11,10,11,11,19),"interval":10})
+# 滞留端末情報保存
+def save_stayinfo(p,d):
+	_stayinfo = stayinfo(
+		plist = p,
+		datetime = d
+		)
+	_stayinfo.save()
 
-# # 保存テスト
-# make_pfvinfo(dataset)
+# 空のstayinfoを作成
+def make_empty_stayinfo(dt):
+	print(str(dt)+"の空のstayinfoを作成")
+	plist = []
+	for node in _pcwlnode:
+		plist.append({"pcwl_id":node["pcwl_id"],"size":0,"mac_list":[]})
+	save_stayinfo(plist,dt)
+
+def add_staysize(node_id,mac,tmp_plist):
+	output = []
+	for i in range(0,len(tmp_plist)): # iの例：{ "size" : 0, "direction" : [ 8, 24 ] }
+		if tmp_plist[i]["pcwl_id"] == node_id:
+			output.append({"pcwl_id":tmp_plist[i]["pcwl_id"]
+				,"size":(tmp_plist[i]["size"] + 1)
+				,"mac_list":(tmp_plist[i]["mac_list"]+[mac])
+				})
+		else:
+			output.append(tmp_plist[i])
+	return output
+
+def make_stayinfo(dataset):
+	stayinfo.objects.all().delete()
+
+	for data in dataset:
+		interval = round(data["interval"])
+		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		tlist = pcwltime.objects(datetime__gte = data["start_time"]).order_by("datetime").limit(num).scalar("datetime")
+
+		for i in range(0,num):
+
+			# 残留端末情報の一時データ取り出し
+			tmp_plist = []
+			tmp_plist += stayinfo.objects(datetime = tlist[i]).scalar("plist")
+			if len(tmp_plist) == 0: # この時間の情報がまだDBに登録されていない場合
+				make_empty_stayinfo(tlist[i]) # この時間の空の情報を作成
+				tmp_plist += stayinfo.objects(datetime = tlist[i]).scalar("plist")
+			tmp_plist = tmp_plist[0]
+
+			# 残留端末情報更新
+			tmp_plist = add_staysize(data["start_node"],data["mac"],tmp_plist)
+			stayinfo.objects(datetime = tlist[i]).delete()
+			save_stayinfo(tmp_plist,tlist[i])
+			
+
+# # 出発時刻、出発点、到着時刻、到着点のデータセット
+# dataset = []
+# dataset.append({"mac":"a","start_node":1,"start_time":datetime.datetime(2015,6,3,12,10,9),"end_node":1,"end_time":datetime.datetime(2014,11,10,11,10,59),"interval":50})
+# dataset.append({"mac":"b","start_node":1,"start_time":datetime.datetime(2015,6,3,12,10,9),"end_node":5,"end_time":datetime.datetime(2014,11,10,11,10,49),"interval":40})
+# dataset.append({"mac":"c","start_node":2,"start_time":datetime.datetime(2015,6,3,12,10,59),"end_node":2,"end_time":datetime.datetime(2014,11,10,11,11,9),"interval":10})
+# dataset.append({"mac":"d","start_node":4,"start_time":datetime.datetime(2015,6,3,12,11,9),"end_node":16,"end_time":datetime.datetime(2014,11,10,11,11,19),"interval":10})
+
+# make_stayinfo(dataset)
 
 print("エラー無しやな")
