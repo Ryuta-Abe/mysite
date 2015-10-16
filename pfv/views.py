@@ -6,7 +6,7 @@ from django.template import RequestContext
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
 from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pcwltime
 from pfv.convert_nodeid import *
-from pfv.save_pfvinfo import make_pfvinfo
+from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfo_experiment
 from mongoengine import *
 from pymongo import *
 import requests
@@ -280,6 +280,10 @@ def get_start_end(request):
   count = 0
   count_all = 0
 
+  # 6F実験で用いた端末のMACリスト
+  mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
+  data_lists_experiment = []
+
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
   datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
   # tmp = []
@@ -319,6 +323,8 @@ def get_start_end(request):
           # print(tmp_enddt - tmp_startdt)
           # if (se_data["start_node"] != 0):
           data_lists.append(se_data)
+          if se_data["mac"] in mac_list_experiment:
+            data_lists_experiment.append(se_data)
           count += 1
           
       tmp_node_id = data["nodelist"][0]["node_id"]
@@ -337,8 +343,10 @@ def get_start_end(request):
     # data_lists.reverse()
     count_all += 1
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
+  data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True)
     # data_lists.remove({"start_node":0})
   make_pfvinfo(data_lists)
+  make_pfvinfo_experiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists, "count":count, "count_all":count_all} 

@@ -37,6 +37,15 @@ class pfvinfo(Document):
         "db_alias" : "nm4bd",
     }
 
+# 人流情報(6F実験用)
+class pfvinfoexperiment(Document):
+    plist = ListField(DictField())
+    datetime = DateTimeField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 # 滞留端末情報
 class stayinfo(Document):
     plist = ListField(DictField())
