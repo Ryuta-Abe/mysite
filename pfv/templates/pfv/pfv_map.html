@@ -174,6 +174,16 @@
   <input type="button" value="戻る" onclick="slide_DT(1)" class="btn btn-default btn-sm">
   <input type="button" value="進む" onclick="slide_DT(-1)" class="btn btn-default btn-sm">
   <a onclick="Auto_Animation()" class="btn btn-default btn-sm" id="btn_Auto">animation</a>
+  </span>
+  　　<!-- ボタン間にスペースを -->
+  <span>
+    <select name="selectbox_timerange">
+        <option value="sec10"/>10秒</option>
+        <option value="sec20"/>20秒</option>
+        <option value="sec30"/>30秒</option>
+        <option value="sec60"/>60秒</option>
+  </select>
+  間の人流データを表示
   </span></div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
@@ -190,7 +200,7 @@
     var pcwlnode = [];
     var pfvinfo = [];
     {% for s in pcwlnode %}
-    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},next_id:{{ s.next_id }}});
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},size:{{ s.size }}});
     {% endfor %}
     {% for s in pfvinfo %}
     pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }}});
@@ -237,7 +247,7 @@
     // マウスがバーに重なったら説明文を出す
     .on( "mouseover", function(d){
         div.transition().duration(300)
-        .style("opacity",1).text("x:"+d.pos_x+",y:"+d.pos_y)
+        .style("opacity",1).text("滞留端末数:"+d.size)
         .style("background","purple")
         .style("width", "150px")
         .style("height", "35px")
@@ -601,9 +611,10 @@
       var hour = ("0"+datetime.getHours()).slice(-2);
       var minute = ("0"+datetime.getMinutes()).slice(-2);
       var second = ("0"+datetime.getSeconds()).slice(-2);
+      var timerange = Sample_form.selectbox_timerange.value.slice(-2);
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute + second,
+        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute + second + "/timerange=" + timerange,
         dataType: 'json',
         success: function(json){
           describe_datetime();
@@ -694,7 +705,11 @@
     function Reload_pfvinfo(json){
       // pfvinfoの更新
       for (var i = 0; i < pfvinfo.length; i++) {
-        pfvinfo[i].size = json[i].size;
+        pfvinfo[i].size = json["pfvinfo"][i].size;
+      };
+      // stayinfoの更新
+      for (var i = 0; i < pcwlnode.length; i++) {
+        pcwlnode[i].size = json["stayinfo"][i].size;
       };
       // 画面の更新
       marker.selectAll("path")
