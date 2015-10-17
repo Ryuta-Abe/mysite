@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# from django.http import HttpResponse
-# from django.shortcuts import render_to_response, get_object_or_404, redirect
-# from django.template import RequestContext
+from django.http import HttpResponse
+from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.template import RequestContext
 
-# from models import pr_req, test, pcwlnode
-from convert_nodeid import *
+from pfv.models import pr_req, test, tmpcol
+from pfv.convert_nodeid import *
 from mongoengine import *
 from pymongo import *
 
@@ -13,11 +13,22 @@ import math
 import datetime
 import locale
 
-# 今日の日付
-d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
-d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[-2:]+("0"+str(int(d.minute/5)*5))[-2:] # 201411201940
-lt = datetime.datetime.today()
+client = MongoClient()
+db = client.nm4bd
 
-def __init__(self):
-  ag = test._get_collection().aggregate([{"$group":{"_id":{"mac":"$mac", "get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
-  print (ag)
+def analyze_direction(request):
+  from datetime import datetime
+
+  ag = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925174000,"$lte":20150925181000}}).sort("_id.mac").sort("_id.get_time_no",-1)
+  ana_list = []
+  for jdata in ag:
+    jdata['id'] = jdata['_id']
+    jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
+    jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
+    for list_data in jdata['nodelist']:
+      list_data['node_id'] = convert_nodeid(list_data['node_id'])
+    del(jdata['_id'])
+    ana_list.append(jdata)
+  return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
+                              {'ag': ana_list} 
+                            )

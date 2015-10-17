@@ -7,6 +7,7 @@ from django.template import RequestContext
 from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pcwltime
 from pfv.convert_nodeid import *
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfo_experiment
+from pfv.make_pcwltime import make_pcwltime
 from mongoengine import *
 from pymongo import *
 import requests
@@ -19,11 +20,15 @@ from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
+dt = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[-2:]+("0"+str(int(d.minute/5)*5))[-2:] # 201411201940
 
 client = MongoClient()
 db = client.nm4bd
+db.test.create_index([("get_time_no", DESCENDING)])
 db.pfvinfo.create_index([("datetime", ASCENDING)])
+db.pcwltime.create_index([("datetime", DESCENDING)])
+db.pcwlroute.create_index([("query", ASCENDING)])
 
 ### データ登録方法 ###
 # 1.http://127.0.0.1:8000/pfv/data_list/
@@ -32,7 +37,7 @@ db.pfvinfo.create_index([("datetime", ASCENDING)])
 # 4.http://127.0.0.1:8000/pfv/get_start_end/
 # 5.http://127.0.0.1:8000/pfv/pfv_map/
 
-# データリスト画面 http://localhost:8000/cms/data_list/
+# データリスト画面 http://127.0.0.1:8000/pfv/data_list/  
 def data_list(request, limit=100, date_time=d):
   from datetime import datetime
  
@@ -41,42 +46,17 @@ def data_list(request, limit=100, date_time=d):
 
   # データベースから取り出し
   t = test.objects(get_time_no__lte=20150603071300).order_by("-get_time_no").limit(100)
-  ag = test._get_collection().aggregate([
-                                          {"$group":
-                                            {"_id":
-                                              {"get_time_no":"$get_time_no",}
-                                            },
-                                          },
-                                          {"$out": "tmppcwltime"},
-                                        ],
-                                      allowDiskUse=True,
-                                      # cursor={"batchSize":0}, useCursor=True,
-                                      )
-  jdatas = db.tmppcwltime.find()
-  pcwltime.objects.all().delete()
-  
-  for jdata in jdatas:
-    jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
-    del(jdata['_id'])
-    timedata = pcwltime(
-                      datetime = jdata['datetime'],
-                      )
-    timedata.save()
-
-  # ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
-  # ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
-  # t = test.objects(node_id=1244).limit(25000)
-  # t = test.objects(get_time_no__gte=20150603114000).limit(1000)
 
   return render_to_response('pfv/data_list.html',  # 使用するテンプレート
-                              {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
-                              ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
+                              {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7],
+                               'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
 def pfv_map(request, date_time=999, timerange=10):
-
+  import time
   # lt = datetime.datetime.today()
-  lt = datetime.datetime(2015,6,3,12,10,30)
+  # lt = datetime.datetime(2015,6,3,12,10,30)
+  lt = datetime.datetime(2015,9,25,18,20,30)
   gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
 
   # pcwl情報の取り出し
@@ -84,10 +64,12 @@ def pfv_map(request, date_time=999, timerange=10):
   _pcwlnode += pcwlnode.objects()
 
   # pfv情報の取り出し
-  # db.pfvinfo.create_index([("datetime", ASCENDING)])
+  # start = time.time()
   _pfvinfo = []
   _pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  # _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  # end = time.time()
+  # print("Time:"+str(end - start))
+
   if len(_pfvinfo) >= 1:
     for i in range(1,len(_pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(_pfvinfo[i]["plist"])):
@@ -131,10 +113,16 @@ def pfv_map(request, date_time=999, timerange=10):
             _stayinfo[i-1][j]["mac_list"] += [mac]
         _stayinfo[i][j]["mac_list"] = _stayinfo[i-1][j]["mac_list"]
     _stayinfo = _stayinfo[-1]
+  # _stayinfo = _stayinfo[0]
 
   # 滞留端末情報をPCWL情報にひも付け
   _pcwlnode_with_stayinfo = []
   for i in range(0,len(_pcwlnode)):
+    # if (type(_stayinfo[i]["size"])==str):
+    #   pass
+    print(_stayinfo)
+    # print(len(_pcwlnode))
+    # print(i)
     _pcwlnode_with_stayinfo.append({
       "pcwl_id":_pcwlnode[i]["pcwl_id"],
       "pos_x":_pcwlnode[i]["pos_x"],
@@ -143,9 +131,9 @@ def pfv_map(request, date_time=999, timerange=10):
       })
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': _pfvinfo
-                              ,'year':lt.year,'month':lt.month,'day':lt.day
-                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': _pfvinfo,
+                               'year':lt.year,'month':lt.month,'day':lt.day,
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
 
 # pfvマップ用JSON
@@ -200,7 +188,7 @@ def pfv_map_json(request, date_time=999, timerange=10):
     _stayinfo = _stayinfo[-1]
 
   dataset = {"pfvinfo":_pfvinfo,"stayinfo":_stayinfo}
-  
+  print(_stayinfo)
   return render_json_response(request, dataset) # dataをJSONとして出力
 
 # JSON出力
@@ -240,123 +228,3 @@ def pfv_graph(request, date_time=999, direction="2205"):
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
-
-def aggregate_data(request):
-  ag = test._get_collection().aggregate([
-                                          # {"$limit":1000},
-                                          {"$group":
-                                            {"_id":
-                                              {"mac":"$mac", 
-                                               "get_time_no":"$get_time_no",
-                                              },
-                                             "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
-                                            },
-                                          },
-                                          {"$out": "tmpcol"},
-                                        ],
-                                      allowDiskUse=True,
-                                      # cursor={"batchSize":0}, useCursor=True,
-                                      )
-
-  return render_to_response('pfv/aggregate_data.html',  # 使用するテンプレート
-                              {} 
-                            )
-
-def analyze_direction(request):
-  from datetime import datetime
-
-  ag = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925174000,"$lte":20150925181000}}).sort("_id.mac").sort("_id.get_time_no",-1)
-  # ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150925183500}}).limit(10000).sort("_id.mac").sort("_id.get_time_no",-1)
-  ana_list = []
-  for jdata in ag:
-    jdata['id'] = jdata['_id']
-    jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
-    jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
-    for list_data in jdata['nodelist']:
-      list_data['node_id'] = convert_nodeid(list_data['node_id'])
-    del(jdata['_id'])
-    ana_list.append(jdata)
-  return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
-                              {'ag': ana_list} 
-                            )
-
-def get_start_end(request):
-  from datetime import datetime
-  tmp_mac     = ""
-  tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
-  # tmp_node_id   = 0
-  data_lists = []
-  count = 0
-  count_all = 0
-
-  # 6F実験で用いた端末のMACリスト
-  mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
-  data_lists_experiment = []
-
-  # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
-  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
-  # tmp = []
-  # tmp += datas
-  tmp_node_id = convert_nodeid(datas[0]['nodelist'][0]['node_id'])
-  for data in datas:
-    data['id'] = data['_id']
-
-    if (data["id"]["mac"] == tmp_mac):
-      # tmp_mac = data["id"]["mac"]
-      # tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
-
-      data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
-
-      data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
-
-      for list_data in data['nodelist']:
-        list_data['node_id'] = convert_nodeid(list_data['node_id'])
-
-      if ((data['id']['get_time_no'] - tmp_startdt).seconds  < 60):
-        tmp_enddt   = data['id']['get_time_no']
-
-        del(data['_id'])
-        # data['nodelist'] = data['nodelist'][0]
-
-        if (data["nodelist"][0]["node_id"] != tmp_node_id):
-          pass
-
-          se_data =  {"mac":data["id"]["mac"],
-                      "start_time":tmp_startdt,
-                      "end_time"  :tmp_enddt,
-                      "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                      "start_node":tmp_node_id,
-                      "end_node"  :data["nodelist"][0]["node_id"],
-                      }
-
-          # print(tmp_enddt - tmp_startdt)
-          # if (se_data["start_node"] != 0):
-          data_lists.append(se_data)
-          if se_data["mac"] in mac_list_experiment:
-            data_lists_experiment.append(se_data)
-          count += 1
-          
-      tmp_node_id = data["nodelist"][0]["node_id"]
-      tmp_startdt = data['id']['get_time_no']
-      # else:
-        # tmp_node_id = data["nodelist"][0]["node_id"]
-        # tmp_startdt = data['id']['get_time_no']
-        # tmp_node_id = 0
-
-    else:
-      tmp_mac = data["id"]["mac"]
-      data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
-      tmp_startdt = data['id']['get_time_no']
-      # tmp_node_id = 0
-
-    # data_lists.reverse()
-    count_all += 1
-  data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
-  data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True)
-    # data_lists.remove({"start_node":0})
-  make_pfvinfo(data_lists)
-  make_pfvinfo_experiment(data_lists_experiment)
-
-  return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
-                              {"datas":data_lists, "count":count, "count_all":count_all} 
-                            )  

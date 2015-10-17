@@ -48,7 +48,8 @@ db = client.nm4bd
 
 # PCWLノード情報取り出し
 _pcwlnode = []
-_pcwlnode += pcwlnode.objects()
+# _pcwlnode += pcwlnode.objects()
+_pcwlnode += db.pcwlnode.find()
 
 # 位置情報保存
 def save_pfvinfo(p,d):
@@ -189,6 +190,8 @@ def make_pfvinfo(dataset):
 								pfvinfo.objects(datetime = tlist[j]).delete()
 								save_pfvinfo(tmp_plist,tlist[j])
 					print(str(tlist[j])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
+
+		# db.pfvinfo.create_index([("datetime", ASCENDING)])
 
 # 滞留端末情報保存
 def save_stayinfo(p,d):
@@ -358,8 +361,7 @@ def make_pfvinfo_experiment(dataset):
 								pfvinfoexperiment.objects(datetime = tlist[j]).delete()
 								save_pfvinfo_experiment(tmp_plist,tlist[j])
 					print(str(tlist[j])+"のpfvinfoexperimentを登録完了, 経路分岐 = "+str(len(route_info)))
-			
-
+		
 # # 出発時刻、出発点、到着時刻、到着点のデータセット
 # dataset = []
 # dataset.append({"mac":"a","start_node":1,"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":11,"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})

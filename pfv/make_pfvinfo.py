@@ -31,6 +31,7 @@ class pcwlroute(Document):
   meta = {
     "db_alias" : "nm4bd"
   }
+  
 def XXX(request):
   st = 1
   ed = 3
@@ -92,9 +93,6 @@ def XXX(request):
       a = a
     else:
       k = k + 1
-
-
-
 
 
 #old
@@ -159,13 +157,6 @@ def XXX(request):
   #           if mod_k == 0:
   #             j= j + 1
   #           # else: break
-
-
-
-
-
-
-
 
   # ag = db.tmpcol.find({"_id.get_time_no":{"$lte":20150603122000}}).limit(100).sort("_id.mac").sort("_id.get_time_no",-1)
   # ana_list = []
