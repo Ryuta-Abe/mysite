@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, tmpcol
+from pfv.models import pr_req, test, tmpcol, pcwlroute
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfo_experiment
 from pfv.convert_nodeid import *
 from mongoengine import *
@@ -19,10 +19,9 @@ db = client.nm4bd
 db.tmpcol.create_index([("get_time_no", DESCENDING), ("mac", ASCENDING)])
 
 def get_start_end(request):
-  from datetime import datetime
+  from datetime import datetime, timedelta
   tmp_mac     = ""
   tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
-  # tmp_node_id   = 0
   data_lists = []
   count = 0
   count_all = 0
@@ -30,10 +29,12 @@ def get_start_end(request):
   # 6F実験で用いた端末のMACリスト
   mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
   data_lists_experiment = []
+  node_history = []
 
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
-  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac").limit(10000)
+  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
   tmp_node_id = convert_nodeid(datas[0]['nodelist'][0]['node_id'])
+
   for data in datas:
     data['id'] = data['_id']
 
@@ -42,24 +43,60 @@ def get_start_end(request):
       data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
 
       for list_data in data['nodelist']:
+
         list_data['node_id'] = convert_nodeid(list_data['node_id'])
-      if ((data['id']['get_time_no'] - tmp_startdt).seconds  < 60):
-        tmp_enddt   = data['id']['get_time_no']
+      if ((data['id']['get_time_no'] - tmp_startdt).seconds < 60):
+        tmp_enddt = data['id']['get_time_no']
         del(data['_id'])
 
-        if (data["nodelist"][0]["node_id"] != tmp_node_id):
-          se_data =  {"mac":data["id"]["mac"],
-                      "start_time":tmp_startdt,
-                      "end_time"  :tmp_enddt,
-                      "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                      "start_node":tmp_node_id,
-                      "end_node"  :data["nodelist"][0]["node_id"],
-                      }
-          data_lists.append(se_data)
+        # 行き来する端末除外
+        repeat_cnt = 0
+        tmp_nodelist = []
+        for nodedata in data["nodelist"]:
+          tmp_nodelist.append(nodedata['node_id'])
 
-          if se_data["mac"] in mac_list_experiment:
-            data_lists_experiment.append(se_data)
-          count += 1
+        node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
+        for histoy in node_history:
+          if not(data['id']['get_time_no'] - timedelta(minutes=10) <= histoy["dt"] <= data['id']['get_time_no'] + timedelta(minutes=10)):
+            node_history.remove(histoy)
+          else:
+            if (data["nodelist"][0]["node_id"] in histoy["node"]):
+              repeat_cnt += 1
+
+        if (data["nodelist"][0]["node_id"] != tmp_node_id) and (repeat_cnt <= 4):
+
+          route_info = [] # 経路情報の取り出し
+          route_info += db.pcwlroute.find({"$and":[
+                                                    {"query" : tmp_node_id}, 
+                                                    {"query" : data["nodelist"][0]["node_id"]}
+                                                  ]})
+
+          d_total = 0
+          tmp_d_total = 0
+          interval = (tmp_enddt - tmp_startdt).seconds
+          for info in route_info:
+            # for part in route:
+            for route in info["dlist"]:
+              for part in route:
+                pass
+                tmp_d_total += part["distance"]
+            if (tmp_d_total > d_total):
+              d_total = tmp_d_total
+
+          if (d_total < interval*20):
+            se_data =  {"mac":data["id"]["mac"],
+                        "start_time":tmp_startdt,
+                        "end_time"  :tmp_enddt,
+                        "interval"  :(tmp_enddt - tmp_startdt).seconds,
+                        "start_node":tmp_node_id,
+                        "end_node"  :data["nodelist"][0]["node_id"],
+                        }
+            data_lists.append(se_data)
+            count += 1
+
+          # 実験用
+          # if se_data["mac"] in mac_list_experiment:
+          #   data_lists_experiment.append(se_data)
           
       tmp_node_id = data["nodelist"][0]["node_id"]
       tmp_startdt = data['id']['get_time_no']
@@ -68,17 +105,23 @@ def get_start_end(request):
       tmp_mac = data["id"]["mac"]
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
       tmp_startdt = data['id']['get_time_no']
+      node_history = []
+      tmp_nodelist = []
+      for nodedata in data["nodelist"]:
+        tmp_nodelist.append(nodedata['node_id'])
+
+      node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
 
     count_all += 1
 
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
-  data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True)
+  # data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用
 
-  import time
-  start = time.time()
+  # import time
+  # start = time.time()
   make_pfvinfo(data_lists)
-  end = time.time()
-  print("time:"+str(end-start))
+  # end = time.time()
+  # print("time:"+str(end-start))
   # make_pfvinfo_experiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
