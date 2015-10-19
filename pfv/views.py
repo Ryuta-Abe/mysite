@@ -171,8 +171,8 @@ def pfv_map_json(request, date_time=999, timerange=10):
 
   _stayinfo = [s1,s2]
 
-  # 複数の対流端末情報の合成
-  if len(_pfvinfo) >= 1:
+  # 複数の滞留端末情報の合成
+  if len(_stayinfo) >= 1:
     for i in range(1,len(_stayinfo)):
       for j in range(0,len(_stayinfo[i])):
         _stayinfo[i][j]["size"] += _stayinfo[i-1][j]["size"]

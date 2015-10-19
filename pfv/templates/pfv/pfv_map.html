@@ -675,13 +675,25 @@
 
     function Reload_pfvinfo(json){
       // pfvinfoの更新
-      for (var i = 0; i < pfvinfo.length; i++) {
-        pfvinfo[i].size = json["pfvinfo"][i].size;
+      if (json["pfvinfo"].length >= 1) {
+        for (var i = 0; i < pfvinfo.length; i++) {
+          pfvinfo[i].size = json["pfvinfo"][i].size;
+        }
+      } else {  // pfvinfoが空だった場合
+        for (var i = 0; i < pfvinfo.length; i++) {
+          pfvinfo[i].size = 0;
+        }
       };
       // stayinfoの更新
-      for (var i = 0; i < pcwlnode.length; i++) {
-        pcwlnode[i].size = json["stayinfo"][i].size;
-      };
+      if (json["stayinfo"].length >= 1) {
+        for (var i = 0; i < pcwlnode.length; i++) {
+          pcwlnode[i].size = json["stayinfo"][i].size;
+        }
+      } else {  // stayinfoが空だった場合
+        for (var i = 0; i < pcwlnode.length; i++) {
+          pcwlnode[i].size = 0;
+        }
+      }
       // 画面の更新
       var animation_time = 500;
       marker.selectAll("path")
