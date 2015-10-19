@@ -99,7 +99,7 @@ def pfv_map(request, date_time=999, timerange=10):
   # 適当な値ここまで
 
   # 複数の滞留端末情報の合成
-  if len(_pfvinfo) >= 1:
+  if len(_stayinfo) >= 1:
     for i in range(1,len(_stayinfo)):
       for j in range(0,len(_stayinfo[i])):
         _stayinfo[i][j]["size"] += _stayinfo[i-1][j]["size"]
@@ -141,7 +141,7 @@ def pfv_map_json(request, date_time=999, timerange=10):
 
   # pfv情報の取り出し
   _pfvinfo = []
-  _pfvinfo += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  _pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   if len(_pfvinfo) >= 1:
     for i in range(1,len(_pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(_pfvinfo[i]["plist"])):
@@ -212,7 +212,7 @@ def pfv_graph(request, date_time=999, direction="2205"):
   st = int(direction[0:2])
   ed = int(direction[2:4])
   _pfvinfo_list = []
-  _pfvinfo_list += pfvinfo.objects(datetime__gt = gt, datetime__lt = lt)
+  _pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   for i in range(0,len(_pfvinfo_list[0]["plist"])):
     if (_pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (_pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
       num = i
