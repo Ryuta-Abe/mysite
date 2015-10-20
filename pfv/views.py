@@ -27,7 +27,7 @@ db = client.nm4bd
 # データリスト画面 http://localhost:8000/cms/data_list/
 def data_list(request, limit=100, date_time=d):
   from datetime import datetime
- 
+
   # 日付をstr12桁に合わせる --> 2014-11-20 19:40
   date_time = datetime_to_12digits(date_time)
 
@@ -45,16 +45,30 @@ def data_list(request, limit=100, date_time=d):
                                       allowDiskUse=True,
                                       # cursor={"batchSize":0}, useCursor=True,
                                       )
-  jdatas = db.tmppcwltime.find()
+  jdatas = db.tmppcwltime.find().sort("_id")
   pcwltime.objects.all().delete()
-  
+  tmp_time = 0 #一つ前の時刻
   for jdata in jdatas:
     jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
     del(jdata['_id'])
-    timedata = pcwltime(
-                      datetime = jdata['datetime'],
-                      )
-    timedata.save()
+    if tmp_time == 0:
+      tmp_time = jdata['datetime']
+      timedata = pcwltime(
+                         datetime = jdata['datetime'],
+                         )
+      timedata.save()
+    else:
+      j_tmp_time = tmp_time - jdata['datetime']
+      j_time = j_tmp_time.total_seconds()
+      if round(j_time / 10) == 0:
+        pass
+      else:
+        tmp_time = jdata['datetime']
+        timedata = pcwltime(
+                          datetime = jdata['datetime'],
+                           )
+        timedata.save()
+
 
   # ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
   # ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
@@ -137,7 +151,7 @@ def pfv_map(request, date_time=999):
 
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode, 'pfvinfo': _pfvinfo, 'year':lt.year,'month':lt.month
-                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute} 
+                              ,'day':lt.day,'hour':lt.hour,'minute':lt.minute}
                               )
 
 # pfvマップ用JSON
@@ -202,12 +216,12 @@ def pfv_map_json(request, date_time=999):
   _pfvinfo.append({'direction':[19,18],'size':random.randint(0, 10)})
   _pfvinfo.append({'direction':[20,19],'size':random.randint(0, 10)})
   _pfvinfo.append({'direction':[21,20],'size':random.randint(0, 10)})
-  
+
   return render_json_response(request, _pfvinfo) # dataをJSONとして出力
 
 # JSON出力
 def render_json_response(request, data, status=None): # response を JSON で返却
-  
+
   json_str = json.dumps(data, ensure_ascii=False, indent=2)
   callback = request.GET.get('callback')
   if not callback:
@@ -224,7 +238,7 @@ def aggregate_data(request):
                                           # {"$limit":1000},
                                           {"$group":
                                             {"_id":
-                                              {"mac":"$mac", 
+                                              {"mac":"$mac",
                                                "get_time_no":"$get_time_no",
                                               },
                                              "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
@@ -237,7 +251,7 @@ def aggregate_data(request):
                                       )
 
   return render_to_response('pfv/aggregate_data.html',  # 使用するテンプレート
-                              {} 
+                              {}
                             )
 
 def analyze_direction(request):
@@ -255,7 +269,7 @@ def analyze_direction(request):
     del(jdata['_id'])
     ana_list.append(jdata)
   return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
-                              {'ag': ana_list} 
+                              {'ag': ana_list}
                             )
 
 def get_start_end(request):
@@ -307,7 +321,7 @@ def get_start_end(request):
           # if (se_data["start_node"] != 0):
           data_lists.append(se_data)
           count += 1
-          
+
       tmp_node_id = data["nodelist"][0]["node_id"]
       tmp_startdt = data['id']['get_time_no']
       # else:
@@ -328,5 +342,5 @@ def get_start_end(request):
   make_pfvinfo(data_lists)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
-                              {"datas":data_lists, "count":count, "count_all":count_all} 
-                            )  
+                              {"datas":data_lists, "count":count, "count_all":count_all}
+                            )
