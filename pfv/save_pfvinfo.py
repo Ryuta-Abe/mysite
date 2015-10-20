@@ -55,6 +55,24 @@ _pcwlnode = []
 # _pcwlnode += pcwlnode.objects()
 _pcwlnode += db.pcwlnode.find()
 
+# st,edからpfvinfoの登録順を求める(例：pfvinfo_id[3][4] = 4)
+pfvinfo_id = []
+for i in range(0,99):
+	pfvinfo_id.append([0]*99)
+count = 0
+for i in range(0,len(_pcwlnode)):
+	for j in range(0,len(_pcwlnode)):
+		st = _pcwlnode[i]["pcwl_id"] # 出発点
+		ed = _pcwlnode[j]["pcwl_id"] # 到着点
+		if ed in _pcwlnode[i]["next_id"]:
+			pfvinfo_id[st][ed] = count
+			count += 1
+
+# idからstayinfoの登録順を求める
+stayinfo_id = [0]*99
+for i in range(0,len(_pcwlnode)):
+	stayinfo_id[_pcwlnode[i]["pcwl_id"]] = i
+
 # pfvinfo関係
 def make_empty_pfvinfo(dt): # 空のpfvinfoを作成
 	# print(str(dt)+"の空のpfvinfoを作成")
@@ -169,9 +187,7 @@ def make_pfvinfo(dataset):
 						j_route_info = optimize_direction(st_ed_info[j]["st"],st_ed_info[j]["ed"],j_route_info[0]["dlist"])
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:
-								for i in range(0,len(tmp_plist["plist"])): # iの例：{ "size" : 0, "direction" : [ 8, 24 ] }
-									if tmp_plist["plist"][i]["direction"] == [node["direction"][0],node["direction"][1]]:
-										tmp_plist["plist"][i]["size"] += add
+								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
 								db.pfvinfo.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
@@ -203,10 +219,8 @@ def make_stayinfo(dataset):
 				tmp_plist = db.stayinfo.find_one({"datetime":{"$eq":tlist[i]["datetime"]}})
 
 			# 残留端末情報更新
-			for i in range(0,len(tmp_plist["plist"])):
-				if tmp_plist["plist"][i]["pcwl_id"] == data["start_node"]:
-					tmp_plist["plist"][i]["size"] += 1
-					tmp_plist["plist"][i]["mac_list"] += [data["mac"]]
+			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] += 1
+			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["mac_list"] += [data["mac"]]
 			db.stayinfo.save(tmp_plist)
 		print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
 
@@ -312,15 +326,13 @@ def make_pfvinfoexperiment(dataset):
 						j_route_info = optimize_direction(st_ed_info[j]["st"],st_ed_info[j]["ed"],j_route_info[0]["dlist"])
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:
-								for i in range(0,len(tmp_plist["plist"])): # iの例：{ "size" : 0, "direction" : [ 8, 24 ] }
-									if tmp_plist["plist"][i]["direction"] == [node["direction"][0],node["direction"][1]]:
-										tmp_plist["plist"][i]["size"] += add
+								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
 								db.pfvinfoexperiment.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoexperimentを登録完了, 経路分岐 = "+str(len(route_info)))
 
 		db.pfvinfoexperiment.create_index([("datetime", ASCENDING)])
 		
-# # 出発時刻、出発点、到着時刻、到着点のデータセット
+# 出発時刻、出発点、到着時刻、到着点のデータセット
 # dataset = []
 # dataset.append({"mac":"a","start_node":1,"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":11,"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})
 # dataset.append({"mac":"b","start_node":5,"start_time":datetime.datetime(2015,6,3,12,10,24),"end_node":9,"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":30})
@@ -330,7 +342,7 @@ def make_pfvinfoexperiment(dataset):
 
 # import time
 # start = time.time()
-# make_pfvinfoexperiment(dataset)
+# make_pfvinfo(dataset)
 # end = time.time()
 # print("time:"+str(end-start))
 
