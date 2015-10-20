@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
 from pfv.models import pr_req, test, tmpcol, pcwlroute
-from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfo_experiment
+from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfoexperiment, make_stayinfo
 from pfv.convert_nodeid import *
 from mongoengine import *
 from pymongo import *
@@ -23,6 +23,7 @@ def get_start_end(request):
   tmp_mac     = ""
   tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
   data_lists = []
+  data_lists_stay = []
   count = 0
   count_all = 0
 
@@ -63,6 +64,7 @@ def get_start_end(request):
             if (data["nodelist"][0]["node_id"] in histoy["node"]):
               repeat_cnt += 1
 
+        # PFVのデータリスト生成
         if (data["nodelist"][0]["node_id"] != tmp_node_id) and (repeat_cnt <= 4):
 
           route_info = [] # 経路情報の取り出し
@@ -97,6 +99,17 @@ def get_start_end(request):
           # 実験用
           # if se_data["mac"] in mac_list_experiment:
           #   data_lists_experiment.append(se_data)
+
+        # stayデータリスト生成
+        elif data["nodelist"][0]["node_id"] == tmp_node_id:
+          se_data =  {"mac":data["id"]["mac"],
+                      "start_time":tmp_startdt,
+                      "end_time"  :tmp_enddt,
+                      "interval"  :(tmp_enddt - tmp_startdt).seconds,
+                      "start_node":tmp_node_id,
+                      "end_node"  :data["nodelist"][0]["node_id"],
+                      }
+          data_lists_stay.append(se_data)
           
       tmp_node_id = data["nodelist"][0]["node_id"]
       tmp_startdt = data['id']['get_time_no']
@@ -115,14 +128,16 @@ def get_start_end(request):
     count_all += 1
 
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
+  data_lists_stay = sorted(data_lists_stay, key=lambda x:x["start_time"], reverse=True)
   # data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用
 
   # import time
   # start = time.time()
   make_pfvinfo(data_lists)
+  make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  # make_pfvinfo_experiment(data_lists_experiment)
+  # make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists, "count":count, "count_all":count_all} 
