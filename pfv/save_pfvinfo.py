@@ -188,7 +188,7 @@ def make_pfvinfo(dataset):
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:
 								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
-								db.pfvinfo.save(tmp_plist)
+						db.pfvinfo.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
 		db.pfvinfo.create_index([("datetime", ASCENDING)])
@@ -327,7 +327,7 @@ def make_pfvinfoexperiment(dataset):
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:
 								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
-								db.pfvinfoexperiment.save(tmp_plist)
+						db.pfvinfoexperiment.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoexperimentを登録完了, 経路分岐 = "+str(len(route_info)))
 
 		db.pfvinfoexperiment.create_index([("datetime", ASCENDING)])
