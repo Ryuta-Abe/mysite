@@ -53,21 +53,21 @@ def data_list(request, limit=100, date_time=d):
     del(jdata['_id'])
     if tmp_time == 0:
       tmp_time = jdata['datetime']
-      timedata = pcwltime(
-                         datetime = jdata['datetime'],
-                         )
-      timedata.save()
     else:
       j_tmp_time = tmp_time - jdata['datetime']
       j_time = j_tmp_time.total_seconds()
       if round(j_time / 10) == 0:
-        pass
-      else:
         tmp_time = jdata['datetime']
+      else:
         timedata = pcwltime(
-                          datetime = jdata['datetime'],
+                          datetime = tmp_time,
                            )
         timedata.save()
+        tmp_time = jdata['datetime']
+  timedata = pcwltime(
+                    datetime = tmp_time,
+                     )
+  timedata.save()
 
 
   # ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
