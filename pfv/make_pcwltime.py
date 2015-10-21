@@ -23,13 +23,36 @@ def make_pcwltime(self):
                                         ],
                                       allowDiskUse=True,
                                       )
-    jdatas = db.tmppcwltime.find()
-    pcwltime.objects.all().delete()
+    # jdatas = db.tmppcwltime.find()
+    # pcwltime.objects.all().delete()
 
+    # for jdata in jdatas:
+    # 	jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
+    # 	del(jdata['_id'])
+    # 	timedata = pcwltime(
+    # 		datetime = jdata['datetime'],
+    # 		)
+    # 	timedata.save()
+    jdatas = db.tmppcwltime.find().sort("_id")
+    pcwltime.objects.all().delete()
+    tmp_time = 0 #一つ前の時刻
     for jdata in jdatas:
-    	jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
-    	del(jdata['_id'])
-    	timedata = pcwltime(
-    		datetime = jdata['datetime'],
-    		)
-    	timedata.save()
+      jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
+      del(jdata['_id'])
+      if tmp_time == 0:
+        tmp_time = jdata['datetime']
+        timedata = pcwltime(
+                           datetime = jdata['datetime'],
+                           )
+        timedata.save()
+      else:
+        j_tmp_time = tmp_time - jdata['datetime']
+        j_time = j_tmp_time.total_seconds()
+        if round(j_time / 10) == 0:
+          pass
+        else:
+          tmp_time = jdata['datetime']
+          timedata = pcwltime(
+                            datetime = jdata['datetime'],
+                             )
+          timedata.save()
