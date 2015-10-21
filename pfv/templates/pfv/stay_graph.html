@@ -523,9 +523,9 @@
       var minute = Sample_form.textbox_minute.value;
       var second = "00";
 
-      var direction = ("0"+"{{ start_node }}").slice(-2)+("0"+"{{ end_node }}").slice(-2)
+      var node = ("0"+"{{ node }}").slice(-2);
 
-      document.location = "{% url 'pfv:stay_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/direction=" + direction;
+      document.location = "{% url 'pfv:stay_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/node=" + node;
     }
     
     // // 更新前の選択状態を記憶
