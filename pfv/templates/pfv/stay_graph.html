@@ -1,0 +1,575 @@
+
+{% extends "base.html" %}
+
+{% block title %}滞留端末数グラフ{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h3 id="header" class="page-header"></h3>
+    <form name="Sample_form" action="Sample.html">
+      取得日時：
+      <select name="textbox_year">
+            <option id="year2014" value="2014"/>2014</option>
+            <option id="year2015" value="2015"/>2015</option>
+      </select>
+      年
+      <select name="textbox_month">
+            <option id="month01" value="01"/>1</option>
+            <option id="month02" value="02"/>2</option>
+            <option id="month03" value="03"/>3</option>
+            <option id="month04" value="04"/>4</option>
+            <option id="month05" value="05"/>5</option>
+            <option id="month06" value="06"/>6</option>
+            <option id="month07" value="07"/>7</option>
+            <option id="month08" value="08"/>8</option>
+            <option id="month09" value="09"/>9</option>
+            <option id="month10" value="10"/>10</option>
+            <option id="month11" value="11"/>11</option>
+            <option id="month12" value="12"/>12</option>
+      </select>
+      月
+      <select name="textbox_day">
+            <option id="day01" value="01"/>1</option>
+            <option id="day02" value="02"/>2</option>
+            <option id="day03" value="03"/>3</option>
+            <option id="day04" value="04"/>4</option>
+            <option id="day05" value="05"/>5</option>
+            <option id="day06" value="06"/>6</option>
+            <option id="day07" value="07"/>7</option>
+            <option id="day08" value="08"/>8</option>
+            <option id="day09" value="09"/>9</option>
+            <option id="day10" value="10"/>10</option>
+            <option id="day11" value="11"/>11</option>
+            <option id="day12" value="12"/>12</option>
+            <option id="day13" value="13"/>13</option>
+            <option id="day14" value="14"/>14</option>
+            <option id="day15" value="15"/>15</option>
+            <option id="day16" value="16"/>16</option>
+            <option id="day17" value="17"/>17</option>
+            <option id="day18" value="18"/>18</option>
+            <option id="day19" value="19"/>19</option>
+            <option id="day20" value="20"/>20</option>
+            <option id="day21" value="21"/>21</option>
+            <option id="day22" value="22"/>22</option>
+            <option id="day23" value="23"/>23</option>
+            <option id="day24" value="24"/>24</option>
+            <option id="day25" value="25"/>25</option>
+            <option id="day26" value="26"/>26</option>
+            <option id="day27" value="27"/>27</option>
+            <option id="day28" value="28"/>28</option>
+            <option id="day29" value="29"/>29</option>
+            <option id="day30" value="30"/>30</option>
+            <option id="day31" value="31"/>31</option>
+      </select>
+      日
+      <select name="textbox_hour">
+            <option id="hour00" value="00"/>0</option>
+            <option id="hour01" value="01"/>1</option>
+            <option id="hour02" value="02"/>2</option>
+            <option id="hour03" value="03"/>3</option>
+            <option id="hour04" value="04"/>4</option>
+            <option id="hour05" value="05"/>5</option>
+            <option id="hour06" value="06"/>6</option>
+            <option id="hour07" value="07"/>7</option>
+            <option id="hour08" value="08"/>8</option>
+            <option id="hour09" value="09"/>9</option>
+            <option id="hour10" value="10"/>10</option>
+            <option id="hour11" value="11"/>11</option>
+            <option id="hour12" value="12"/>12</option>
+            <option id="hour13" value="13"/>13</option>
+            <option id="hour14" value="14"/>14</option>
+            <option id="hour15" value="15"/>15</option>
+            <option id="hour16" value="16"/>16</option>
+            <option id="hour17" value="17"/>17</option>
+            <option id="hour18" value="18"/>18</option>
+            <option id="hour19" value="19"/>19</option>
+            <option id="hour20" value="20"/>20</option>
+            <option id="hour21" value="21"/>21</option>
+            <option id="hour22" value="22"/>22</option>
+            <option id="hour23" value="23"/>23</option>
+      </select>
+      時
+      <select name="textbox_minute">
+            <option id="minute00" value="00"/>0</option>
+            <option id="minute05" value="05"/>5</option>
+            <option id="minute10" value="10"/>10</option>
+            <option id="minute15" value="15"/>15</option>
+            <option id="minute20" value="20"/>20</option>
+            <option id="minute25" value="25"/>25</option>
+            <option id="minute30" value="30"/>30</option>
+            <option id="minute35" value="35"/>35</option>
+            <option id="minute40" value="40"/>40</option>
+            <option id="minute45" value="45"/>45</option>
+            <option id="minute50" value="50"/>50</option>
+            <option id="minute55" value="55"/>55</option>
+      </select>
+      分
+      <input type="button" value="更新" onclick="reload_datetime()" class="btn btn-default btn-sm">
+      <!-- br>
+      <text id="id2">表示日数：</text>
+      <a id="one_day" onclick="one_day()" class="btn btn-default btn-sm">1日</a>
+      <a id="two_days" onclick="two_days()" class="btn btn-default btn-sm">2日</a>
+      <a id="three_days" onclick="three_days()" class="btn btn-default btn-sm">3日</a>
+      <a id="one_week" onclick="one_week()" class="btn btn-default btn-sm">1週間</a>
+      <a id="two_weeks" onclick="two_weeks()" class="btn btn-default btn-sm">2週間</a>
+      <a id="one_month" onclick="one_month()" class="btn btn-default btn-sm">1ヶ月</a>
+      <a id="two_months" onclick="two_months()" class="btn btn-default btn-sm">2ヶ月</a> -->
+    </form>
+    <svg id="svg1" width="1024" height="560">
+    <div id="tooltip_div"></div>
+    <script type="text/javascript">
+
+    //  センサーデータセット
+    var staygraph_info = [];
+    {% for s in staygraph_info %}
+    staygraph_info.push({size:{{ s.size }},datetime:"{{ s.datetime }}"});
+    {% endfor %}
+
+    // // 一日分のデータを表示
+    // function one_day(){
+    //   button_color("#one_day");
+    //   dataset = t1;
+    //   xyScale_Set();
+    //   remove_objects();
+    //   if ("{{ sensor }}" == "0"){
+    //     change_acceleration_graph();
+    //   } else if ("{{ sensor }}" == "1"){
+    //     change_illuminance_graph();
+    //   } else {
+    //     change_heat_graph();
+    //   }
+    // }
+    // // 二日分のデータを表示
+    // function two_days(){
+    //   button_color("#two_days");
+    //   dataset = t1.concat(t2);
+    //   xyScale_Set();
+    //   remove_objects();
+    //   if ("{{ sensor }}" == "0"){
+    //     change_acceleration_graph();
+    //   } else if ("{{ sensor }}" == "1"){
+    //     change_illuminance_graph();
+    //   } else {
+    //     change_heat_graph();
+    //   }
+    // }
+    // // 三日分のデータを表示
+    // function three_days(){
+    //   button_color("#three_days");
+    //   dataset = t1.concat(t2).concat(t3);
+    //   xyScale_Set();
+    //   remove_objects();
+    //   if ("{{ sensor }}" == "0"){
+    //     change_acceleration_graph();
+    //   } else if ("{{ sensor }}" == "1"){
+    //     change_illuminance_graph();
+    //   } else {
+    //     change_heat_graph();
+    //   }
+    // }
+    // // 一週間分のデータを表示
+    // function one_week(){
+    //   button_color("#one_week");
+    //   get_data("7");
+    // }
+    // // 二週間分のデータを表示
+    // function two_weeks(){
+    //   button_color("#two_weeks");
+    //   get_data("14");
+    // }
+    // // 一ヶ月分のデータを表示
+    // function one_month(){
+    //   button_color("#one_month");
+    //   get_data("30");
+    // }
+    // // 二ヶ月分のデータを表示
+    // function two_months(){
+    //   button_color("#two_months");
+    //   get_data("61");
+    // }
+
+    // // ajaxでデータを取得
+    // function get_data(limit){
+    //   var d = zero_padding_dt(datetime);
+    //   var url = "{% url 'cms:sensor_graph_json' %}"+"limit=" + limit + "/datetime=" + d.year + d.month + d.date + d.hour + d.minute + "/type=" + "{{ sensor }}" + "{{ device_id }}";
+    //   $.ajax({
+    //     type: 'GET',
+    //     url: url,
+    //     dataType: 'json',
+    //     success: function(json){
+    //       push_json(json);
+    //       xyScale_Set();
+    //       remove_objects();
+    //       if ("{{ sensor }}" == "0"){
+    //         change_acceleration_graph();
+    //       } else if ("{{ sensor }}" == "1"){
+    //         change_illuminance_graph();
+    //       } else {
+    //         change_heat_graph();
+    //       }
+    //     }
+    //   });
+    // }
+
+    // // jsonデータをデータセットに追加
+    // function push_json(json){
+    //   if("{{ sensor }}" == "0"){ // 加速度グラフ
+    //     for (var i = 0; i < json.length; i++) {
+    //       if(json[i].ac!=null){
+    //         t4.push({ac:parseInt(json[i].ac),datetime:json[i].datetime});
+    //       }
+    //     };
+    //   } else if ("{{ sensor }}" == "1"){ // 照度グラフ
+    //     for (var i = 0; i < json.length; i++) {
+    //       if(json[i].ilu!=null){
+    //         t4.push({ilu:parseInt(json[i].ilu),datetime:json[i].datetime});
+    //       }
+    //     };
+    //   } else { // 気温グラフ
+    //     for (var i = 0; i < json.length; i++) {
+    //       if(json[i].tu!=null){
+    //         t4.push({tu:parseInt(json[i].tu),datetime:json[i].datetime});
+    //       }
+    //     };
+    //   }
+    //   dataset = t1.concat(t2).concat(t3).concat(t4);
+    // }
+
+    // // ボタンに色付け
+    // function button_color(id){
+    //   d3.select("#one_day").style("color","black");
+    //   d3.select("#two_days").style("color","black");
+    //   d3.select("#three_days").style("color","black");
+    //   d3.select("#one_week").style("color","black");
+    //   d3.select("#two_weeks").style("color","black");
+    //   d3.select("#one_month").style("color","black");
+    //   d3.select("#two_months").style("color","black");
+    //   d3.select(id).style("color","blue");
+    // }
+
+    // 現在のグラフを除去
+    function remove_objects(){
+      if ("{{ sensor }}" == "0"){
+        acceleration_rect.transition().duration(1000)
+        .attr({
+          "x": function(d){ return xScale(parseDate(d.datetime));},
+        })
+        .remove();
+      } else if ("{{ sensor }}" == "1"){
+        illuminance_circle.transition().duration(1000)
+        .attr({
+          "cx": function(d){ return xScale(parseDate(d.datetime));},
+        })
+        .remove();
+      } else {
+        heat_circle.transition().duration(1000)
+        .attr({
+          "cx": function(d){ return xScale(parseDate(d.datetime));},
+        })
+        .remove();
+      }
+      svg1.selectAll("g").remove();
+    }
+
+    // // 初期表示日数
+    // button_color("#two_days");
+    // dataset = t1.concat(t2);
+    
+
+    // d3.select("body").append("p").text(dataset.length);
+    // d3.select("body").append("p").text(dataset.length);
+
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+    // svgの選択
+    var svg1 = d3.select("#svg1")
+
+    // 幅（Width）と高さ（ height）
+    var w = 1024;
+    var h = 560;
+    var padding = 30;
+
+    
+    // 定義域と値域の設定関数
+    function xyScale_Set(){
+
+      // x軸の定義域
+      xScale = d3.time.scale()
+                      .domain(d3.extent(staygraph_info, function (d) {
+                                  return parseDate(d.datetime);
+                              }))
+                      .range([padding*2, w - padding *2]);
+
+      // y軸の定義域
+      var y_max = d3.max(staygraph_info, function(d) {return d.size;})
+      if (y_max < 10) {y_max = 10;};
+      yScale = d3.scale.linear()
+                     .domain([0,y_max])
+                     .range([h - padding, padding]);
+
+      // x軸の定義
+      xAxis = d3.svg.axis()
+                    .scale(xScale)
+                    .orient("bottom")
+                    .ticks(5);  // 大雑把に目盛りの個数を設定
+
+      // y軸の定義
+      yAxis = d3.svg.axis()
+                    .scale(yScale)
+                    .orient("left")
+                    .ticks(5);  // 大雑把に目盛りの個数を設定
+    }
+    xyScale_Set();
+
+    // ヘッダーの入力
+    d3.select("#header").text("滞留端末数変化グラフ PCWL "+"{{ node }}");
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
+    // //ドラッグ時のイベントをセット
+    // drag = d3.behavior.drag()
+    //  .on("drag", function(d,i) { // ドラッグ中
+    //   d.x += d3.event.dx;
+    //   d.y += d3.event.dy;
+    //   d3.select(this)
+    //   .attr("transform", function(d,i){
+    //     return "translate(" + [ d.x,d.y ] + ")";
+    //   })
+    //   .transition().duration(50)
+    //   .attr("r",15);
+    //   })
+    //  .on("dragend", function(d){ // ドラッグ終了時
+    //   d.x = 0;
+    //   d.y = 0;
+    //   d3.select(this)
+    //   .transition().duration(500)
+    //   .attr({
+    //     "transform": "translate(0,0)",
+    //   })
+    //   .transition().duration(400)
+    //   .style("opacity",0)
+    //   .attr({
+    //     "r": 150,
+    //   })
+    //   .remove()
+    //  });   
+
+
+    // 気温に対応した色を返す(サーモグラフィ風)
+    function thermography(tu){
+      threshold_H = 29.4; // この温度以上は赤色
+      threshold_L = 17.8; // この温度以下は青色
+      if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 0 + ")"; // 黄～赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 2.0 / 4.0 ) ) {
+        return  "rgb(" + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ", " + 0 + ")"; // 緑～黄  
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 1.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ")"; // 水～緑
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 0.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ")"; // 青～水
+      }else {
+        return  "rgb(" + 0 + ", " + 0 + ", " + 255 + ")"; // 青
+      }
+    }
+
+    // stayグラフの描画
+    function make_stay_graph(){
+      stay_rect = svg1.selectAll("rect.stay")
+      .data(staygraph_info)
+      .enter()
+      .append("rect")
+      stay_rect.attr({
+        "x": function(d){ return xScale(parseDate(d.datetime));},
+        "y": h - padding,
+        "width": (w - padding*4)/staygraph_info.length,
+        "height": 0,
+        "fill": "purple",
+      })
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"rgb(255,0,255)",
+        });
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","purple")
+        .style("width", "260px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text(d.size + " 機　" + d.datetime.slice(5))
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        d3.select(this)
+        .attr({
+          "fill":"purple",
+        });
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      .transition().duration(function(d,i){ return i*3;})
+      .attr({
+        "y": function(d){ return yScale(d.size);},
+        "height": function(d){ return (h - padding) - yScale(d.size);},
+      });
+      generate_axis();
+    }
+    // function change_acceleration_graph(){
+    //   acceleration_rect = svg1.selectAll("rect.acceleration")
+    //   .data(dataset)
+    //   .enter()
+    //   .append("rect")
+    //   acceleration_rect.attr({
+    //     "x": function(d){ return xScale(parseDate(d.datetime));},
+    //     "y": function(d){ return yScale(d.ac);},
+    //     "width": (w - padding*4)/dataset.length,
+    //     "height": function(d){ return (h - padding) - yScale(d.ac);},
+    //     "fill": "green",
+    //   })
+    //   .style("opacity",0)
+    //   // マウスがバーに重なったら説明文を出す
+    //   .on( "mouseover", function(d){
+    //     d3.select(this)
+    //     .attr({
+    //       "fill":"rgb(0,255,0)",
+    //     });
+    //     div.transition().duration(300)
+    //     .style("opacity",1)
+    //     .style("background","green")
+    //     .style("width", "260px" )
+    //     .style("height", "35px")
+    //     .style("left", (d3.event.pageX + 20) + "px")
+    //     .style("top", (d3.event.pageY + 20) + "px")
+    //     .text(d.ac + " m/s²　" + d.datetime.slice(5))
+    //   })
+    //   // マウスがバーから離れたら説明文をけす
+    //   .on( "mouseout", function(d){
+    //     d3.select(this)
+    //     .attr({
+    //       "fill":"green",
+    //     });
+    //     div.transition().duration(300)
+    //     .style("opacity",0)
+    //   })
+    //   .transition().delay(800)
+    //   .style("opacity",1);
+    //   generate_axis();
+    // }
+
+    // 描画グラフの選択と実行
+    make_stay_graph();
+
+    // xy軸の生成
+    function generate_axis(){
+      // x軸の生成
+      svg1.append("g")
+        .attr("class", "x axis")  // "axis" クラスを定義
+        .attr("transform", "translate(0," + (h - padding) + ")")
+        .call(xAxis);
+
+      // y軸の生成
+      svg1.append("g")
+         .attr("class", "y axis")
+         .attr("transform", "translate(" + padding*2 + ",0)")
+         .call(yAxis);
+    }
+
+    function reload_datetime(){
+
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = "00";
+
+      var direction = ("0"+"{{ start_node }}").slice(-2)+("0"+"{{ end_node }}").slice(-2)
+
+      document.location = "{% url 'pfv:stay_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/direction=" + direction;
+    }
+    
+    // // 更新前の選択状態を記憶
+    // d3.select("#year"+"{{ year }}").attr("selected",true);
+    // d3.select("#month"+"{{ month }}").attr("selected",true);
+    // d3.select("#day"+"{{ day }}").attr("selected",true);
+    // d3.select("#hour"+"{{ hour }}").attr("selected",true);
+    // d3.select("#minute"+"{{ minute }}").attr("selected",true);
+
+    // セレクトボックスの値をdatetimeに合わせる
+    function set_selectbox(){
+      var year = datetime.getFullYear() - 2014;
+      var minute = datetime.getMinutes()/5;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
+      document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
+      document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+    }
+
+    // datatimeをゼロ埋め
+    function zero_padding_dt(datetime){
+      var year = String(datetime.getFullYear());
+      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+      var date = ("0"+datetime.getDate()).slice(-2);
+      var hour = ("0"+datetime.getHours()).slice(-2);
+      var minute = ("0"+datetime.getMinutes()).slice(-2);
+      var dt = {year:year,month:month,date:date,hour:hour,minute:minute};
+      return dt;
+    }
+
+    // 取得時間を表示
+    var year = parseInt({{ year }});
+    var month = parseInt({{ month }})-1;
+    var day = parseInt({{ day }});
+    var hour = parseInt({{ hour }});
+    var minute = parseInt({{ minute }});
+    var datetime = new Date(year,month,day,hour,minute);
+    set_selectbox(); // セレクトボックスにdatetimeをセット
+
+
+    </script>
+{% endblock content %}
+
+
+
+

@@ -263,10 +263,10 @@
       div.transition().duration(300)
       .style("opacity",0).text("　")
     })
-    // // クリック時の動作
-    // .on( "click", function(d){
-    //   jump_graph(d.pcwl_id);
-    // });
+    // クリック時の動作
+    .on( "click", function(d){
+      jump_staygraph(d.pcwl_id);
+    });
     // 円の描画
     g.append("circle")
     .attr({
@@ -368,7 +368,7 @@
     })
     // クリック時の動作
     .on( "click", function(d){
-      jump_graph(d.direction);
+      jump_pfvgraph(d.direction);
     });
     // 2本の矢印をアニメーション付きでずらす
     path.transition().duration(1000).attr({
@@ -559,7 +559,7 @@
     }
 
     // 矢印クリック時の動作
-    function jump_graph(dir){
+    function jump_pfvgraph(dir){
 
       var year = Sample_form.textbox_year.value;
       var month = Sample_form.textbox_month.value;
@@ -571,6 +571,20 @@
       var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
       
       window.open("{% url 'pfv:pfv_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/direction=" + direction,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+    }
+    // PCWLクリック時の動作
+    function jump_staygraph(pcwl_id){
+
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+
+      var node = ("0"+pcwl_id).slice(-2);
+      
+      window.open("{% url 'pfv:stay_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/node=" + node,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
 
     // セレクトボックスの値をdatetimeに合わせる

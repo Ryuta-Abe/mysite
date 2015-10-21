@@ -173,3 +173,24 @@ def pfv_graph(request, date_time=999, direction="2205"):
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
+
+# stayグラフ
+def stay_graph(request, date_time=999, node="01"):
+
+  lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
+
+  stayinfo_list = []
+  stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  for i in range(0,len(stayinfo_list[0]["plist"])):
+    if stayinfo_list[0]["plist"][i]["pcwl_id"] == int(node):
+      num = i
+  staygraph_info = []
+  for stayinfo in stayinfo_list:
+    staygraph_info.append({"datetime":stayinfo["datetime"],"size":stayinfo["plist"][num]["size"]})
+
+  return render_to_response('pfv/stay_graph.html',  # 使用するテンプレート
+                              {'staygraph_info': staygraph_info, 'node':int(node)
+                              ,'year':lt.year,'month':lt.month,'day':lt.day
+                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                              )

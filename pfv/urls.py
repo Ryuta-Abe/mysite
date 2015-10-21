@@ -12,6 +12,8 @@ urlpatterns = patterns('',
     url(r'^pfv_map_json/datetime=(?P<date_time>\d+)/timerange=(?P<timerange>\d+)/$', views.pfv_map_json, name='pfv_map_json'),
     url(r'^pfv_graph/$', views.pfv_graph, name='pfv_graph'),   # pfvグラフ
     url(r'^pfv_graph/datetime=(?P<date_time>\d+)/direction=(?P<direction>\w+)/$', views.pfv_graph, name='pfv_graph'),
+    url(r'^stay_graph/$', views.stay_graph, name='stay_graph'),   # stayグラフ
+    url(r'^stay_graph/datetime=(?P<date_time>\d+)/node=(?P<node>\w+)/$', views.stay_graph, name='stay_graph'),
 
     url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
     url(r'^analyze/$', analyze.analyze_direction, name='analyze_direction'),
