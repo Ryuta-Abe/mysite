@@ -98,3 +98,4 @@ for num in "6789": # 親機ループ
 
 # dev test
 # dev test3
+# dev test shimamura
