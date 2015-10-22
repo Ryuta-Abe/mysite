@@ -5,6 +5,7 @@ from django.template import RequestContext
 
 from pfv.models import pr_req, test, tmpcol, pcwlroute
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfoexperiment, make_stayinfo
+from pfv.make_pcwltime import make_pcwltime
 from pfv.convert_nodeid import *
 from mongoengine import *
 from pymongo import *
@@ -19,6 +20,7 @@ db = client.nm4bd
 db.tmpcol.create_index([("get_time_no", DESCENDING), ("mac", ASCENDING)])
 
 def get_start_end(request):
+  # make_pcwltime()
   from datetime import datetime, timedelta
   tmp_mac     = ""
   tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
@@ -49,6 +51,17 @@ def get_start_end(request):
       if ((data['id']['get_time_no'] - tmp_startdt).seconds < 60):
         tmp_enddt = data['id']['get_time_no']
         del(data['_id'])
+
+        # 実験端末
+        if (data["nodelist"][0]["node_id"] != tmp_node_id) and (data["id"]["mac"] in mac_list_experiment):
+          se_data =  {"mac":data["id"]["mac"],
+                        "start_time":tmp_startdt,
+                        "end_time"  :tmp_enddt,
+                        "interval"  :(tmp_enddt - tmp_startdt).seconds,
+                        "start_node":tmp_node_id,
+                        "end_node"  :data["nodelist"][0]["node_id"],
+                        }
+          data_lists_experiment.append(se_data)
 
         # 行き来する端末除外
         repeat_cnt = 0
@@ -129,7 +142,7 @@ def get_start_end(request):
 
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
   data_lists_stay = sorted(data_lists_stay, key=lambda x:x["start_time"], reverse=True)
-  # data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用
+  data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用
 
   # import time
   # start = time.time()
@@ -137,7 +150,7 @@ def get_start_end(request):
   make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  # make_pfvinfoexperiment(data_lists_experiment)
+  make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists, "count":count, "count_all":count_all} 

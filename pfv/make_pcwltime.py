@@ -12,7 +12,11 @@ import math
 import datetime
 import locale
 
+client = MongoClient()
+db = client.nm4bd
+
 def make_pcwltime():
+    from datetime import datetime
     ag = test._get_collection().aggregate([
                                           {"$group":
                                             {"_id":
