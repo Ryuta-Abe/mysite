@@ -98,4 +98,8 @@ for num in "6789": # 親機ループ
 
 # dev test
 # dev test3
-# dev test shimamura
+# <<<<<<< .merge_file_a09576
+# # dev test shimamura
+# =======
+# dev test abe
+# >>>>>>> .merge_file_a10012
