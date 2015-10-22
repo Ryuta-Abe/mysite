@@ -41,18 +41,24 @@ def make_pcwltime(self):
       del(jdata['_id'])
       if tmp_time == 0:
         tmp_time = jdata['datetime']
-        timedata = pcwltime(
-                           datetime = jdata['datetime'],
-                           )
-        timedata.save()
       else:
         j_tmp_time = tmp_time - jdata['datetime']
         j_time = j_tmp_time.total_seconds()
         if round(j_time / 10) == 0:
-          pass
-        else:
           tmp_time = jdata['datetime']
+        else:
           timedata = pcwltime(
-                            datetime = jdata['datetime'],
+                            datetime = tmp_time,
                              )
           timedata.save()
+          tmp_time = jdata['datetime']
+    timedata = pcwltime(
+                      datetime = tmp_time,
+                       )
+    timedata.save()
+
+
+    # ag = test._get_collection().aggregate([{"$match":{"node_id":1242}}])
+    # ag2 = test._get_collection().aggregate([{"$group":{"_id":{"get_time_no":"$get_time_no"}, "count":{"$sum":1}}}])
+    # t = test.objects(node_id=1244).limit(25000)
+    # t = test.objects(get_time_no__gte=20150603114000).limit(1000)
