@@ -51,11 +51,15 @@ def data_list(request, limit=100, date_time=d):
                                'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
-def pfv_map(request, date_time=999, timerange=10):
-  import time
-  lt = datetime.datetime(2015,6,4,12,10,30)
-  # lt = datetime.datetime(2015,9,25,18,20,30)
-  gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
+def pfv_map(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', '20150603122130')
+  timerange = int(request.GET.get('timerange', 10))
+  experiment = int(request.GET.get('experiment', 0))
+
+  lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
   # pcwl情報の取り出し
   pcwlnode = []
@@ -63,14 +67,20 @@ def pfv_map(request, date_time=999, timerange=10):
 
   # pfv情報の取り出し
   pfvinfo = []
-  pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if experiment == 1: # 実験データ
+    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 非実験データ
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
         pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
     pfvinfo = pfvinfo[-1]["plist"]
   else :
-    pfvinfo += db.pfvinfo.find().limit(1)
+    if experiment == 1: # 実験データ
+      pfvinfo += db.pfvinfoexperiment.find().limit(1)
+    else : # 非実験データ
+      pfvinfo += db.pfvinfo.find().limit(1)
     pfvinfo = pfvinfo[0]["plist"]
     for j in range(0,len(pfvinfo)):
       pfvinfo[j]["size"] = 0 
@@ -105,20 +115,29 @@ def pfv_map(request, date_time=999, timerange=10):
       })
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,
+                              {'pcwlnode': _pcwlnode_with_stayinfo,
+                               'pfvinfo': pfvinfo, 'experiment':experiment,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
 
 # pfvマップ用JSON
-def pfv_map_json(request, date_time=999, timerange=10):  
+def pfv_map_json(request):  
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', '20150603122130')
+  timerange = int(request.GET.get('timerange', 10))
+  experiment = int(request.GET.get('experiment', 0))
 
   lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
   # pfv情報の取り出し
   pfvinfo = []
-  pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if experiment == 1: # 実験データ
+    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 非実験データ
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
@@ -158,134 +177,64 @@ def render_json_response(request, data, status=None): # response を JSON で返
   return response
 
 # pfvグラフ
-def pfv_graph(request, date_time=999, direction="2205"):
+def pfv_graph(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', '20150603122130')
+  direction = request.GET.get('direction', '2205')
+  experiment = int(request.GET.get('experiment', 0))
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
 
   st = int(direction[0:2])
   ed = int(direction[2:4])
+
+  # pfv情報の取り出しとグラフデータ化
   pfvinfo_list = []
-  pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  for i in range(0,len(pfvinfo_list[0]["plist"])):
-    if (pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
-      num = i
   pfvgraph_info = []
-  for pfvinfo in pfvinfo_list:
-    pfvgraph_info.append({"datetime":pfvinfo["datetime"],"size":pfvinfo["plist"][num]["size"]})
+  if experiment == 1: # 実験データ
+    pfvinfo_list += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 非実験データ
+    pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if len(pfvinfo_list) >= 1:
+    for i in range(0,len(pfvinfo_list[0]["plist"])):
+      if (pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
+        num = i
+    for pfvinfo in pfvinfo_list:
+      pfvgraph_info.append({"datetime":pfvinfo["datetime"],"size":pfvinfo["plist"][num]["size"]})
 
   return render_to_response('pfv/pfv_graph.html',  # 使用するテンプレート
-                              {'pfvgraph_info': pfvgraph_info, 'start_node':st, 'end_node':ed
+                              {'pfvgraph_info': pfvgraph_info, 'experiment':experiment
+                              ,'start_node':st, 'end_node':ed
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
 
 # stayグラフ
-def stay_graph(request, date_time=999, node="01"):
+def stay_graph(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', '20150603122130')
+  node = int(request.GET.get('node', 1))
+  experiment = int(request.GET.get('experiment', 0))
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
 
+  # 滞留端末情報の取り出しとグラフデータ化
   stayinfo_list = []
-  stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  for i in range(0,len(stayinfo_list[0]["plist"])):
-    if stayinfo_list[0]["plist"][i]["pcwl_id"] == int(node):
-      num = i
   staygraph_info = []
-  for stayinfo in stayinfo_list:
-    staygraph_info.append({"datetime":stayinfo["datetime"],"size":stayinfo["plist"][num]["size"]})
+  stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if len(stayinfo_list) >= 1:
+    for i in range(0,len(stayinfo_list[0]["plist"])):
+      if stayinfo_list[0]["plist"][i]["pcwl_id"] == node:
+        num = i
+    for stayinfo in stayinfo_list:
+      staygraph_info.append({"datetime":stayinfo["datetime"],"size":stayinfo["plist"][num]["size"]})
 
   return render_to_response('pfv/stay_graph.html',  # 使用するテンプレート
                               {'staygraph_info': staygraph_info, 'node':int(node)
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
-
-# 実験用
-# pfvマップ画面 http://localhost:8000/cms/pfv_map_experiment/
-def pfv_map_experiment(request, date_time=999, timerange=10):
-  import time
-  # lt = datetime.datetime(2015,6,3,12,10,30)
-  lt = datetime.datetime(2015,10,15,11,30,30)
-  gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
-
-  # pcwl情報の取り出し
-  pcwlnode = []
-  pcwlnode += db.pcwlnode.find()
-
-  # pfv情報の取り出し
-  pfvinfoexperiment = []
-  pfvinfoexperiment += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  if len(pfvinfoexperiment) >= 1:
-    for i in range(1,len(pfvinfoexperiment)): # timerange内のpfv情報を合成
-      for j in range(0,len(pfvinfoexperiment[i]["plist"])):
-        pfvinfoexperiment[i]["plist"][j]["size"] += pfvinfoexperiment[i-1]["plist"][j]["size"]
-    pfvinfoexperiment = pfvinfoexperiment[-1]["plist"]
-
-  # 滞留端末情報の取り出し
-  stayinfo = []
-  stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  if len(stayinfo) >= 1:
-    for i in range(1,len(stayinfo)):
-      for j in range(0,len(stayinfo[i]["plist"])):
-        stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
-        for mac in stayinfo[i]["plist"][j]["mac_list"]:
-          if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
-            stayinfo[i]["plist"][j]["size"] -= 1
-          else :
-            stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
-        stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
-    stayinfo = stayinfo[-1]["plist"]
-
-  # 滞留端末情報をPCWL情報にひも付け
-  _pcwlnode_with_stayinfo = []
-  for i in range(0,len(pcwlnode)):
-    if len(stayinfo) >= 1:
-      size = stayinfo[i]["size"]
-    else :
-      size = 0
-    _pcwlnode_with_stayinfo.append({
-      "pcwl_id":pcwlnode[i]["pcwl_id"],
-      "pos_x":pcwlnode[i]["pos_x"],
-      "pos_y":pcwlnode[i]["pos_y"],
-      "size":size
-      })
-  
-  return render_to_response('pfv/pfv_map_experiment.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfoexperiment,
-                               'year':lt.year,'month':lt.month,'day':lt.day,
-                               'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
-                              )
-
-# pfvマップ用JSON
-def pfv_map_json_experiment(request, date_time=999, timerange=10):  
-
-  lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
-
-  # pfv情報の取り出し
-  pfvinfoexperiment = []
-  pfvinfoexperiment += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  if len(pfvinfoexperiment) >= 1:
-    for i in range(1,len(pfvinfoexperiment)): # timerange内のpfv情報を合成
-      for j in range(0,len(pfvinfoexperiment[i]["plist"])):
-        pfvinfoexperiment[i]["plist"][j]["size"] += pfvinfoexperiment[i-1]["plist"][j]["size"]
-    pfvinfoexperiment = pfvinfoexperiment[-1]["plist"]
-
-  # 滞留端末情報の取り出し
-  stayinfo = []
-  stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  if len(stayinfo) >= 1:
-    for i in range(1,len(stayinfo)):
-      for j in range(0,len(stayinfo[i]["plist"])):
-        stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
-        for mac in stayinfo[i]["plist"][j]["mac_list"]:
-          if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
-            stayinfo[i]["plist"][j]["size"] -= 1
-          else :
-            stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
-        stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
-    stayinfo = stayinfo[-1]["plist"]
-
-  dataset = {"pfvinfo":pfvinfoexperiment,"stayinfo":stayinfo}
-  return render_json_response(request, dataset) # dataをJSONとして出力

@@ -353,7 +353,11 @@
     xyScale_Set();
 
     // ヘッダーの入力
-    d3.select("#header").text("人流変化グラフ "+"{{ start_node }}"+" → "+"{{ end_node }}");
+    if ({{ experiment }} == 1) {
+      d3.select("#header").text("人流変化グラフ(実験用) "+"{{ start_node }}"+" → "+"{{ end_node }}");
+    } else {
+      d3.select("#header").text("人流変化グラフ "+"{{ start_node }}"+" → "+"{{ end_node }}");
+    };
 
     // マウスオーバーすると出てくる説明文(div要素)
     var div = d3.select("#tooltip_div")

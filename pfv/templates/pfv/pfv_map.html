@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<h3 id="header" class="page-header">人流マップ</h3>
+<h3 id="header" class="page-header"></h3>
 <form name="Sample_form" action="Sample.html">
   <a id="btn_simple" onclick="simple_color()" class="btn btn-default btn-sm">単　色</a>
   <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
@@ -199,6 +199,13 @@
 <svg id="svg2" width="1000" height="100"></svg>
 
 <script type="text/javascript">
+
+    // ヘッダーの表示
+    if ({{ experiment }} == 1) {
+      d3.select("#header").text("人流マップ(実験用)");
+    } else {
+      d3.select("#header").text("人流マップ");
+    };
 
     // データセットの定義
     var pcwlnode = [];
@@ -570,7 +577,7 @@
 
       var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
       
-      window.open("{% url 'pfv:pfv_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/direction=" + direction,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+      window.open("{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction +"&experiment=" + {{ experiment }},"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
     // PCWLクリック時の動作
     function jump_staygraph(pcwl_id){
@@ -584,7 +591,7 @@
 
       var node = ("0"+pcwl_id).slice(-2);
       
-      window.open("{% url 'pfv:stay_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/node=" + node,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+      window.open("{% url 'pfv:stay_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&node=" + node,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
 
     // セレクトボックスの値をdatetimeに合わせる
@@ -609,7 +616,6 @@
     var minute = parseInt({{ minute }});
     var second = parseInt({{ second }});
     var datetime = new Date(year,month,day,hour,minute,second);
-    // var Real_datetime;
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
     function describe_datetime(){
@@ -641,7 +647,7 @@
 
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"datetime=" + year + month + day + hour + minute + second + "/timerange=" + timerange,
+        url: "{% url 'pfv:pfv_map_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }},
         dataType: 'json',
         success: function(json){
           describe_datetime();
