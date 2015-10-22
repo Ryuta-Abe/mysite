@@ -53,7 +53,7 @@ def data_list(request, limit=100, date_time=d):
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
 def pfv_map(request, date_time=999, timerange=10):
   import time
-  lt = datetime.datetime(2015,6,3,12,10,30)
+  lt = datetime.datetime(2015,6,4,12,10,30)
   # lt = datetime.datetime(2015,9,25,18,20,30)
   gt = lt - datetime.timedelta(seconds = int(timerange)) # timerange秒前までのデータを取得
 
@@ -69,6 +69,11 @@ def pfv_map(request, date_time=999, timerange=10):
       for j in range(0,len(pfvinfo[i]["plist"])):
         pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
     pfvinfo = pfvinfo[-1]["plist"]
+  else :
+    pfvinfo += db.pfvinfo.find().limit(1)
+    pfvinfo = pfvinfo[0]["plist"]
+    for j in range(0,len(pfvinfo)):
+      pfvinfo[j]["size"] = 0 
 
   # 滞留端末情報の取り出し
   stayinfo = []

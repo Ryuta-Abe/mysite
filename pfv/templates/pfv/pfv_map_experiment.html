@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<h3 id="header" class="page-header">人流マップ</h3>
+<h3 id="header" class="page-header">人流マップ(実験端末用)</h3>
 <form name="Sample_form" action="Sample.html">
   <a id="btn_simple" onclick="simple_color()" class="btn btn-default btn-sm">単　色</a>
   <a id="btn_opacity" onclick="opacity()" class="btn btn-default btn-sm">座　標</a>
@@ -697,7 +697,6 @@
       } else {  // pfvinfoが空だった場合
         for (var i = 0; i < pfvinfo.length; i++) {
           pfvinfo[i].size = 0;
-          console.log("空だった");
         }
       };
       // stayinfoの更新

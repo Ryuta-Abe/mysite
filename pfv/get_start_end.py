@@ -140,7 +140,7 @@ def get_start_end(request):
   # make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  make_pfvinfoexperiment(data_lists_experiment)
+  # make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists, "count":count, "count_all":count_all} 
