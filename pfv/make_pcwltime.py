@@ -12,7 +12,7 @@ import math
 import datetime
 import locale
 
-def make_pcwltime(self):
+def make_pcwltime():
     ag = test._get_collection().aggregate([
                                           {"$group":
                                             {"_id":
