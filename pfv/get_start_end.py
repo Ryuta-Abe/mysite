@@ -52,17 +52,6 @@ def get_start_end(request):
         tmp_enddt = data['id']['get_time_no']
         del(data['_id'])
 
-        # 実験端末
-        if (data["nodelist"][0]["node_id"] != tmp_node_id) and (data["id"]["mac"] in mac_list_experiment):
-          se_data =  {"mac":data["id"]["mac"],
-                        "start_time":tmp_startdt,
-                        "end_time"  :tmp_enddt,
-                        "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                        "start_node":tmp_node_id,
-                        "end_node"  :data["nodelist"][0]["node_id"],
-                        }
-          data_lists_experiment.append(se_data)
-
         # 行き来する端末除外
         repeat_cnt = 0
         tmp_nodelist = []
@@ -78,7 +67,7 @@ def get_start_end(request):
               repeat_cnt += 1
 
         # PFVのデータリスト生成
-        if (data["nodelist"][0]["node_id"] != tmp_node_id) and (repeat_cnt <= 4):
+        if data["nodelist"][0]["node_id"] != tmp_node_id:
 
           route_info = [] # 経路情報の取り出し
           route_info += db.pcwlroute.find({"$and":[
@@ -98,7 +87,7 @@ def get_start_end(request):
             if (tmp_d_total > d_total):
               d_total = tmp_d_total
 
-          if (d_total < interval*20):
+          if d_total < interval*20:
             se_data =  {"mac":data["id"]["mac"],
                         "start_time":tmp_startdt,
                         "end_time"  :tmp_enddt,
@@ -106,12 +95,13 @@ def get_start_end(request):
                         "start_node":tmp_node_id,
                         "end_node"  :data["nodelist"][0]["node_id"],
                         }
-            data_lists.append(se_data)
-            count += 1
+            if repeat_cnt <= 4:
+              data_lists.append(se_data)
+              count += 1
 
-          # 実験用
-          # if se_data["mac"] in mac_list_experiment:
-          #   data_lists_experiment.append(se_data)
+            # 実験用
+            if se_data["mac"] in mac_list_experiment:
+              data_lists_experiment.append(se_data)
 
         # stayデータリスト生成
         elif data["nodelist"][0]["node_id"] == tmp_node_id:
@@ -146,8 +136,8 @@ def get_start_end(request):
 
   # import time
   # start = time.time()
-  make_pfvinfo(data_lists)
-  make_stayinfo(data_lists_stay)
+  # make_pfvinfo(data_lists)
+  # make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
   make_pfvinfoexperiment(data_lists_experiment)

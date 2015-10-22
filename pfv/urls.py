@@ -15,6 +15,14 @@ urlpatterns = patterns('',
     url(r'^stay_graph/$', views.stay_graph, name='stay_graph'),   # stayグラフ
     url(r'^stay_graph/datetime=(?P<date_time>\d+)/node=(?P<node>\w+)/$', views.stay_graph, name='stay_graph'),
 
+    # 実験端末用
+    url(r'^pfv_map_experiment/$', views.pfv_map_experiment, name='pfv_map_experiment'), #pfvマップ
+    url(r'^pfv_map_experiment/datetime=(?P<date_time>\d+)/$', views.pfv_map_experiment, name='pfv_map_experiment'),
+    url(r'^pfv_map_experiment/datetime=(?P<date_time>\d+)/timerange=(?P<timerange>\d+)/$', views.pfv_map_experiment, name='pfv_map_experiment'),
+    url(r'^pfv_map_json_experiment/$', views.pfv_map_json_experiment, name='pfv_map_json_experiment'), #pfvマップ用JSON
+    url(r'^pfv_map_json_experiment/datetime=(?P<date_time>\d+)/$', views.pfv_map_json_experiment, name='pfv_map_json_experiment'),
+    url(r'^pfv_map_json_experiment/datetime=(?P<date_time>\d+)/timerange=(?P<timerange>\d+)/$', views.pfv_map_json_experiment, name='pfv_map_json_experiment'),
+
     url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
     url(r'^analyze/$', analyze.analyze_direction, name='analyze_direction'),
     url(r'^get_start_end/$', get_start_end.get_start_end, name='get_start_end'),
