@@ -236,7 +236,7 @@ def make_empty_pfvinfoexperiment(dt): # 空のpfvinfoを作成
 			ed = _pcwlnode[j]["pcwl_id"] # 到着点
 			# iとjが隣接ならば人流0人でplistに加える
 			if ed in _pcwlnode[i]["next_id"]:
-				plist.append({"direction":[st,ed],"size":0})
+				plist.append({"direction":[st,ed],"size":0,"mac_list":[]})
 	db.pfvinfoexperiment.insert({'datetime':dt,'plist':plist})
 
 def make_pfvinfoexperiment(dataset):
@@ -327,6 +327,7 @@ def make_pfvinfoexperiment(dataset):
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:
 								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
+								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["mac_list"] += [data["mac"]]
 						db.pfvinfoexperiment.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoexperimentを登録完了, 経路分岐 = "+str(len(route_info)))
 

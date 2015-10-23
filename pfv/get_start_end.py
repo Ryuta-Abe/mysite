@@ -101,6 +101,7 @@ def get_start_end(request):
 
             # 実験用
             if se_data["mac"] in mac_list_experiment:
+              se_data["mac"] = name_filter(se_data["mac"])
               data_lists_experiment.append(se_data)
 
         # stayデータリスト生成
@@ -140,8 +141,22 @@ def get_start_end(request):
   # make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  # make_pfvinfoexperiment(data_lists_experiment)
+  make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists, "count":count, "count_all":count_all} 
                             )  
+
+# 実験用 mac→name フィルタ
+def name_filter(mac):
+  if mac == "90:b6:86:52:77:2a":
+    name = "Galaxy(S)"
+  elif mac == "80:be:05:6c:6b:2b":
+    name = "iPhone6Plus(Y)"
+  elif mac == "98:e0:d9:35:92:4d":
+    name = "iPhone6(A)"
+  elif mac == "18:cf:5e:4a:3a:17":
+    name = "Dynabook(A)"
+  elif mac == "18:00:2d:62:6c:d1":
+    name = "XperiaVL(A)"
+  return name

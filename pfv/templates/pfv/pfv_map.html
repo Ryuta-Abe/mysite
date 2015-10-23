@@ -47,6 +47,7 @@
   <span id="selected_datetime">
   <script type="text/javascript">
     function make_selectbox(list){
+      var list_id = {"test":99};
       for (var i = 0; i < list.length; i++) {
         if (list[i] < 60) {
           document.write('<option value="sec'+("0"+list[i]).slice(-2)+'"/>'+list[i]+' '+second_text+'</option>');
@@ -57,7 +58,9 @@
         } else if (list[i] < 302400) {
           document.write('<option value="day'+("0"+(list[i]/43200)).slice(-2)+'"/>'+(list[i]/43200)+' '+day_text+'</option>');
         };
+        list_id[String(list[i])] = i;
       };
+      return list_id;
     }
 
     if ("{{ language }}" == "en") {
@@ -135,7 +138,7 @@
 
     document.write('<select name="selectbox_timerange">');
     timerange_list = [10,20,30,60,120,300,600]
-    make_selectbox(timerange_list);
+    timerange_list_id = make_selectbox(timerange_list);
     document.write('</select>');
 
   </script>
@@ -190,9 +193,16 @@
     {% for s in pcwlnode %}
     pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},size:{{ s.size }}});
     {% endfor %}
-    {% for s in pfvinfo %}
-    pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }}});
-    {% endfor %}
+    if ({{ experiment }} == 1) {
+      {% for s in pfvinfo %}
+      pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},mac_list:"{{ s.mac_list }}"});
+      {% endfor %}
+      // d3.select("body").append("p").text("pfvinfo[0][mac_list] = "+pfvinfo[0]["mac_list"].length);
+    } else {
+      {% for s in pfvinfo %}
+      pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }}});
+      {% endfor %}
+    };
 
     // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
     var pcwlnode_id = [];
@@ -210,7 +220,7 @@
 
     // d3.select("body").append("p").text("pcwlnodeの長さ = "+pcwlnode.length);
     // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
-    // d3.select("body").append("p").text("pcwlnode[0].next_id[0] = "+pcwlnode[0].next_id[0]);
+    // d3.select("body").append("p").text("pfvinfo[0][mac_list] = "+pfvinfo[0][mac_list]);
     // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
     // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
 
@@ -354,14 +364,21 @@
         div.transition().duration(300)
         .style("opacity",1)
         .style("background",thermography(d.size))
-        .style("width", "150px")
         .style("height", "35px")
         .style("left", (d3.event.pageX + 20) + "px")
         .style("top", (d3.event.pageY + 20) + "px")
         if ("{{ language }}" == "en") {
-          div.text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1));
+          div.style("width", "150px")
+          .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1));
         } else {
-          div.text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1)+"人");
+          if ({{ experiment }} == 1) {
+            var len = d.mac_list.length*10 + 40;
+            div.style("width", len+"px")
+            .text(d.size.toFixed(1) + " : " + d.mac_list);
+          } else {
+            div.style("width", "150px")
+            .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1)+"人");
+          };
         };
     })
     // マウスがバーから離れたら説明文をけす
@@ -668,6 +685,9 @@
     var datetime = new Date(year,month,day,hour,minute,second);
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
+    // セレクトボックスの値をtimerangeに合わせる
+    document.Sample_form.selectbox_timerange.selectedIndex = timerange_list_id["{{ timerange }}"];
+
     function describe_datetime(){
       if ("{{ language }}" == "en") {
         d3.select("#got_datetime").text(String(datetime).slice(4,24));
@@ -752,10 +772,16 @@
       if (json["pfvinfo"].length >= 1) {
         for (var i = 0; i < pfvinfo.length; i++) {
           pfvinfo[i].size = json["pfvinfo"][i].size;
+          if ({{ experiment }} == 1) {
+            pfvinfo[i].mac_list = json["pfvinfo"][i].mac_list;
+          };
         }
       } else {  // pfvinfoが空だった場合
         for (var i = 0; i < pfvinfo.length; i++) {
           pfvinfo[i].size = 0;
+          if ({{ experiment }} == 1) {
+            pfvinfo[i].mac_list = "";
+          };
         }
       };
       // stayinfoの更新

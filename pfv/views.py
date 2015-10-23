@@ -76,7 +76,19 @@ def pfv_map(request):
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
         pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
+        if experiment == 1: # 実験データ
+          for mac in pfvinfo[i]["plist"][j]["mac_list"]:
+            if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
+              pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
+          pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
     pfvinfo = pfvinfo[-1]["plist"]
+    if experiment == 1: # 実験データ
+      for j in range(0,len(pfvinfo)): # mac_listを文字列に変換する(webで正常に表示できないため)
+        str_mac_list = ""
+        if len(pfvinfo[j]["mac_list"]) >= 1:
+          for mac in pfvinfo[j]["mac_list"]:
+            str_mac_list += mac + " , "
+        pfvinfo[j]["mac_list"] = str_mac_list[0:-3]
   else :
     if experiment == 1: # 実験データ
       pfvinfo += db.pfvinfoexperiment.find().limit(1)
@@ -85,6 +97,7 @@ def pfv_map(request):
     pfvinfo = pfvinfo[0]["plist"]
     for j in range(0,len(pfvinfo)):
       pfvinfo[j]["size"] = 0 
+
 
   # 滞留端末情報の取り出し
   stayinfo = []
@@ -117,7 +130,7 @@ def pfv_map(request):
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,
-                               'experiment':experiment,'language':language,
+                               'experiment':experiment,'language':language,'timerange':timerange,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
@@ -143,7 +156,19 @@ def pfv_map_json(request):
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
         pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
+        if experiment == 1: # 実験データ
+          for mac in pfvinfo[i]["plist"][j]["mac_list"]:
+            if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
+              pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
+          pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
     pfvinfo = pfvinfo[-1]["plist"]
+    if experiment == 1: # 実験データ
+      for j in range(0,len(pfvinfo)): # mac_listを文字列に変換する(webで正常に表示できないため)
+        str_mac_list = ""
+        if len(pfvinfo[j]["mac_list"]) >= 1:
+          for mac in pfvinfo[j]["mac_list"]:
+            str_mac_list += mac + " , "
+        pfvinfo[j]["mac_list"] = str_mac_list[0:-3]
 
   # 滞留端末情報の取り出し
   stayinfo = []
