@@ -37,7 +37,7 @@
 {% block content %}
 <h3 id="header" class="page-header"></h3>
 <form name="Sample_form" action="Sample.html">
-  <!-- <a id="btn_simple" onclick="simple_color()" class="btn btn-default btn-sm"></a> -->
+  <a id="btn_staycircle" onclick="staycircle_opacity()" class="btn btn-default btn-sm"></a>
   <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
@@ -158,6 +158,7 @@
     // ヘッダーやその他文字の表示
     if ("{{ language }}" == "en") {
       d3.select("#header").text("People Stream Map");
+      d3.select("#btn_staycircle").text("StayMAC");
       d3.select("#btn_coordinate").text("coordinate");
       d3.select("#datetime_header").text("datetime : ");
       d3.select("#category_1").text("adjust");
@@ -172,6 +173,7 @@
       } else {
         d3.select("#header").text("人流マップ");
       };
+      d3.select("#btn_staycircle").text("滞留");
       d3.select("#btn_coordinate").text("座標");
       d3.select("#datetime_header").text("取得日時：");
       d3.select("#category_1").text("時間調整");
@@ -255,6 +257,14 @@
     .on( "click", function(d){
       jump_staygraph(d.pcwl_id);
     });
+    // 滞留端末数によって色が変わる円の描画
+    g.append("circle")
+    .attr({
+      "id": "staycircle",
+      "r": 18,
+      "fill": function(d){return thermography(d.size);},
+    })
+    .style("opacity",0)
     // 円の描画
     g.append("circle")
     .attr({
@@ -385,6 +395,25 @@
       coordinate.push({x:x, y:y});
      }
    }
+
+   // 滞留端末数視覚化円の透明度をトグルで切り替える
+    var flag_staycircle = false;
+    function staycircle_opacity(){
+        if (flag_staycircle) {
+          d3.select("#btn_staycircle").style("color","black");
+          svg1.selectAll("#staycircle")
+              .transition()
+              .duration(1000)
+              .style("opacity",0);
+        } else {
+          d3.select("#btn_staycircle").style("color","blue");
+          svg1.selectAll("#staycircle")
+              .transition()
+              .duration(1000)
+              .style("opacity",1);
+          };
+      flag_staycircle = !flag_staycircle;
+    }
 
     // 座標目盛りの透明度をトグルで切り替える
     var flag_opacity = false;
@@ -757,6 +786,11 @@
         } else {
           return 1;
         };
+      })
+      svg1.selectAll("#staycircle")
+      .transition().duration(animation_time)
+      .attr({
+        "fill": function(d){return thermography(d.size);},
       })
     }
 
