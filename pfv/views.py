@@ -57,6 +57,7 @@ def pfv_map(request):
   date_time = request.GET.get('datetime', '20150603122130')
   timerange = int(request.GET.get('timerange', 10))
   experiment = int(request.GET.get('experiment', 0))
+  language = request.GET.get('language', 'jp')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
@@ -115,8 +116,8 @@ def pfv_map(request):
       })
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode_with_stayinfo,
-                               'pfvinfo': pfvinfo, 'experiment':experiment,
+                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,
+                               'experiment':experiment,'language':language,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
@@ -183,6 +184,7 @@ def pfv_graph(request):
   date_time = request.GET.get('datetime', '20150603122130')
   direction = request.GET.get('direction', '2205')
   experiment = int(request.GET.get('experiment', 0))
+  language = request.GET.get('language', 'jp')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
@@ -206,7 +208,7 @@ def pfv_graph(request):
 
   return render_to_response('pfv/pfv_graph.html',  # 使用するテンプレート
                               {'pfvgraph_info': pfvgraph_info, 'experiment':experiment
-                              ,'start_node':st, 'end_node':ed
+                              ,'start_node':st, 'end_node':ed, 'language':language
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
@@ -217,7 +219,7 @@ def stay_graph(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', '20150603122130')
   node = int(request.GET.get('node', 1))
-  experiment = int(request.GET.get('experiment', 0))
+  language = request.GET.get('language', 'jp')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
@@ -234,7 +236,7 @@ def stay_graph(request):
       staygraph_info.append({"datetime":stayinfo["datetime"],"size":stayinfo["plist"][num]["size"]})
 
   return render_to_response('pfv/stay_graph.html',  # 使用するテンプレート
-                              {'staygraph_info': staygraph_info, 'node':int(node)
+                              {'staygraph_info': staygraph_info, 'node':int(node), 'language':language
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
