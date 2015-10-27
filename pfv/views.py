@@ -82,13 +82,6 @@ def pfv_map(request):
               pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
           pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
     pfvinfo = pfvinfo[-1]["plist"]
-    if experiment == 1: # 実験データ
-      for j in range(0,len(pfvinfo)): # mac_listを文字列に変換する(webで正常に表示できないため)
-        str_mac_list = ""
-        if len(pfvinfo[j]["mac_list"]) >= 1:
-          for mac in pfvinfo[j]["mac_list"]:
-            str_mac_list += mac + " , "
-        pfvinfo[j]["mac_list"] = str_mac_list[0:-3]
   else :
     if experiment == 1: # 実験データ
       pfvinfo += db.pfvinfoexperiment.find().limit(1)
@@ -162,13 +155,6 @@ def pfv_map_json(request):
               pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
           pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
     pfvinfo = pfvinfo[-1]["plist"]
-    if experiment == 1: # 実験データ
-      for j in range(0,len(pfvinfo)): # mac_listを文字列に変換する(webで正常に表示できないため)
-        str_mac_list = ""
-        if len(pfvinfo[j]["mac_list"]) >= 1:
-          for mac in pfvinfo[j]["mac_list"]:
-            str_mac_list += mac + " , "
-        pfvinfo[j]["mac_list"] = str_mac_list[0:-3]
 
   # 滞留端末情報の取り出し
   stayinfo = []

@@ -87,18 +87,70 @@ def make_empty_pfvinfo(dt): # 空のpfvinfoを作成
 				plist.append({"direction":[st,ed],"size":0})
 	db.pfvinfo.insert({'datetime':dt,'plist':plist})
 
-def optimize_direction(st,ed,route_info): # 経路情報の向きを最適化(st > edの場合にリストとdirectionの中身を逆向きに)
-	if st < ed:
-		return route_info
-	else :
-		output = []
+def optimize_routeinfo(st,ed,route_info): # 向きの最適化と各経路の重みを計算
+	output = []
+
+	# 経路情報の向きを最適化(st > edの場合にリストとdirectionの中身を逆向きに)
+	if st[0] > ed[0]:
 		for route in route_info:
 			reverse = []
 			for i in range(-1,-len(route)-1,-1):
 				reverse.append({"direction":[route[i]["direction"][1],route[i]["direction"][0]],
 					"distance":route[i]["distance"]})
-			output.append(reverse)
-		return output
+			output.append({"route":reverse})
+	else :
+		for route in route_info:
+			output.append({"route":route})
+
+	# 各経路の重みを計算
+	if len(route_info) > 1: # 経路が複数の場合
+
+		# 距離による重み付け
+		d_total = 0 #全経路の総距離
+		for route in output:
+			d_route = 0 #一つの経路の距離
+			for node in route["route"]:
+				d_route += node["distance"]
+			route["distance"] = d_route
+			d_total += d_route
+		add_total = 0 # 各addの合計値を1にするため用いる
+		for route in output:
+			tmp_add = (d_total - route["distance"]) / d_total / (len(output) - 1)
+			add_total += tmp_add * tmp_add
+		for route in output:
+			tmp_add = (d_total - route["distance"]) / d_total / (len(route_info) - 1)
+			route["add"] = tmp_add * tmp_add / add_total
+
+		# # 2番目以降に強いRSSIによる重み付け
+		# for route in output:
+		# 	route["add"] = 0
+		# 	num_list = [] # 出発点、到着点を除いたrouteに含まれるnode番号の数字列
+		# 	for i in range(1,len(route["route"])):
+		# 		num_list.append(route["route"][i]["direction"][0])
+		# 	for i in range(1,len(st)):
+		# 		if st[i] in num_list:
+		# 			route["add"] += 1/i
+		# 	for i in range(1,len(ed)):
+		# 		if ed[i] in num_list:
+		# 			route["add"] += 1/i
+		# add_total = 0 # 各addの合計値を1にするため用いる
+		# for route in output:
+		# 	add_total += route["add"]
+		# if add_total != 0:
+		# 	for route in output:
+		# 		route["add"] /= add_total
+		# else : # 2番目以降に強いRSSIがどの経路においても一つも一致しなかった場合
+		# 	for route in output:
+		# 		route["add"] = 1/len(output)
+
+	else : # 経路が1つの場合
+		output[0]["add"] = 1
+		d_route = 0 #一つの経路の距離
+		for node in output[0]["route"]:
+			d_route += node["distance"]
+		output[0]["distance"] = d_route
+
+	return output
 
 def make_pfvinfo(dataset):
 	# 開始時にDBを初期化
@@ -110,67 +162,44 @@ def make_pfvinfo(dataset):
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
-													{"query" : data["start_node"]}, 
-													{"query" : data["end_node"]}
+													{"query" : data["start_node"][0]}, 
+													{"query" : data["end_node"][0]}
 												]})
-		route_info = optimize_direction(data["start_node"],data["end_node"],route_info[0]["dlist"])
-		print("[出発点,到着点] = "+str([data["start_node"], data["end_node"]])+" , 間隔 = "+str(interval)+" 秒")
-
-		# 重み付け用の計算
-		if len(route_info) > 1:
-			d_total = 0 #全経路の総距離
-			for route in route_info:
-				for node in route:
-					d_total += node["distance"]
-			add_total = 0
-			for route in route_info:
-				d_route = 0 #一つの経路の距離
-				for node in route:
-					d_route += node["distance"]
-				tmp_add = (d_total - d_route) / d_total / (len(route_info) - 1)
-				add_total += tmp_add * tmp_add
+		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+		print("[出発点,到着点] = "+str([data["start_node"][0], data["end_node"][0]])+" , 間隔 = "+str(interval)+" 秒")
 
 		if num >= 1:
 			for route in route_info: # ある経路に対して以下を実行
+				print("add = "+str(route["add"]))
 
 				# 抜けている出発到着情報の補完
 				if num > 1:
-					total_distance = 0 # 経路の合計距離
-					for node in route:
-						total_distance += node["distance"]
+					total_distance = route["distance"]
 					tmp_distance = 0 # 推定に用いる一時累計距離
 					st_ed_info = [] # 欠落した出発到着情報を補完するリスト
 					n_count = 0 # ノード情報のカウンター
 					t_count = 1 # タイム情報のカウンター
 					while t_count < num:
-						tmp_distance += route[n_count]["distance"]
+						tmp_distance += route["route"][n_count]["distance"]
 						if tmp_distance >= (total_distance*t_count/num): # 一時累計距離がしきい値を超えたら以下を実行
 							if len(st_ed_info) == 0:
-								st = data["start_node"]
+								st = data["start_node"][0]
 							else :
 								st = st_ed_info[-1]["ed"]
 							extra_distance = tmp_distance - (total_distance*t_count/num)
-							if extra_distance >= (route[n_count]["distance"]/2):
-								ed = route[n_count]["direction"][0]
+							if extra_distance >= (route["route"][n_count]["distance"]/2):
+								ed = route["route"][n_count]["direction"][0]
 							else :
-								ed = route[n_count]["direction"][1]
+								ed = route["route"][n_count]["direction"][1]
 							st_ed_info.append({"st":st,"ed":ed})
-							tmp_distance -= route[n_count]["distance"]
+							tmp_distance -= route["route"][n_count]["distance"]
 							t_count += 1
 						else :
 							n_count += 1
-					st_ed_info.append({"st":st_ed_info[-1]["ed"],"ed":data["end_node"]}) # st_ed_infoの完成,例：[{'ed': 2, 'st': 1}, {'ed': 3, 'st': 2}]
+					st_ed_info.append({"st":st_ed_info[-1]["ed"],"ed":data["end_node"][0]}) # st_ed_infoの完成,例：[{'ed': 2, 'st': 1}, {'ed': 3, 'st': 2}]
 				elif num == 1:
-					st_ed_info = [{"st":data["start_node"],"ed":data["end_node"]}]
+					st_ed_info = [{"st":data["start_node"][0],"ed":data["end_node"][0]}]
 				print("st_ed_info = "+str(st_ed_info))
-
-				# この経路の重みを計算
-				if len(route_info) == 1:
-					add = 1
-				else:
-					tmp_add = (d_total - total_distance) / d_total / (len(route_info) - 1)
-					add = tmp_add * tmp_add / add_total
-				print("add = "+str(add))
 
 				# pfv情報の登録
 				for j in range(0,num):
@@ -184,10 +213,10 @@ def make_pfvinfo(dataset):
 																	{"query" : st_ed_info[j]["st"]}, 
 																	{"query" : st_ed_info[j]["ed"]}
 																	]})
-						j_route_info = optimize_direction(st_ed_info[j]["st"],st_ed_info[j]["ed"],j_route_info[0]["dlist"])
-						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
-							for node in j_route:
-								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
+						j_route_info = optimize_routeinfo([st_ed_info[j]["st"]],[st_ed_info[j]["ed"]],j_route_info[0]["dlist"])
+						for j_route in j_route_info: # j_routeの例：{'distance':xx,'add':oo,'route':[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]}
+							for node in j_route["route"]:
+								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += route["add"]*j_route["add"]
 						db.pfvinfo.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
 
@@ -249,67 +278,44 @@ def make_pfvinfoexperiment(dataset):
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
-													{"query" : data["start_node"]}, 
-													{"query" : data["end_node"]}
+													{"query" : data["start_node"][0]}, 
+													{"query" : data["end_node"][0]}
 												]})
-		route_info = optimize_direction(data["start_node"],data["end_node"],route_info[0]["dlist"])
-		print("[出発点,到着点] = "+str([data["start_node"], data["end_node"]])+" , 間隔 = "+str(interval)+" 秒")
-
-		# 重み付け用の計算
-		if len(route_info) > 1:
-			d_total = 0 #全経路の総距離
-			for route in route_info:
-				for node in route:
-					d_total += node["distance"]
-			add_total = 0
-			for route in route_info:
-				d_route = 0 #一つの経路の距離
-				for node in route:
-					d_route += node["distance"]
-				tmp_add = (d_total - d_route) / d_total / (len(route_info) - 1)
-				add_total += tmp_add * tmp_add
+		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+		print("[出発点,到着点] = "+str([data["start_node"][0], data["end_node"][0]])+" , 間隔 = "+str(interval)+" 秒")
 
 		if num >= 1:
 			for route in route_info: # ある経路に対して以下を実行
+				print("add = "+str(route["add"]))
 
 				# 抜けている出発到着情報の補完
 				if num > 1:
-					total_distance = 0 # 経路の合計距離
-					for node in route:
-						total_distance += node["distance"]
+					total_distance = route["distance"]
 					tmp_distance = 0 # 推定に用いる一時累計距離
 					st_ed_info = [] # 欠落した出発到着情報を補完するリスト
 					n_count = 0 # ノード情報のカウンター
 					t_count = 1 # タイム情報のカウンター
 					while t_count < num:
-						tmp_distance += route[n_count]["distance"]
+						tmp_distance += route["route"][n_count]["distance"]
 						if tmp_distance >= (total_distance*t_count/num): # 一時累計距離がしきい値を超えたら以下を実行
 							if len(st_ed_info) == 0:
-								st = data["start_node"]
+								st = data["start_node"][0]
 							else :
 								st = st_ed_info[-1]["ed"]
 							extra_distance = tmp_distance - (total_distance*t_count/num)
-							if extra_distance >= (route[n_count]["distance"]/2):
-								ed = route[n_count]["direction"][0]
+							if extra_distance >= (route["route"][n_count]["distance"]/2):
+								ed = route["route"][n_count]["direction"][0]
 							else :
-								ed = route[n_count]["direction"][1]
+								ed = route["route"][n_count]["direction"][1]
 							st_ed_info.append({"st":st,"ed":ed})
-							tmp_distance -= route[n_count]["distance"]
+							tmp_distance -= route["route"][n_count]["distance"]
 							t_count += 1
 						else :
 							n_count += 1
-					st_ed_info.append({"st":st_ed_info[-1]["ed"],"ed":data["end_node"]}) # st_ed_infoの完成,例：[{'ed': 2, 'st': 1}, {'ed': 3, 'st': 2}]
+					st_ed_info.append({"st":st_ed_info[-1]["ed"],"ed":data["end_node"][0]}) # st_ed_infoの完成,例：[{'ed': 2, 'st': 1}, {'ed': 3, 'st': 2}]
 				elif num == 1:
-					st_ed_info = [{"st":data["start_node"],"ed":data["end_node"]}]
+					st_ed_info = [{"st":data["start_node"][0],"ed":data["end_node"][0]}]
 				print("st_ed_info = "+str(st_ed_info))
-
-				# この経路の重みを計算
-				if len(route_info) == 1:
-					add = 1
-				else:
-					tmp_add = (d_total - total_distance) / d_total / (len(route_info) - 1)
-					add = tmp_add * tmp_add / add_total
-				print("add = "+str(add))
 
 				# pfv情報の登録
 				for j in range(0,num):
@@ -323,11 +329,12 @@ def make_pfvinfoexperiment(dataset):
 																	{"query" : st_ed_info[j]["st"]}, 
 																	{"query" : st_ed_info[j]["ed"]}
 																	]})
-						j_route_info = optimize_direction(st_ed_info[j]["st"],st_ed_info[j]["ed"],j_route_info[0]["dlist"])
-						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
-							for node in j_route:
-								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
-								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["mac_list"] += [data["mac"]]
+						j_route_info = optimize_routeinfo([st_ed_info[j]["st"]],[st_ed_info[j]["ed"]],j_route_info[0]["dlist"])
+						for j_route in j_route_info: # j_routeの例：{'distance':xx,'add':oo,'route':[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]}
+							for node in j_route["route"]:
+								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += route["add"]*j_route["add"]
+								if data["mac"] not in tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["mac_list"]:
+									tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["mac_list"] += [data["mac"]]
 						db.pfvinfoexperiment.save(tmp_plist)
 					print(str(tlist[j]["datetime"])+"のpfvinfoexperimentを登録完了, 経路分岐 = "+str(len(route_info)))
 
@@ -335,11 +342,12 @@ def make_pfvinfoexperiment(dataset):
 		
 # 出発時刻、出発点、到着時刻、到着点のデータセット
 # dataset = []
-# dataset.append({"mac":"a","start_node":1,"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":11,"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})
-# dataset.append({"mac":"b","start_node":5,"start_time":datetime.datetime(2015,6,3,12,10,24),"end_node":9,"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":30})
-# dataset.append({"mac":"c","start_node":13,"start_time":datetime.datetime(2015,6,3,12,10,54),"end_node":9,"end_time":datetime.datetime(2015,6,3,12,11,4),"interval":10})
-# dataset.append({"mac":"d","start_node":1,"start_time":datetime.datetime(2015,6,3,12,11,4),"end_node":5,"end_time":datetime.datetime(2015,6,3,12,11,14),"interval":10})
-# dataset.append({"mac":"e","start_node":1,"start_time":datetime.datetime(2015,6,3,12,10,14),"end_node":5,"end_time":datetime.datetime(2015,6,3,12,10,44),"interval":30})
+# dataset.append({"mac":"a","start_node":[1,21,27],"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":[11,12],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})
+# dataset.append({"mac":"b","start_node":[5],"start_time":datetime.datetime(2015,6,3,12,10,24),"end_node":[9],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":30})
+# dataset.append({"mac":"c","start_node":[13],"start_time":datetime.datetime(2015,6,3,12,10,54),"end_node":[9],"end_time":datetime.datetime(2015,6,3,12,11,4),"interval":10})
+# dataset.append({"mac":"d","start_node":[1],"start_time":datetime.datetime(2015,6,3,12,11,4),"end_node":[5],"end_time":datetime.datetime(2015,6,3,12,11,14),"interval":10})
+# dataset.append({"mac":"e","start_node":[1],"start_time":datetime.datetime(2015,6,3,12,10,14),"end_node":[5],"end_time":datetime.datetime(2015,6,3,12,10,44),"interval":30})
+# dataset.append({"mac":"e","start_node":[5],"start_time":datetime.datetime(2015,6,3,12,11,14),"end_node":[12],"end_time":datetime.datetime(2015,6,3,12,11,34),"interval":20})
 
 # import time
 # start = time.time()
