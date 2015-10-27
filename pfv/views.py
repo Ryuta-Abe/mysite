@@ -41,13 +41,17 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 
 # データリスト画面 http://127.0.0.1:8000/pfv/data_list/  
 def data_list(request, limit=100, date_time=d):
-  dt = int(date_time + "00")
+  dt = date_time + "00"
   
   # データベースから取り出し
-  t = test.objects(get_time_no__lte=dt).order_by("-get_time_no").limit(int(limit))
-
+  dataset = []
+  # t = test.objects(get_time_no__lte=dt).order_by("-get_time_no").limit(int(limit))
+  t = db.test.find({"get_time_no":{"$lte":dt}}).sort("get_time_no", DESCENDING).limit(int(limit))
+  for data in t:
+    data["node_id"] = convert_nodeid(data["node_id"])
+    dataset.append(data)
   return render_to_response('pfv/data_list.html',  # 使用するテンプレート
-                              {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
+                              {'t': dataset, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
                                'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/

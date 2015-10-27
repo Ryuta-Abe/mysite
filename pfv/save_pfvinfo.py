@@ -252,6 +252,10 @@ def make_pfvinfoexperiment(dataset):
 													{"query" : data["start_node"]}, 
 													{"query" : data["end_node"]}
 												]})
+		# if route_info == []:
+		# 	import pdb; pdb.set_trace()  # breakpoint 5b7c82ed //
+		# 	pass
+
 		route_info = optimize_direction(data["start_node"],data["end_node"],route_info[0]["dlist"])
 		print("[出発点,到着点] = "+str([data["start_node"], data["end_node"]])+" , 間隔 = "+str(interval)+" 秒")
 
@@ -313,6 +317,9 @@ def make_pfvinfoexperiment(dataset):
 
 				# pfv情報の登録
 				for j in range(0,num):
+					# if (st_ed_info[j]["st"].month == 10)and(st_ed_info[j]["st"].minute == 50):
+					# 	import pdb; pdb.set_trace()  # breakpoint 56cdb0b7 //
+					# 	pass
 					if st_ed_info[j]["st"] != st_ed_info[j]["ed"]: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
 						tmp_plist = db.pfvinfoexperiment.find_one({"datetime":{"$eq":tlist[j]["datetime"]}})
 						if tmp_plist == None: # この時間の情報がまだDBに登録されていない場合
@@ -324,6 +331,12 @@ def make_pfvinfoexperiment(dataset):
 																	{"query" : st_ed_info[j]["ed"]}
 																	]})
 						j_route_info = optimize_direction(st_ed_info[j]["st"],st_ed_info[j]["ed"],j_route_info[0]["dlist"])
+
+						### ToDo:このへんの調整が必要 ###
+						# 端末4台で4以上のsizeが出てしまう
+						# if (tlist[j]["datetime"].month == 10) and (tlist[j]["datetime"].minute == 50):
+						# 	import pdb; pdb.set_trace()  # breakpoint 9e9fe99d //
+						# 	pass
 						for j_route in j_route_info: # routeの例：[{'direction': [2, 3], 'distance': 75.16648189186454}, {'direction': [3, 4], 'distance': 69.6419413859206}]
 							for node in j_route:
 								tmp_plist["plist"][pfvinfo_id[node["direction"][0]][node["direction"][1]]]["size"] += add
