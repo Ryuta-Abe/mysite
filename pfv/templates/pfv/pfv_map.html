@@ -108,8 +108,8 @@
     document.write('</select>');
 
     document.write('<select name="textbox_minute">');
-    for (var i = 0; i < 12; i++) {
-      document.write('<option id="minute'+("0"+(i*5)).slice(-2)+'" value="'+("0"+(i*5)).slice(-2)+'"/>'+(i*5)+' '+minute_text+'</option>');
+    for (var i = 0; i < 60; i++) {
+      document.write('<option id="minute'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+minute_text+'</option>');
     };
     document.write('</select>');
 
@@ -195,7 +195,7 @@
     {% endfor %}
     if ({{ experiment }} == 1) {
       {% for s in pfvinfo %}
-      pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},mac_list:"{{ s.mac_list }}"});
+      pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},mac_list:[]});
       {% endfor %}
       // d3.select("body").append("p").text("pfvinfo[0][mac_list] = "+pfvinfo[0]["mac_list"].length);
     } else {
@@ -372,7 +372,7 @@
           .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1));
         } else {
           if ({{ experiment }} == 1) {
-            var len = d.mac_list.length*10 + 40;
+            var len = d.mac_list.length*120 + 50;
             div.style("width", len+"px")
             .text(d.size.toFixed(1) + " : " + d.mac_list);
           } else {
@@ -664,7 +664,7 @@
     // セレクトボックスの値をdatetimeに合わせる
     function set_selectbox(){
       var year = datetime.getFullYear() - 2014;
-      var minute = datetime.getMinutes()/5;
+      var minute = datetime.getMinutes();
       var second = datetime.getSeconds()/10;
       document.Sample_form.textbox_year.selectedIndex = year;
       document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
@@ -805,14 +805,13 @@
           .attr({
             'stroke': function(d){return thermography(d.size);},
           })
-      // 0人ならば矢印を見えなくする
-      .style("opacity",function(d){
-        if (d.size == 0) {
-          return 0;
-        } else {
-          return 1;
-        };
-      })
+          .style("opacity",function(d){ // 0人ならば矢印を見えなくする
+            if (d.size == 0) {
+              return 0;
+            } else {
+              return 1;
+            };
+          })
       svg1.selectAll("#staycircle")
       .transition().duration(animation_time)
       .attr({

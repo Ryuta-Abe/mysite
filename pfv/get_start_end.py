@@ -36,7 +36,11 @@ def get_start_end(request):
 
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
   datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
-  tmp_node_id = convert_nodeid(datas[0]['nodelist'][0]['node_id'])
+  # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500}}).sort("_id.get_time_no",-1).sort("_id.mac")
+  tmp_node_id_list = []
+  for tmp_node_id in datas[0]['nodelist']:
+    tmp_node_id_list.append(convert_nodeid(tmp_node_id['node_id']))
+  tmp_node_id = tmp_node_id_list[0]
 
   for data in datas:
     data['id'] = data['_id']
@@ -44,6 +48,9 @@ def get_start_end(request):
     if (data["id"]["mac"] == tmp_mac):
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
       data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
+      end_node_list = []
+      for end_node in data["nodelist"]:
+        end_node_list.append(convert_nodeid(end_node["node_id"]))
 
       # if (data["id"]["mac"] == "90:b6:86:52:77:2a")and(data['id']['get_time_no'].month == 10)and(45 <=data['id']['get_time_no'].minute <= 46):
       #   import pdb; pdb.set_trace()  # breakpoint 25909508 //
@@ -117,21 +124,50 @@ def get_start_end(request):
                 data_lists_experiment.append(se_data)
               break
 
+#           # stayデータリスト生成
+#           elif data["nodelist"][num]["node_id"] == tmp_node_id:
+#             se_data =  {"mac":data["id"]["mac"],
+#                         "start_time":tmp_startdt,
+#                         "end_time"  :tmp_enddt,
+#                         "interval"  :(tmp_enddt - tmp_startdt).seconds,
+# # <<<<<<< HEAD
+#                         # "start_node":tmp_node_id,
+#                         # "end_node"  :data["nodelist"][num]["node_id"],
+#                         # }
+#                         "start_node":tmp_node_id_list,
+#                         "end_node"  :end_node_list,
+#                         }
+#             data_lists_stay.append(se_data)
+            # break
           # stayデータリスト生成
-          elif data["nodelist"][num]["node_id"] == tmp_node_id:
+          elif data["nodelist"][0]["node_id"] == tmp_node_id:
             se_data =  {"mac":data["id"]["mac"],
                         "start_time":tmp_startdt,
                         "end_time"  :tmp_enddt,
                         "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                        "start_node":tmp_node_id,
-                        "end_node"  :data["nodelist"][num]["node_id"],
+                        "start_node":tmp_node_id_list,
+                        "end_node"  :end_node_list,
                         }
             data_lists_stay.append(se_data)
             break
-      
+
       else:
         tmp_node_id = data["nodelist"][0]["node_id"]
-      tmp_startdt = data['id']['get_time_no']
+# =======
+              # if repeat_cnt <= 4:
+              #   data_lists.append(se_data)
+              #   count += 1
+
+              # # 実験用
+              # if se_data["mac"] in mac_list_experiment:
+              #   se_data["mac"] = name_filter(se_data["mac"])
+              #   data_lists_experiment.append(se_data)
+
+          
+        tmp_node_id_list = end_node_list
+        tmp_node_id = tmp_node_id_list[0]
+  # >>>>>>> 0c2df583c3c9dddb410730b37e9ea4383ba8079d
+        tmp_startdt = data['id']['get_time_no']
 
     else:
       tmp_mac = data["id"]["mac"]
@@ -149,7 +185,7 @@ def get_start_end(request):
 
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
   data_lists_stay = sorted(data_lists_stay, key=lambda x:x["start_time"], reverse=True)
-  data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用
+  data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用  
 
   # import time
   # start = time.time()
@@ -157,7 +193,7 @@ def get_start_end(request):
   # make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  make_pfvinfoexperiment(data_lists_experiment)
+  # make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
