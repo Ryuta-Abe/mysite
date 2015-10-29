@@ -95,22 +95,32 @@ def get_start_end(request):
 
             d_total = 0
             interval = (tmp_enddt - tmp_startdt).seconds
+              
             for info in route_info:
               # for part in route:
               for route in info["dlist"]:
+                tmp_d_total = 0
                 for part in route:
-                  tmp_d_total = 0
                   tmp_d_total += part["distance"]
-                if (tmp_d_total > d_total):
+                if d_total == 0:
                   d_total = tmp_d_total
+                if (tmp_d_total < d_total):
+                  d_total = tmp_d_total
+
+            if (tmp_node_id == 8) and (data["nodelist"][num]["node_id"] == 22):
+              pass
 
             if d_total < interval*20:
               se_data =  {"mac":data["id"]["mac"],
                           "start_time":tmp_startdt,
                           "end_time"  :tmp_enddt,
                           "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                          "start_node":tmp_node_id,
-                          "end_node"  :data["nodelist"][num]["node_id"],
+                          # "start_node":tmp_node_id_list,
+                          # "end_node"  :end_node_id_list,
+                          # "start_node":tmp_node_id_list,
+                          # "end_node"  :end_node_list,
+                          "start_node":[tmp_node_id],
+                          "end_node"  :[data["nodelist"][num]["node_id"]],
                           }
 
               tmp_node_id = data["nodelist"][num]["node_id"]
@@ -134,8 +144,8 @@ def get_start_end(request):
 #                         # "start_node":tmp_node_id,
 #                         # "end_node"  :data["nodelist"][num]["node_id"],
 #                         # }
-#                         "start_node":tmp_node_id_list,
-#                         "end_node"  :end_node_list,
+                        # "start_node":tmp_node_id_list,
+                        # "end_node"  :end_node_list,
 #                         }
 #             data_lists_stay.append(se_data)
             # break
@@ -145,11 +155,15 @@ def get_start_end(request):
                         "start_time":tmp_startdt,
                         "end_time"  :tmp_enddt,
                         "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                        "start_node":tmp_node_id_list,
-                        "end_node"  :end_node_list,
+                        # "start_node":tmp_node_id_list,
+                        # "end_node"  :end_node_list,
+                        "start_node":[tmp_node_id],
+                        "end_node"  :[data["nodelist"][num]["node_id"]],
                         }
             data_lists_stay.append(se_data)
             break
+
+        tmp_startdt = data['id']['get_time_no']
 
       else:
         tmp_node_id = data["nodelist"][0]["node_id"]
@@ -193,7 +207,7 @@ def get_start_end(request):
   # make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  # make_pfvinfoexperiment(data_lists_experiment)
+  make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
