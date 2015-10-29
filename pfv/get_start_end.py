@@ -109,8 +109,8 @@ def get_start_end(request):
                           "start_time":tmp_startdt,
                           "end_time"  :tmp_enddt,
                           "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                          "start_node":tmp_node_id,
-                          "end_node"  :data["nodelist"][num]["node_id"],
+                          "start_node":tmp_node_id_list,
+                          "end_node"  :end_node_list,
                           }
 
               tmp_node_id = data["nodelist"][num]["node_id"]

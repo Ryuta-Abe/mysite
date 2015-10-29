@@ -46,6 +46,14 @@ class pfvinfoexperiment(Document):
         "db_alias" : "nm4bd",
     }
 
+class pfvinfoexperiment2(Document):
+    plist = ListField(DictField())
+    datetime = DateTimeField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 # 滞留端末情報
 class stayinfo(Document):
     plist = ListField(DictField())

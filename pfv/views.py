@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 # from cms.forms import SensorForm
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
-from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pfvinfoexperiment, pcwltime, stayinfo
+from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwltime, stayinfo
 from pfv.convert_nodeid import *
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfoexperiment
 from pfv.make_pcwltime import make_pcwltime
@@ -74,21 +74,25 @@ def pfv_map(request):
   pfvinfo = []
   if experiment == 1: # 実験データ
     pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if experiment == 2: # 実験データ2
+    pfvinfo += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   else : # 非実験データ
     pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
         pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
-        if experiment == 1: # 実験データ
-          for mac in pfvinfo[i]["plist"][j]["mac_list"]:
-            if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
-              pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
-          pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
+        # if (experiment == 1) or (experiment == 2): # 実験データ
+        #   for mac in pfvinfo[i]["plist"][j]["mac_list"]:
+        #     if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
+        #       pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
+        #   pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
     pfvinfo = pfvinfo[-1]["plist"]
   else :
     if experiment == 1: # 実験データ
       pfvinfo += db.pfvinfoexperiment.find().limit(1)
+    if experiment == 2: # 実験データ2
+      pfvinfo += db.pfvinfoexperiment2.find().limit(1)
     else : # 非実験データ
       pfvinfo += db.pfvinfo.find().limit(1)
     pfvinfo = pfvinfo[0]["plist"]
@@ -147,17 +151,19 @@ def pfv_map_json(request):
   pfvinfo = []
   if experiment == 1: # 実験データ
     pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if experiment == 2: # 実験データ2
+    pfvinfo += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   else : # 非実験データ
     pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
         pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
-        if experiment == 1: # 実験データ
-          for mac in pfvinfo[i]["plist"][j]["mac_list"]:
-            if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
-              pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
-          pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
+        # if (experiment == 1) or (experiment == 2): # 実験データ
+        #   for mac in pfvinfo[i]["plist"][j]["mac_list"]:
+        #     if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
+        #       pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
+        #   pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
     pfvinfo = pfvinfo[-1]["plist"]
 
   # 滞留端末情報の取り出し
@@ -212,6 +218,8 @@ def pfv_graph(request):
   pfvgraph_info = []
   if experiment == 1: # 実験データ
     pfvinfo_list += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if experiment == 2: # 実験データ2
+    pfvinfo_list += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   else : # 非実験データ
     pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   if len(pfvinfo_list) >= 1:
