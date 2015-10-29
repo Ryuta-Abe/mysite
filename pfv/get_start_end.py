@@ -121,6 +121,8 @@ def get_start_end(request):
                           # "end_node"  :end_node_list,
                           "start_node":[tmp_node_id],
                           "end_node"  :[data["nodelist"][num]["node_id"]],
+                          # "start_node":tmp_node_id_list,
+                          # "end_node"  :end_node_list,
                           }
 
               tmp_node_id = data["nodelist"][num]["node_id"]
@@ -157,6 +159,7 @@ def get_start_end(request):
                         "interval"  :(tmp_enddt - tmp_startdt).seconds,
                         # "start_node":tmp_node_id_list,
                         # "end_node"  :end_node_list,
+                        # st&ed_nodeのみ変更
                         "start_node":[tmp_node_id],
                         "end_node"  :[data["nodelist"][num]["node_id"]],
                         }
@@ -186,6 +189,10 @@ def get_start_end(request):
     else:
       tmp_mac = data["id"]["mac"]
       tmp_node_id = convert_nodeid(data["nodelist"][0]["node_id"])
+      end_node_list = []
+      for end_node in data["nodelist"]:
+        end_node_list.append(convert_nodeid(end_node["node_id"]))
+        
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
       tmp_startdt = data['id']['get_time_no']
       node_history = []
