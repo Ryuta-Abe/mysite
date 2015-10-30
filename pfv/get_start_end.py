@@ -67,6 +67,7 @@ def get_start_end(request):
         repeat_cnt = 0
         tmp_nodelist = []
         for nodedata in data["nodelist"]:
+          # tmp_nodelist.append({"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']})
           tmp_nodelist.append(nodedata['node_id'])
 
         node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
@@ -192,7 +193,7 @@ def get_start_end(request):
       end_node_list = []
       for end_node in data["nodelist"]:
         end_node_list.append(convert_nodeid(end_node["node_id"]))
-        
+
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
       tmp_startdt = data['id']['get_time_no']
       node_history = []
