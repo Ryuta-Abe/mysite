@@ -208,8 +208,6 @@ def get_start_end(request):
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
   data_lists_stay = sorted(data_lists_stay, key=lambda x:x["start_time"], reverse=True)
   data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用  
-  import pdb; pdb.set_trace()  # breakpoint 6bd4c17d //
-  
 
   # import time
   # start = time.time()
@@ -236,3 +234,32 @@ def name_filter(mac):
   elif mac == "18:00:2d:62:6c:d1":
     name = "XperiaVL(A)"
   return name
+
+def distance_filter(st_list,ed_list,interval):
+  route_info = [] # 経路情報の取り出し
+  route_info += db.pcwlroute.find({"$and":[
+                                            {"query" : st_list[0]["pcwl_id"]}, 
+                                            {"query" : ed_list[0]["pcwl_id"]}
+                                          ]})
+  route_info = route_info[0]["dlist"]
+  d_total = 0
+  d_total_max = 0
+  for route in route_info:
+    for node in route:
+      d_total += node["distance"]
+    if (d_total > d_total_max):
+      d_total_max = d_total
+  if d_total_max < interval*20:
+    return [st_list,ed_list]
+  else :
+    if (len(st_list)>=2) and (len(ed_list)>=2):
+      if (st_list[1]["rssi"]) > (ed_list[1]["rssi"]):
+        return distance_filter(st_list,ed_list[1:],interval)
+      else :
+        return distance_filter(st_list[1:],ed_list,interval)
+    elif (len(st_list)>=2) and (len(ed_list)==1):
+      return distance_filter(st_list[1:],ed_list,interval)
+    elif (len(st_list)==1) and (len(ed_list)>=2):
+      return distance_filter(st_list,ed_list[1:],interval)
+    else :
+      return [[],[]]
