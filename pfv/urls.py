@@ -8,6 +8,7 @@ urlpatterns = patterns('',
     url(r'^pfv_map_json/$', views.pfv_map_json, name='pfv_map_json'), #pfvマップ用JSON
     url(r'^pfv_graph/$', views.pfv_graph, name='pfv_graph'),   # pfvグラフ
     url(r'^stay_graph/$', views.stay_graph, name='stay_graph'),   # stayグラフ
+    url(r'^pfv_heatmap/$', views.pfv_heatmap, name='pfv_heatmap'), #pfvマップ
 
     url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
     url(r'^analyze/$', analyze.analyze_direction, name='analyze_direction'),

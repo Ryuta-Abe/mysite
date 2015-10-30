@@ -248,13 +248,14 @@
         .style("opacity",1)
         .style("background","purple")
         .style("height", "35px")
-        .style("width", "150px")
         .style("left", (d3.event.pageX + 20) + "px")
         .style("top", (d3.event.pageY + 20) + "px")
         if ("{{ language }}" == "en") {
-          div.text("Stay MAC:"+d.size);
+          div.text("The number of Stay MAC:"+d.size)
+          .style("width", "250px");
         } else {
-          div.text("滞留端末数:"+d.size);
+          div.text("滞留端末数:"+d.size)
+          .style("width", "150px");
         };
     })
     // マウスがバーから離れたら説明文をけす
@@ -832,10 +833,12 @@
         "fill": function(d){return thermography(d.size);},
       })
       .style("opacity",function(d){ // 0人ならば矢印を見えなくする
-            if ((flag_staycircle)&&(d.size != 0)) {
-                return 0.5;
-            } else {
+            if (flag_staycircle) {
+              if (d.size == 0) {
                 return 0;
+              } else {
+                return 0.5;
+              };
             };
           })
     }

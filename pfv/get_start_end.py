@@ -208,6 +208,8 @@ def get_start_end(request):
   data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
   data_lists_stay = sorted(data_lists_stay, key=lambda x:x["start_time"], reverse=True)
   data_lists_experiment = sorted(data_lists_experiment, key=lambda x:x["start_time"], reverse=True) # 実験用  
+  import pdb; pdb.set_trace()  # breakpoint 6bd4c17d //
+  
 
   # import time
   # start = time.time()
@@ -215,7 +217,7 @@ def get_start_end(request):
   # make_stayinfo(data_lists_stay)
   # end = time.time()
   # print("time:"+str(end-start))
-  make_pfvinfoexperiment(data_lists_experiment)
+  # make_pfvinfoexperiment(data_lists_experiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
