@@ -165,7 +165,7 @@ def make_pfvinfo(dataset):
 													{"query" : data["start_node"][0]}, 
 													{"query" : data["end_node"][0]}
 												]})
-		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+		route_info = optimize_routeinfo(data["start_node"][0],data["end_node"][0],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
 		print("[出発点,到着点] = "+str([data["start_node"][0], data["end_node"][0]])+" , 間隔 = "+str(interval)+" 秒")
 
 		if num >= 1:
@@ -281,7 +281,7 @@ def make_pfvinfoexperiment(dataset):
 													{"query" : data["start_node"][0]}, 
 													{"query" : data["end_node"][0]}
 												]})
-		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+		route_info = optimize_routeinfo(data["start_node"][0],data["end_node"][0],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
 		print("[出発点,到着点] = "+str([data["start_node"][0], data["end_node"][0]])+" , 間隔 = "+str(interval)+" 秒")
 
 		if num >= 1:
