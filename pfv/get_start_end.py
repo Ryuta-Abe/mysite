@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
 from pfv.models import pr_req, test, tmpcol, pcwlroute
-from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfoexperiment, make_stayinfo
+from pfv.save_pfvinfo import make_pfvinfo, make_stayinfo
 from pfv.make_pcwltime import make_pcwltime
 from pfv.convert_nodeid import *
 from mongoengine import *
@@ -40,7 +40,7 @@ def get_start_end(request):
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
   ### 処理が重いため、実装時はlimitをつける ###
-  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac").limit(1000)
+  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
 
   for data in datas:
     data['id'] = data['_id']
@@ -81,8 +81,7 @@ def get_start_end(request):
                 repeat_cnt += 1
 
         interval = (tmp_enddt - tmp_startdt).seconds
-        st_list = distance_filter(tmp_nodelist, end_nodelist, interval)[0]
-        ed_list = distance_filter(tmp_nodelist, end_nodelist, interval)[1]
+        [st_list,ed_list] = distance_filter(tmp_nodelist, end_nodelist, interval)
         if (st_list != []) and (ed_list != []):
           se_data =  {"mac":data["id"]["mac"],
                       "start_time":tmp_startdt,
@@ -91,7 +90,9 @@ def get_start_end(request):
                       "start_node":st_list,
                       "end_node"  :ed_list,
                       }
-          data_lists_experiment.append(se_data)
+          if se_data["mac"] in mac_list_experiment:
+            se_data["mac"] = name_filter(se_data["mac"])
+            data_lists_experiment.append(se_data)
           count += 1
 
         # if data["nodelist"][num]["node_id"] != tmp_node_id:
@@ -198,11 +199,11 @@ def get_start_end(request):
   # end = time.time()
   # print("time:"+str(end-start))
 
-  ### 下記のコメントアウト解除でエラー発生 ###
-  # make_pfvinfoexperiment(data_lists_experiment)
+  ### 下記のコメントアウト解除でエラー発生 (2015年11月2日修正済み)###
+  # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
-                              {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
+                              {"datas":data_lists_experiment[:2000], "count":count, "count_all":count_all} 
                             )  
 
 # 実験用 mac→name フィルタ

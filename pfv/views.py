@@ -6,7 +6,7 @@ from django.template import RequestContext
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
 from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwltime, stayinfo
 from pfv.convert_nodeid import *
-from pfv.save_pfvinfo import make_pfvinfo, make_pfvinfoexperiment
+from pfv.save_pfvinfo import make_pfvinfo
 from pfv.make_pcwltime import make_pcwltime
 from mongoengine import *
 from pymongo import *
