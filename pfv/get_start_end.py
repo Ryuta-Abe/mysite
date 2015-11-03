@@ -28,12 +28,12 @@ def get_start_end(request):
   tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
   data_lists = []
   data_lists_stay = []
+  data_lists_experiment = []
   count = 0
   count_all = 0
 
   # 6F実験で用いた端末のMACリスト
   mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
-  data_lists_experiment = []
   node_history = []
   end_nodelist = []
 
@@ -49,11 +49,6 @@ def get_start_end(request):
     if (data["id"]["mac"] == tmp_mac):
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
       data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
-      # end_node_list = []
-      # node_id変換
-      # for list_data in data["nodelist"]:
-        # list_data['node_id'] = convert_nodeid(list_data['node_id'])
-        # end_node_list.append(convert_nodeid(list_data["node_id"]))
 
       # intervalによる除外
       if ((data['id']['get_time_no'] - tmp_startdt).seconds <= 60):
@@ -65,7 +60,6 @@ def get_start_end(request):
         tmp_nodelist = []
         for nodedata in data["nodelist"]:
           tmp_nodelist.append({"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']})
-          # tmp_nodelist.append(nodedata['node_id'])
 
         node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
 
@@ -93,6 +87,8 @@ def get_start_end(request):
           if se_data["mac"] in mac_list_experiment:
             se_data["mac"] = name_filter(se_data["mac"])
             data_lists_experiment.append(se_data)
+          data_lists.append(se_data)
+
           count += 1
 
         # if data["nodelist"][num]["node_id"] != tmp_node_id:
@@ -200,7 +196,9 @@ def get_start_end(request):
   # print("time:"+str(end-start))
 
   ### 下記のコメントアウト解除でエラー発生 (2015年11月2日修正済み)###
-  # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
+  make_pfvinfo(data_lists,db.pfvinfo)
+  make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
+  # make_stayinfo(data_lists_stay,db.stayinfo)
 
   return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                               {"datas":data_lists_experiment[:2000], "count":count, "count_all":count_all} 
