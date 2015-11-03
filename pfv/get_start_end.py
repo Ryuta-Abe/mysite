@@ -31,16 +31,22 @@ def get_start_end(request):
   data_lists_experiment = []
   count = 0
   count_all = 0
+  MIN_NODE_NUM = 1
+  MAX_NODE_NUM = 27
 
   # 6F実験で用いた端末のMACリスト
   mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
   node_history = []
-  end_nodelist = []
+  start_nodelist = []
+  nodecnt_dict = {}
+  for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
+    nodecnt_dict.update({num:0})
 
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
   ### 処理が重いため、実装時はlimitをつける ###
   datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
+  # datas = db.tmpcol.find({"_id.mac":"98:e0:d9:35:92:4d"}).sort("_id.get_time_no",-1).sort("_id.mac")
 
   for data in datas:
     data['id'] = data['_id']
@@ -59,37 +65,50 @@ def get_start_end(request):
         repeat_cnt = 0
         tmp_nodelist = []
         for nodedata in data["nodelist"]:
-          tmp_nodelist.append({"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']})
+          append_nodedata = {"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']}
+          tmp_nodelist.append(append_nodedata)
 
         node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
+        for num in range(0, min(len(data["nodelist"]), 3)):
+          tmp_num = convert_nodeid(data["nodelist"][num]['node_id'])
+          nodecnt_dict.update({tmp_num : nodecnt_dict[tmp_num]+1})
 
         # PFVのデータリスト生成
-        node_cnt = min(len(data["nodelist"]), 5)
-        for num in range(0, node_cnt):
-          for histoy in node_history:
-            repeat_cnt = 0
-            if not(data['id']['get_time_no'] - timedelta(minutes=5) <= histoy["dt"] <= data['id']['get_time_no'] + timedelta(minutes=5)):
-              node_history.remove(histoy)
-            else:
-              if (data["nodelist"][num]["node_id"] in histoy["node"]):
-                repeat_cnt += 1
-
+        node_cnt = min(len(data["nodelist"]), 3)
+        time_range = timedelta(minutes=1)
+        
+        for history in node_history:
+          if not(data['id']['get_time_no'] - time_range <= history["dt"] <= data['id']['get_time_no'] + time_range):
+            for num in range(0, min(len(history["node"]), 3)):
+              tmp_num = history["node"][num]["pcwl_id"]
+              nodecnt_dict.update({tmp_num : nodecnt_dict[tmp_num]-1})
+            node_history.remove(history)
+            # repeat_cnt = 0
+          else:
+            # for num in range(0, min(len(history["node"]), 3)):
+              pass
+              # if (data["nodelist"][num]["node_id"] in history["node"]):
+                # pass
+              # repeat_cnt += 1
+        
         interval = (tmp_enddt - tmp_startdt).seconds
-        [st_list,ed_list] = distance_filter(tmp_nodelist, end_nodelist, interval)
-        if (st_list != []) and (ed_list != []):
-          se_data =  {"mac":data["id"]["mac"],
-                      "start_time":tmp_startdt,
-                      "end_time"  :tmp_enddt,
-                      "interval"  :(tmp_enddt - tmp_startdt).seconds,
-                      "start_node":st_list,
-                      "end_node"  :ed_list,
-                      }
-          if se_data["mac"] in mac_list_experiment:
-            se_data["mac"] = name_filter(se_data["mac"])
-            data_lists_experiment.append(se_data)
-          data_lists.append(se_data)
+        [st_list,ed_list] = distance_filter(start_nodelist, tmp_nodelist, interval)
+        print(ed_list)
+        if (nodecnt_dict[convert_nodeid(data["nodelist"][0]["node_id"])] <= 4):
+          if (st_list != []) and (ed_list != []):
+            se_data =  {"mac":data["id"]["mac"],
+                        "start_time":tmp_startdt,
+                        "end_time"  :tmp_enddt,
+                        "interval"  :(tmp_enddt - tmp_startdt).seconds,
+                        "start_node":st_list,
+                        "end_node"  :ed_list,
+                        }
+            if se_data["mac"] in mac_list_experiment:
+              se_data["mac"] = name_filter(se_data["mac"])
+              data_lists_experiment.append(se_data)
+            data_lists.append(se_data)
 
-          count += 1
+            count += 1
 
         # if data["nodelist"][num]["node_id"] != tmp_node_id:
         #   route_info = [] # 経路情報の取り出し
@@ -124,8 +143,8 @@ def get_start_end(request):
             #             }
 
         #     tmp_node_id = data["nodelist"][num]["node_id"]
-        #     if repeat_cnt <= 60:
-        #       data_lists.append(se_data)
+            # if repeat_cnt <= 60:
+            #   data_lists.append(se_data)
         #       count += 1
 
         #     # 実験用
@@ -160,15 +179,18 @@ def get_start_end(request):
         start_nodelist = []
         for nodedata in data["nodelist"]:
           start_nodelist.append({"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']})
+        for num in range(0, min(len(data["nodelist"]), 3)):
+          tmp_num = convert_nodeid(data["nodelist"][num]['node_id'])
+          nodecnt_dict.update({tmp_num : nodecnt_dict[tmp_num]+1})
 
     else:
       tmp_mac = data["id"]["mac"]
       # end_node_list = []
-      end_nodelist = []
+      start_nodelist = []
       # for node in data["nodelist"]:
       # tmp_nodelist = []
       for nodedata in data["nodelist"]:
-        end_nodelist.append({"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']})
+        start_nodelist.append({"pcwl_id":convert_nodeid(nodedata['node_id']),"rssi":nodedata['dbm']})
         # end_node_list.append(convert_nodeid(node["node_id"]))
         # start_node_list.append(convert_nodeid(node["node_id"]))
 
@@ -176,7 +198,10 @@ def get_start_end(request):
       tmp_startdt = data['id']['get_time_no']
       node_history = []
 
-      node_history.append({"node":end_nodelist, "dt":data['id']['get_time_no']})
+      node_history.append({"node":start_nodelist, "dt":data['id']['get_time_no']})
+      nodecnt_dict ={}
+      for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
+        nodecnt_dict.update({num:0})
 
     count_all += 1
     if count_all % 1000 == 0:
@@ -196,7 +221,7 @@ def get_start_end(request):
   # print("time:"+str(end-start))
 
   ### 下記のコメントアウト解除でエラー発生 (2015年11月2日修正済み)###
-  make_pfvinfo(data_lists,db.pfvinfo)
+  # make_pfvinfo(data_lists,db.pfvinfo)
   make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
   # make_stayinfo(data_lists_stay,db.stayinfo)
 
