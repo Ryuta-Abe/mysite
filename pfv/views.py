@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 # from cms.forms import SensorForm
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
-from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwltime, stayinfo
+from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwltime, stayinfo, bookmark
 from pfv.convert_nodeid import *
 from pfv.save_pfvinfo import make_pfvinfo
 from pfv.make_pcwltime import make_pcwltime
@@ -70,6 +70,10 @@ def pfv_map(request):
   pcwlnode = []
   pcwlnode += db.pcwlnode.find()
 
+  # ブックマーク情報の取り出し
+  bookmarks = []
+  bookmarks += db.bookmark.find()
+
   # pfv情報の取り出し
   pfvinfo = []
   if experiment == 1: # 実験データ
@@ -130,7 +134,7 @@ def pfv_map(request):
       })
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,
+                              {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
                                'experiment':experiment,'language':language,'timerange':timerange,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
