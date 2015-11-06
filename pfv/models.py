@@ -63,6 +63,16 @@ class stayinfo(Document):
         "db_alias" : "nm4bd",
     }
 
+# ブックマーク情報
+class bookmark(Document):
+    name = StringField(max_length=255)
+    url = StringField(max_length=255)
+    frequency = IntField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 class test(Document):
     _id          = StringField(max_length=255)
     node_id     = IntField()

@@ -31,6 +31,17 @@
     border-radius: 8px;
     pointer-events: none;
   }
+
+  *.logbox
+      {
+         border: solid 1px #808080;
+         width: 350px;
+         height: 115px;
+         padding: 0.5em;
+         overflow: auto;
+         display: inline-block;
+         _display: inline;
+      }
 </style>
 {% endblock %}
 
@@ -39,6 +50,7 @@
 <form name="Sample_form" action="Sample.html">
   <a id="btn_staycircle" onclick="staycircle_opacity()" class="btn btn-default btn-sm"></a>
   <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
+  <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
@@ -144,6 +156,10 @@
   </script>
   <text id="time_interval_text"></text>
   </span></div>
+  <div id="layer_2" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="bookmark_list" class="logbox"></div>
+  <div id="bookmark_add" class="logbox"></div>
+  </div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
 <?xml version="1.0" standalone="no"?>
@@ -189,9 +205,13 @@
 
     // データセットの定義
     var pcwlnode = [];
+    var bookmarks = [];
     var pfvinfo = [];
     {% for s in pcwlnode %}
     pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},size:{{ s.size }}});
+    {% endfor %}
+    {% for s in bookmarks %}
+    bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
     {% endfor %}
     if (is_experiment({{ experiment }})) {
       {% for s in pfvinfo %}
@@ -468,19 +488,177 @@
           var opentext = "時間調整";
           var closetext = "非表示";
         };
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_"+inputData).text(closetext);
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_"+inputData).text(opentext);
+        }
       } else if (inputData == 2){
-        var opentext = "最近";
-        var closetext = "最近非表示";
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_2").style("color","blue");
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_2").style("color","black");
+        }
       }
-      if(objID.className=='close') {
-      objID.style.display='block';
-      objID.className='open';
-      d3.select("#category_"+inputData).text(closetext);
-      }else{
-      objID.style.display='none';
-      objID.className='close';
-      d3.select("#category_"+inputData).text(opentext);
-    }}
+    }
+
+    // ブックマーク関係の描画
+    for (var i = 0; i < bookmarks.length; i++) {
+      add_bookmark_list(bookmarks[i]);
+    };
+    if (bookmarks.length < 4) {
+      add_space(4 - bookmarks.length);
+    };
+    var book = d3.select("#bookmark_add");
+    if ("{{ language }}" == "en") {
+      book.append("p").text("Add new Bookmark:");
+    } else {
+      book.append("p").text("新規ブックマーク追加：");
+    };
+    book.append("input")
+    .attr({
+      "type":"text",
+      "name":"textbox_new_bookmark_name",
+      "size":"30",
+    });
+    book.append("input")
+    .attr({
+      "type":"button",
+      "value": function(){
+        if ("{{ language }}" == "en") {
+          return "Add";
+        } else {
+          return "追加";
+        }
+      },
+      "onclick":"add_new_bookmark()",
+      "class":"btn btn-default btn-sm",
+    })
+    book.append("p"); // 間隔調整
+    if ("{{ language }}" == "en") {
+      book.append("p").append("a").style("color","red")
+      .attr("onclick","all_bookmark_delete()").text("All Bookmarks delete");
+    } else {
+      book.append("p").append("a").style("color","red")
+      .attr("onclick","all_bookmark_delete()").text("全ブックマーク削除");
+    };
+    book.append("p").text("_"); // 間隔調整
+
+    function add_bookmark_list(json){ // 1つのブックマークを表に書き足す
+      var book = d3.select("#bookmark_list").append("p").attr("id",json["name"]);
+      book.append("a")
+      .text(json["name"]+" ")
+      .attr("href",json["url"]);
+      if ("{{ language }}" == "en") {
+        book.append("a")
+        .text("delete")
+        .style("color","red")
+        .attr("onclick","delete_bookmark('"+json["name"]+"')");
+      } else {
+        book.append("a")
+        .text("削除")
+        .style("color","red")
+        .attr("onclick","delete_bookmark('"+json["name"]+"')");
+      };
+    }
+    function add_space(num){ // 表を整えるためにスペースを作る
+      var book = d3.select("#bookmark_list");
+      for (var i = 0; i < num; i++) {
+        book.append("p").attr("id","space").text("_"); // 間隔調整
+      };
+    }
+
+    function add_new_bookmark(){ // テキストボックスを読み取り新規ブックマークの作成
+      var name = Sample_form.textbox_new_bookmark_name.value;
+      if (name != "") {
+        var year = datetime.getFullYear();
+        var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+        var day = ("0"+datetime.getDate()).slice(-2);
+        var hour = ("0"+datetime.getHours()).slice(-2);
+        var minute = ("0"+datetime.getMinutes()).slice(-2);
+        var second = ("0"+datetime.getSeconds()).slice(-2);
+
+        var value = Sample_form.selectbox_timerange.value;
+        var num = parseInt(value.slice(-2));
+        if (value.slice(0,3) == "sec"){
+          var timerange = num;
+        } else if (value.slice(0,3) == "min"){
+          var timerange = num*60;
+        }
+
+        var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}";
+
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'pfv:bookmark_edit' %}"+send_url,
+          dataType: 'json',
+          success: function(json){
+            bookmarks.push(json);
+            d3.select("#bookmark_list").selectAll("#space").remove();
+            add_bookmark_list(json);
+            if (bookmarks.length < 4) {
+              add_space(4 - bookmarks.length);
+            };
+            Sample_form.textbox_new_bookmark_name.value = "";
+          }
+        });
+      };
+    }
+    function delete_bookmark(name){ // 1つのブックマークを削除する
+      if ("{{ language }}" == "en") {
+        var alert = 'delete '+name;
+      } else {
+        var alert = name+'を削除します';
+      };
+      if(window.confirm(alert)){
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'pfv:bookmark_edit' %}"+"?delete=1&name="+name,
+          dataType: 'json',
+          success: function(json){
+            d3.select("#bookmark_list").select("#"+name).remove();
+            d3.select("#bookmark_list").selectAll("#space").remove();
+            bookmarks.splice(0, 1);
+            if (bookmarks.length < 4) {
+              add_space(4 - bookmarks.length);
+            };
+          }
+        });
+      }
+    }
+    function all_bookmark_delete(){ // すべてのブックマークを削除する
+      if ("{{ language }}" == "en") {
+        var alert1 = 'All Bookmarks will be deleted';
+        var alert2 = 'Really OK?';
+      } else {
+        var alert1 = 'すべてのブックマークを削除します';
+        var alert2 = '本当によろしいですか？';
+      };
+      if(window.confirm(alert1)){
+        if (window.confirm(alert2)) {
+          $.ajax({
+            type: 'GET',
+            url: "{% url 'pfv:bookmark_edit' %}"+"?delete=2",
+            dataType: 'json',
+            success: function(json){
+              d3.select("#bookmark_list").selectAll("p").remove();
+              bookmarks = [];
+              if (bookmarks.length < 4) {
+                add_space(4 - bookmarks.length);
+              };
+            }
+          });
+        };
+      }
+    }
 
     // 座標目盛り(円)の生成
     svg1.append("g").attr("id","g_coordinate").style("opacity",0);
@@ -593,32 +771,6 @@
       "height": h - padding*2 - 10,
       "fill": function(d){ return thermography(d);},
     });
-
-    // 単色表示
-    function simple_color(){
-      // 画面の更新
-      marker.selectAll("path")
-          .transition().duration(1000)
-          .attr({
-            fill: "red"
-          });
-      path.transition().duration(1000).attr({
-        'stroke': "red",
-      })
-      // 人数で透明度を変える
-      .style("opacity",function(d){
-        if ((d.size / 10) >= 1) {
-          return 1;
-        } else {
-          return d.size / 10;
-        };
-      })
-      // 人数表示バーの更新
-      svg2.selectAll("rect")
-      .transition().duration(1000)
-      .attr("fill","red")
-      .style("opacity",function(d){return d/10;})
-    }
 
     // 矢印クリック時の動作
     function jump_pfvgraph(dir){

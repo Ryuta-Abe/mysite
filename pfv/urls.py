@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from pfv import views, make_pfvinfo, aggregate, analyze, get_start_end
+from pfv import views, make_pfvinfo, aggregate, analyze, get_start_end, bookmark_edit
 
 urlpatterns = patterns('',
 
@@ -9,6 +9,8 @@ urlpatterns = patterns('',
     url(r'^pfv_graph/$', views.pfv_graph, name='pfv_graph'),   # pfvグラフ
     url(r'^stay_graph/$', views.stay_graph, name='stay_graph'),   # stayグラフ
     url(r'^pfv_heatmap/$', views.pfv_heatmap, name='pfv_heatmap'), #pfvマップ
+
+    url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
 
     url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
     url(r'^analyze/$', analyze.analyze_direction, name='analyze_direction'),
