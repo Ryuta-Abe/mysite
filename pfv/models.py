@@ -88,14 +88,14 @@ class test(Document):
     }
 
 class tmpcol(Document):
-    _id = StringField()
+    _id = DictField()
     # nodelist = ListField(DictField())
     # mac         = StringField(max_length=255)
     # rssi        = IntField()
     # get_time_no = IntField()
     # node_id     = IntField()
-    mac         = ListField()
-    get_time_no = ListField()
+    mac         = StringField()
+    get_time_no = IntField()
     nodelist    = ListField()
 
     meta = {
