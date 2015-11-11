@@ -210,13 +210,13 @@
       pcwlnode_id[pcwlnode[i].pcwl_id] = i;
     };
 
-    // pfvinfoにノード間距離情報追加
-    for (var i = 0; i < pfvinfo.length; i++) {
-      var c1 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[0]]];
-      var c2 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[1]]];
-      var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
-      pfvinfo[i].totalLength = totalLength;
-    };
+    // // pfvinfoにノード間距離情報追加
+    // for (var i = 0; i < pfvinfo.length; i++) {
+    //   var c1 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[0]]];
+    //   var c2 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[1]]];
+    //   var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
+    //   pfvinfo[i].totalLength = totalLength;
+    // };
 
     // d3.select("body").append("p").text("pcwlnodeの長さ = "+pcwlnode.length);
     // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
@@ -231,134 +231,134 @@
     var svg1 = d3.select("#svg1")
     var svg2 = d3.select("#svg2")
 
-    // pcwlnodeのマッピング
-    var g = svg1.selectAll("g.pcwlnode")
-    .data(pcwlnode)
-    .enter()
-    .append("g")
-    .attr({
-      "id": function(d){return "g_pcwl_"+d.pcwl_id;},
-      transform: function(d) {
-        return "translate(" + d.pos_x + "," + d.pos_y + ")";
-      },
-    })
-    // マウスがバーに重なったら説明文を出す
-    .on( "mouseover", function(d){
-        div.transition().duration(300)
-        .style("opacity",1)
-        .style("background","purple")
-        .style("height", "35px")
-        .style("left", (d3.event.pageX + 20) + "px")
-        .style("top", (d3.event.pageY + 20) + "px")
-        if ("{{ language }}" == "en") {
-          div.text("The number of Stay MAC:"+d.size)
-          .style("width", "250px");
-        } else {
-          div.text("滞留端末数:"+d.size)
-          .style("width", "150px");
-        };
-    })
-    // マウスがバーから離れたら説明文をけす
-    .on( "mouseout", function(d){
-      div.transition().duration(300)
-      .style("opacity",0)
-    })
-    // クリック時の動作
-    .on( "click", function(d){
-      jump_staygraph(d.pcwl_id);
-    });
-    // 滞留端末数によって色が変わる円の描画
-    g.append("circle")
-    .attr({
-      "id": "staycircle",
-      "r": 20,
-      "fill": function(d){return thermography(d.size);},
-    })
-    .style("opacity",0)
-    // 円の描画
-    g.append("circle")
-    .attr({
-      "id": function(d){return "pcwl_circle"+d.pcwl_id;},
-      "r": 0.1,
-      "fill": "purple",
-    })
-    .transition().duration(1000)
-    .attr("r", 13);
-    // テキストの描画
-    g.append("text")
-    .attr({
-      "id": function(d){return "pcwl_text"+d.pcwl_id;},
-      "text-anchor": "middle",
-      "dy": ".35em",
-      "fill": "white",
-    })
-    .text(function(d) {
-            return d.pcwl_id;
-    });
+    // // pcwlnodeのマッピング
+    // var g = svg1.selectAll("g.pcwlnode")
+    // .data(pcwlnode)
+    // .enter()
+    // .append("g")
+    // .attr({
+    //   "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+    //   transform: function(d) {
+    //     return "translate(" + d.pos_x + "," + d.pos_y + ")";
+    //   },
+    // })
+    // // マウスがバーに重なったら説明文を出す
+    // .on( "mouseover", function(d){
+    //     div.transition().duration(300)
+    //     .style("opacity",1)
+    //     .style("background","purple")
+    //     .style("height", "35px")
+    //     .style("left", (d3.event.pageX + 20) + "px")
+    //     .style("top", (d3.event.pageY + 20) + "px")
+    //     if ("{{ language }}" == "en") {
+    //       div.text("The number of Stay MAC:"+d.size)
+    //       .style("width", "250px");
+    //     } else {
+    //       div.text("滞留端末数:"+d.size)
+    //       .style("width", "150px");
+    //     };
+    // })
+    // // マウスがバーから離れたら説明文をけす
+    // .on( "mouseout", function(d){
+    //   div.transition().duration(300)
+    //   .style("opacity",0)
+    // })
+    // // クリック時の動作
+    // .on( "click", function(d){
+    //   jump_staygraph(d.pcwl_id);
+    // });
+    // // 滞留端末数によって色が変わる円の描画
+    // g.append("circle")
+    // .attr({
+    //   "id": "staycircle",
+    //   "r": 20,
+    //   "fill": function(d){return thermography(d.size);},
+    // })
+    // .style("opacity",0)
+    // // 円の描画
+    // g.append("circle")
+    // .attr({
+    //   "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+    //   "r": 0.1,
+    //   "fill": "purple",
+    // })
+    // .transition().duration(1000)
+    // .attr("r", 13);
+    // // テキストの描画
+    // g.append("text")
+    // .attr({
+    //   "id": function(d){return "pcwl_text"+d.pcwl_id;},
+    //   "text-anchor": "middle",
+    //   "dy": ".35em",
+    //   "fill": "white",
+    // })
+    // .text(function(d) {
+    //         return d.pcwl_id;
+    // });
 
-    // 矢印の描画
-    // pathの計算で使うので、半径と矢印の微調整パラメータを別定義にしている。
-    var r1 = 13;
-    var r2 = 13;
-    var ref1 = 7;
+    // // 矢印の描画
+    // // pathの計算で使うので、半径と矢印の微調整パラメータを別定義にしている。
+    // var r1 = 13;
+    // var r2 = 13;
+    // var ref1 = 7;
 
-    // defs/markerという構造で、svgの下に矢印を定義
-    var marker = svg1.append("defs").selectAll("g.marker").data(pfvinfo).enter().append("marker")
-        .attr({
-          'id': function(d,i){return "arrowhead"+i;},
-          'refX': ref1,
-          'refY': 2,
-          'markerWidth': 4,
-          'markerHeight': 4,
-          'orient': "auto"
-        });
-    // 矢印の形をpathで定義
-    marker.append("path")
-        .attr({
-          d: "M 2,0.5 V 3.5 L4,2 Z",
-          fill: function(d){return thermography(d.size);}
-        });
+    // // defs/markerという構造で、svgの下に矢印を定義
+    // var marker = svg1.append("defs").selectAll("g.marker").data(pfvinfo).enter().append("marker")
+    //     .attr({
+    //       'id': function(d,i){return "arrowhead"+i;},
+    //       'refX': ref1,
+    //       'refY': 2,
+    //       'markerWidth': 4,
+    //       'markerHeight': 4,
+    //       'orient': "auto"
+    //     });
+    // // 矢印の形をpathで定義
+    // marker.append("path")
+    //     .attr({
+    //       d: "M 2,0.5 V 3.5 L4,2 Z",
+    //       fill: function(d){return thermography(d.size);}
+    //     });
 
-    // line関数を定義
-    var line = d3.svg.line()
-        .interpolate('basis')
-        .x(function(d) {return d.pos_x;})
-        .y(function(d) {return d.pos_y;});
+    // // line関数を定義
+    // var line = d3.svg.line()
+    //     .interpolate('basis')
+    //     .x(function(d) {return d.pos_x;})
+    //     .y(function(d) {return d.pos_y;});
 
-    // path要素を作成
-    svg1.append("g").attr("id","g_arrow").style("opacity",1);
-    var path = svg1.select("#g_arrow").selectAll("g.arrow")
-    .data(pfvinfo)
-    .enter()
-    .append("path")
-    .attr({
-      'd': function(d){
-        var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
-        var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
-        var carray = [c1,c2];
-        return line(carray);
-      },
-      'stroke': function(d){return thermography(d.size);},
-      'stroke-width': 5,
-      'fill': 'none',
-      // pathの属性として、上で定義した矢印を指定します
-      'marker-end':function(d,i){return "url(#arrowhead"+i+")";},
-      // 破線の指定を行います。
-      'stroke-dasharray': function(d){
-        var t = d.totalLength - (r1+r2+ref1);
-        return "0 " + r1 + " " + t + " " + r2;
-      },
-      // 破線の開始相対位置を指定します
-      'stroke-dashoffset': 0,
-    })
-    // 0人ならば矢印を見えなくする
-    .style("opacity",function(d){
-      if (d.size == 0) {
-        return 0;
-      } else {
-        return 1;
-      };
-    });
+    // // path要素を作成
+    // svg1.append("g").attr("id","g_arrow").style("opacity",1);
+    // var path = svg1.select("#g_arrow").selectAll("g.arrow")
+    // .data(pfvinfo)
+    // .enter()
+    // .append("path")
+    // .attr({
+    //   'd': function(d){
+    //     var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+    //     var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+    //     var carray = [c1,c2];
+    //     return line(carray);
+    //   },
+    //   'stroke': function(d){return thermography(d.size);},
+    //   'stroke-width': 5,
+    //   'fill': 'none',
+    //   // pathの属性として、上で定義した矢印を指定します
+    //   'marker-end':function(d,i){return "url(#arrowhead"+i+")";},
+    //   // 破線の指定を行います。
+    //   'stroke-dasharray': function(d){
+    //     var t = d.totalLength - (r1+r2+ref1);
+    //     return "0 " + r1 + " " + t + " " + r2;
+    //   },
+    //   // 破線の開始相対位置を指定します
+    //   'stroke-dashoffset': 0,
+    // })
+    // // 0人ならば矢印を見えなくする
+    // .style("opacity",function(d){
+    //   if (d.size == 0) {
+    //     return 0;
+    //   } else {
+    //     return 1;
+    //   };
+    // });
     // // マウスがバーに重なったら説明文を出す
     // .on( "mouseover", function(d){
     //     div.transition().duration(300)
@@ -391,19 +391,19 @@
     //   jump_pfvgraph(d.direction);
     // });
     // 2本の矢印をアニメーション付きでずらす
-    path.transition().duration(1000).attr({
-      transform: function(d){
-        var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
-        var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
-        var interval = 6; // 2本の矢印間の間隔
-        var trans_x = +1 * interval * (c1.pos_y - c2.pos_y) / d.totalLength;
-        var trans_y = -1 * interval * (c1.pos_x - c2.pos_x) / d.totalLength;
-        return "translate("+trans_x+","+trans_y+")";
-      },
-    })
+    // path.transition().duration(1000).attr({
+    //   transform: function(d){
+    //     var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+    //     var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+    //     var interval = 6; // 2本の矢印間の間隔
+    //     var trans_x = +1 * interval * (c1.pos_y - c2.pos_y) / d.totalLength;
+    //     var trans_y = -1 * interval * (c1.pos_x - c2.pos_x) / d.totalLength;
+    //     return "translate("+trans_x+","+trans_y+")";
+    //   },
+    // })
 
     // マップの座標(目盛り)と温度・照度を追加
-    var coordinate_width = 50; // 座標間の幅
+    var coordinate_width = 75; // 座標間の幅
     var coordinate = [];
     for (var i = 0; i*coordinate_width < 1024; i++) {
      for (var j = 0; j*coordinate_width < 560; j++) {
@@ -429,50 +429,8 @@
       "height": 0,
       "fill": "white",
     })
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////
-    // // var coordinate_size = []; //
-    // for (var k = 0; k < pfvinfo.length; k++) {
-    //   var coordinate_size = [];
-    //   var c1 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[0]]];
-    //   var c2 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[1]]];
-    //   console.log(c1)
-    //   for (var i = 0; i*coordinate_width < (1024 - coordinate_width); i++) {
-    //     for (var j = 0; j*coordinate_width < (560 - coordinate_width); j++) {
-    //     // function(pfvinfo){
-    //     //   var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
-    //     //   var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
-    //     // }
-    //     // var coordinate_size = [];
-    //     var x1 = i*coordinate_width;
-    //     var y1 = j*coordinate_width;
-    //     var x2 = (i+1)*coordinate_width;
-    //     var y2 = (j+1)*coordinate_width;
-    //       if ((x1 <= c1.pos_x) && (c1.pos_x <= x2) && (y1 <= c1.pos_y) && (c1.pos_y <= y2)) {
-    //         coordinate_size.push({x:x1, y:y1, size:c1.size});
-    //         console.log(x1, y1, 'c1')
-    //         console.log(c1.size)
-    //         console.log(coordinate_size.length)
-    //       }
-    //       else {
-    //         coordinate_size.push({x:x1, y:y1, size:0});
-    //       }
-    //       if ((x1 <= c2.pos_x) && (c2.pos_x <= x2) && (y1 <= c2.pos_y) && (c2.pos_y <= y2)) {
-    //         coordinate_size.push({x:x1, y:y1, size:c2.size});
-    //         console.log(x1, y1, 'c2')
-    //         console.log(c2.size)
-    //         console.log(coordinate_size.length)
-    //       }
-    //       else {
-    //         coordinate_size.push({x:x1, y:y1, size:0});
-    //       }
-    //   // visualize_heat_complement();
-    //     }
-    //   }
-    //   visualize_heat_complement();
-    //   }
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    var coordinate_size = []; //
+    var coordinate_size = [];
       for (var i = 0; i*coordinate_width < (1024 - coordinate_width); i++) {
         for (var j = 0; j*coordinate_width < (560 - coordinate_width); j++) {
           var x1 = i*coordinate_width;
@@ -481,48 +439,31 @@
           var y2 = (j+1)*coordinate_width;
           var tmp_size = [];
           for (var k = 0; k < pfvinfo.length; k++) {
-              // var coordinate_size = [];
-              // var tmp_size = [];
+              var point_list = [];
               var c1 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[0]]];
               var c2 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[1]]];
-              // console.log(c1)
-            if ((x1 <= c1.pos_x) && (c1.pos_x <= x2) && (y1 <= c1.pos_y) && (c1.pos_y <= y2)) {
-              tmp_size.push(c1.size);
-              console.log(tmp_size)
-              // console.log(x1, y1, 'c1')
-              console.log(c1, x1, y1)
-              // console.log(coordinate_size.length)
+              var center_x = (c1.pos_x + c2.pos_x) / 2;
+              var center_y = (c1.pos_y + c2.pos_y) / 2;
+              var center_x_1 = (c1.pos_x + center_x) / 2;
+              var center_y_1 = (c1.pos_y + center_y) / 2;
+              var center_x_2 = (c2.pos_x + center_x) / 2;
+              var center_y_2 = (c2.pos_y + center_y) / 2;
+              point_list.push({x:c1.pos_x, y:c1.pos_y, size:pfvinfo[k].size}, {x:center_x_1, y:center_y_1, size:pfvinfo[k].size}, {x:center_x, y:center_y, size:pfvinfo[k].size}, {x:center_x_2, y:center_y_2, size:pfvinfo[k].size}, {x:c2.pos_x, y:c2.pos_y, size:pfvinfo[k].size});
+              for (var m = 0; m < point_list.length; m++) {
+                if ((x1 <= point_list[m].x) && (point_list[m].x <= x2) && (y1 <= point_list[m].y) && (point_list[m].y <= y2)) {
+                  tmp_size.push(point_list[m].size);
+                  break;
             }
-            // else {
-            //   coordinate_size.push({x:x1, y:y1, size:0});
-            // }
-            if ((x1 <= c2.pos_x) && (c2.pos_x <= x2) && (y1 <= c2.pos_y) && (c2.pos_y <= y2)) {
-              tmp_size.push(c2.size);
-              console.log(tmp_size)
-              // console.log(x1, y1, 'c2')
-              // console.log(c2)
-              // console.log(coordinate_size.length)
-            }
-            // else {
-            //   coordinate_size.push({x:x1, y:y1, size:0});
-            // }
           }
-          if (tmp_size[0] == 0) {
-              coordinate_size.push({x:x1, y:y1, size:0});
-            }
-          else {
+          }
               var t_size = 0;
               for (var l = 0; l < tmp_size.length; l++) {
-                // console.log(tmp_size[l])
                 var t_size = t_size + tmp_size[l];
               }
-              // console.log(t_size, x1, y1)
               coordinate_size.push({x:x1, y:y1, size:t_size})
-          }
         visualize_heat_complement();
         }
       }
-      // visualize_heat_complement();
 
     function visualize_heat_complement(){
       var svg2 = d3.select("#svg2")
@@ -551,24 +492,6 @@
           // "fill": thermography(5),
       });
     }
-
-
-    // // 視覚化補完用エリアの生成
-    // svg1.append("g").attr("id","complement_area");
-    // var complement = svg1.select("#complement_area")
-    // .selectAll("complement.area")
-    // .data(coordinate)
-    // .enter()
-    // .append("rect")
-    // .style("opacity",0)
-    // .attr({
-    //   "x": function(d){ return d.x;},
-    //   "y": function(d){ return d.y;},
-    //   "width": 0,
-    //   "height": 0,
-    //   "fill": "white",
-    // })
-    // visualize_heat_complement();
 ////////////////////////////////////////////////////////////////
    // 滞留端末数視覚化円の透明度をトグルで切り替える
     var flag_staycircle = false;
@@ -652,31 +575,31 @@
       "r": 3,
       "fill": "purple",
     })
-    // マウスがバーに重なったら説明文を出す
-    .on( "mouseover", function(d){
-      if (flag_opacity){ // 座標可視状態なら説明を出す
-        div.transition().duration(300)
-        .style("opacity",1)
-        .style("background","purple")
-        .style("width", "150px" )
-        .style("height", "35px")
-        .style("left", (d3.event.pageX + 20) + "px")
-        .style("top", (d3.event.pageY + 20) + "px")
-        .text("x = " + d.x + " , y = " + d.y)
-      }
-    })
-    // マウスがバーから離れたら説明文をけす
-    .on( "mouseout", function(d){
-      div.transition().duration(300)
-      .style("opacity",0)
-    });
+    // // マウスがバーに重なったら説明文を出す
+    // .on( "mouseover", function(d){
+    //   if (flag_opacity){ // 座標可視状態なら説明を出す
+    //     div.transition().duration(300)
+    //     .style("opacity",1)
+    //     .style("background","purple")
+    //     .style("width", "150px" )
+    //     .style("height", "35px")
+    //     .style("left", (d3.event.pageX + 20) + "px")
+    //     .style("top", (d3.event.pageY + 20) + "px")
+    //     .text("x = " + d.x + " , y = " + d.y)
+    //   }
+    // })
+    // // マウスがバーから離れたら説明文をけす
+    // .on( "mouseout", function(d){
+    //   div.transition().duration(300)
+    //   .style("opacity",0)
+    // });
 
-    // マウスオーバーすると出てくる説明文(div要素)
-    var div = d3.select("#tooltip_div")
-    .attr("class","tooltip")
-    .style("width", "80px" )
-    .style("height", "35px")
-    .style("opacity",0)
+    // // マウスオーバーすると出てくる説明文(div要素)
+    // var div = d3.select("#tooltip_div")
+    // .attr("class","tooltip")
+    // .style("width", "80px" )
+    // .style("height", "35px")
+    // .style("opacity",0)
 
     // 気温に対応した色を返す(サーモグラフィ風)
     function thermography(tu){
@@ -778,34 +701,34 @@
       .style("opacity",function(d){return d/10;})
     }
 
-    // 矢印クリック時の動作
-    function jump_pfvgraph(dir){
+    // // 矢印クリック時の動作
+    // function jump_pfvgraph(dir){
 
-      var year = datetime.getFullYear();
-      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
-      var day = ("0"+datetime.getDate()).slice(-2);
-      var hour = ("0"+datetime.getHours()).slice(-2);
-      var minute = ("0"+datetime.getMinutes()).slice(-2);
-      var second = ("0"+datetime.getSeconds()).slice(-2);
+    //   var year = datetime.getFullYear();
+    //   var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+    //   var day = ("0"+datetime.getDate()).slice(-2);
+    //   var hour = ("0"+datetime.getHours()).slice(-2);
+    //   var minute = ("0"+datetime.getMinutes()).slice(-2);
+    //   var second = ("0"+datetime.getSeconds()).slice(-2);
 
-      var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
+    //   var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
 
-      window.open("{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
-    }
-    // PCWLクリック時の動作
-    function jump_staygraph(pcwl_id){
+    //   window.open("{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+    // }
+    // // PCWLクリック時の動作
+    // function jump_staygraph(pcwl_id){
 
-      var year = datetime.getFullYear();
-      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
-      var day = ("0"+datetime.getDate()).slice(-2);
-      var hour = ("0"+datetime.getHours()).slice(-2);
-      var minute = ("0"+datetime.getMinutes()).slice(-2);
-      var second = ("0"+datetime.getSeconds()).slice(-2);
+    //   var year = datetime.getFullYear();
+    //   var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+    //   var day = ("0"+datetime.getDate()).slice(-2);
+    //   var hour = ("0"+datetime.getHours()).slice(-2);
+    //   var minute = ("0"+datetime.getMinutes()).slice(-2);
+    //   var second = ("0"+datetime.getSeconds()).slice(-2);
 
-      var node = ("0"+pcwl_id).slice(-2);
+    //   var node = ("0"+pcwl_id).slice(-2);
 
-      window.open("{% url 'pfv:stay_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&node=" + node + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
-    }
+    //   window.open("{% url 'pfv:stay_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&node=" + node + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+    // }
     // 言語切替
     function change_language(){
 
@@ -966,6 +889,69 @@
           pcwlnode[i].size = 0;
         }
       }
+      //coordinate_sizeの更新
+      var count = 0;
+      for (var i = 0; i*coordinate_width < (1024 - coordinate_width); i++) {
+        for (var j = 0; j*coordinate_width < (560 - coordinate_width); j++) {
+          var x1 = i*coordinate_width;
+          var y1 = j*coordinate_width;
+          var x2 = (i+1)*coordinate_width;
+          var y2 = (j+1)*coordinate_width;
+          var tmp_size = [];
+          for (var k = 0; k < pfvinfo.length; k++) {
+              var point_list = [];
+              var c1 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[0]]];
+              var c2 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[1]]];
+              var center_x = (c1.pos_x + c2.pos_x) / 2;
+              var center_y = (c1.pos_y + c2.pos_y) / 2;
+              point_list.push({x:c1.pos_x, y:c1.pos_y, size:pfvinfo[k].size}, {x:center_x, y:center_y, size:pfvinfo[k].size}, {x:c2.pos_x, y:c2.pos_y, size:pfvinfo[k].size});
+              for (var m = 0; m < point_list.length; m++) {
+                if ((x1 <= point_list[m].x) && (point_list[m].x <= x2) && (y1 <= point_list[m].y) && (point_list[m].y <= y2)) {
+
+                  tmp_size.push(point_list[m].size);
+                  break;
+            }
+          }
+          }
+              var t_size = 0;
+              for (var l = 0; l < tmp_size.length; l++) {
+                var t_size = t_size + tmp_size[l];
+              }
+              coordinate_size[count]["size"] = t_size;
+              count += 1;
+        visualize_heat_complement();
+        }
+      }
+      // for (var i = 0; i*coordinate_width < (1024 - coordinate_width); i++) {
+      //   for (var j = 0; j*coordinate_width < (560 - coordinate_width); j++) {
+      //     var x1 = i*coordinate_width;
+      //     var y1 = j*coordinate_width;
+      //     var x2 = (i+1)*coordinate_width;
+      //     var y2 = (j+1)*coordinate_width;
+      //     var tmp_size = [];
+      //     for (var k = 0; k < pfvinfo.length; k++) {
+      //         var c1 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[0]]];
+      //         var c2 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[1]]];
+      //         var xrange = Math.abs(c1.pos_x -c2.pos_x);
+      //         var yrange = Math.abs(c1.pos_y -c2.pos_y);
+      //       if ((x1 <= c1.pos_x) && (c1.pos_x <= x2) && (y1 <= c1.pos_y) && (c1.pos_y <= y2)) {
+      //         tmp_size.push(c1.size);
+      //       }
+      //       if ((x1 <= c2.pos_x) && (c2.pos_x <= x2) && (y1 <= c2.pos_y) && (c2.pos_y <= y2)) {
+      //         tmp_size.push(c2.size);
+      //       }
+      //     }
+      //         var t_size = 0;
+      //         for (var l = 0; l < tmp_size.length; l++) {
+      //           // console.log(tmp_size[l])
+      //           var t_size = t_size + tmp_size[l];
+      //         }
+      //         coordinate_size[count]["size"] = t_size;
+      //         count += 1;
+      //   visualize_heat_complement();
+      //   }
+      // }
+
       // 画面の更新
       var animation_time = 500;
       marker.selectAll("path")
@@ -998,6 +984,9 @@
               };
             };
           })
+      complement.attr({
+        "fill": function(d){return thermography(d.size);},
+      })
     }
 
     d3.select("#Auto_Animation").style("color","black");
