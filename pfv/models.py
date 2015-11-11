@@ -23,6 +23,7 @@ class pcwlnode(Document):
     pos_x = IntField()
     pos_y = IntField()
     next_id = ListField(IntField())
+    floor = StringField()
 
     meta = {
         "db_alias" : "nm4bd",
@@ -32,6 +33,7 @@ class pcwlnode(Document):
 class pfvinfo(Document):
     plist = ListField(DictField())
     datetime = DateTimeField()
+    floor = StringField()
 
     meta = {
         "db_alias" : "nm4bd",
@@ -41,6 +43,7 @@ class pfvinfo(Document):
 class pfvinfoexperiment(Document):
     plist = ListField(DictField())
     datetime = DateTimeField()
+    floor = StringField()
 
     meta = {
         "db_alias" : "nm4bd",
@@ -49,6 +52,18 @@ class pfvinfoexperiment(Document):
 class pfvinfoexperiment2(Document):
     plist = ListField(DictField())
     datetime = DateTimeField()
+    floor = StringField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+# 人流情報(mac情報付き)
+class pfvmacinfo(Document):
+    datetime = DateTimeField()
+    mac = StringField()
+    direction = ListField(ListField(IntField()))
+    floor = StringField()
 
     meta = {
         "db_alias" : "nm4bd",
@@ -58,6 +73,7 @@ class pfvinfoexperiment2(Document):
 class stayinfo(Document):
     plist = ListField(DictField())
     datetime = DateTimeField()
+    floor = StringField()
 
     meta = {
         "db_alias" : "nm4bd",
@@ -105,6 +121,7 @@ class tmpcol(Document):
 class pcwlroute(Document):
     query = ListField(IntField())
     dlist = ListField(ListField(DictField()))
+    floor = StringField()
 
     meta = {
         "db_alias" : "nm4bd",

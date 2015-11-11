@@ -268,6 +268,9 @@ def stay_graph(request):
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
 
+def mac_trace(request):
+  return 0 
+
   # pfvマップ画面 http://localhost:8000/cms/pfv_heatmap/
 def pfv_heatmap(request):
 
