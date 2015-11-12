@@ -5,7 +5,7 @@ import math
 from mongoengine import *
 from pymongo import *
 
-from pfv.models import pcwlnode, pfvinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwlroute, pcwltime, stayinfo
+from pfv.models import pcwlnode, pfvinfo, pfvmacinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwlroute, pcwltime, stayinfo, staymacinfo
 
 client = MongoClient()
 db = client.nm4bd
@@ -47,6 +47,17 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 # class pcwltime(Document):
 #     _id = StringField()
 #     datetime = DateTimeField()
+
+# # 人流情報(mac情報付き)
+# class pfvmacinfo(Document):
+#     datetime = DateTimeField()
+#     mac = StringField()
+#     plist = ListField(DictField())
+#     floor = StringField()
+
+#     meta = {
+#         "db_alias" : "nm4bd",
+#     }
 
 # ここまでコメントアウト
 
@@ -235,6 +246,89 @@ def is_experiment(db_name): # 実験用DBか否かを判定
 	else :
 		return False
 
+# mac情報付きpfvinfo
+def make_pfvmacinfo(dataset,db_name):
+	# 開始時にDBを初期化
+	db_name.remove()
+
+	# 空のplistを作成
+	emp_plist = []
+	# ノード同士の全組み合わせで経路情報を記録
+	for i in range(0,len(_pcwlnode)):
+		for j in range(0,len(_pcwlnode)):
+			st = _pcwlnode[i]["pcwl_id"] # 出発点
+			ed = _pcwlnode[j]["pcwl_id"] # 到着点
+			# iとjが隣接ならば人流0人でplistに加える
+			if ed in _pcwlnode[i]["next_id"]:
+				emp_plist.append({"direction":[st,ed],"size":0})
+
+	progress = 0
+	for data in dataset:
+		interval = round(data["interval"])
+		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
+		route_info = [] # 経路情報の取り出し
+		route_info += db.pcwlroute.find({"$and": [
+													{"query" : data["start_node"][0]["pcwl_id"]}, 
+													{"query" : data["end_node"][0]["pcwl_id"]}
+												]})
+		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+
+		if num >= 1:
+			for route in route_info: # ある経路に対して以下を実行
+
+				# 抜けている出発到着情報の補完
+				if num > 1:
+					total_distance = route["distance"]
+					tmp_distance = 0 # 推定に用いる一時累計距離
+					st_ed_info = [] # 欠落した出発到着情報を補完するリスト
+					tmp_st_ed_info = []
+					n_count = 0 # ノード情報のカウンター
+					t_count = 1 # タイム情報のカウンター
+					while t_count < num:
+						tmp_distance += route["route"][n_count]["distance"]
+						tmp_st_ed_info.append(route["route"][n_count]["direction"])
+						if tmp_distance >= (total_distance*t_count/num): # 一時累計距離がしきい値を超えたら以下を実行
+							extra_distance = tmp_distance - (total_distance*t_count/num)
+							if extra_distance >= (route["route"][n_count]["distance"]/2):
+								tmp_st_ed_info.pop(-1)
+								tmp_distance -= route["route"][n_count]["distance"]
+							else :
+								n_count += 1
+							st_ed_info.append(tmp_st_ed_info)
+							tmp_st_ed_info = []
+							t_count += 1
+							if n_count == len(route["route"]):
+								for i in range(t_count-1,num):
+									st_ed_info.append([])
+								break
+							if t_count == num:
+								for i in range(n_count,len(route["route"])):
+									tmp_st_ed_info.append(route["route"][i]["direction"])
+								st_ed_info.append(tmp_st_ed_info)
+						else :
+							n_count += 1
+				elif num == 1:
+					tmp_st_ed_info = []
+					for node in route["route"]:
+						tmp_st_ed_info.append(node["direction"])
+					st_ed_info = [tmp_st_ed_info]
+
+				# pfv情報の登録
+				for j in range(0,num):
+					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
+						tmp_plist = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":"W2-6F"}
+						for dire in st_ed_info[j]:
+							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] += route["add"]
+						db_name.insert(tmp_plist)
+						for dire in st_ed_info[j]:
+							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] -= route["add"]
+
+		progress += 1
+		if ((progress % 1000) == 0) or (progress == len(dataset)):
+			print("pfvmacinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+		db_name.create_index([("datetime", ASCENDING)])
+
 # 滞留端末情報stayinfo関係
 def make_empty_stayinfo(dt): # 空のstayinfoを作成
 	# print(str(dt)+"の空のstayinfoを作成")
@@ -259,25 +353,55 @@ def make_stayinfo(dataset,db_name):
 			if tmp_plist == None: # この時間の情報がまだDBに登録されていない場合
 				tmp_plist = make_empty_stayinfo(tlist[i]["datetime"]) # この時間の空の情報を作成
 
-			# 滞留端末情報更新
+				# 滞留端末情報更新
 			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] += 1
 			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["mac_list"] += [data["mac"]]
 			db_name.save(tmp_plist)
 		print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
 		db_name.create_index([("datetime", ASCENDING)])
+
+def make_staymacinfo(dataset,db_name):
+	# stayinfoを初期化
+	db_name.remove()
+
+	# 空のplistを作成
+	emp_plist = []
+	for node in _pcwlnode:
+		emp_plist.append({"pcwl_id":node["pcwl_id"],"size":0})
+
+	progress = 0
+	for data in dataset:
+		interval = round(data["interval"])
+		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
+
+		for i in range(0,num):
+
+			# 滞留端末情報の一時データ取り出し
+			tmp_plist = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":"W2-6F"}
+
+			# 滞留端末情報更新
+			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] += 1
+			db_name.insert(tmp_plist)
+			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] -= 1
+
+		progress += 1
+		if ((progress % 1000) == 0) or (progress == len(dataset)):
+			print("staymacinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+		db_name.create_index([("datetime", ASCENDING)])
 		
-# 出発時刻、出発点、到着時刻、到着点のデータセット
+# # 出発時刻、出発点、到着時刻、到着点のデータセット
 # dataset = []
 # dataset.append({"mac":"a","start_node":[{"pcwl_id":1,"rssi":-60},{"pcwl_id":21,"rssi":-65},{"pcwl_id":27,"rssi":-70}],"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":[{"pcwl_id":11,"rssi":-60},{"pcwl_id":12,"rssi":-65}],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})
 # dataset.append({"mac":"b","start_node":[{"pcwl_id":5,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,24),"end_node":[{"pcwl_id":9,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":30})
 # dataset.append({"mac":"c","start_node":[{"pcwl_id":13,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,54),"end_node":[{"pcwl_id":9,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,4),"interval":10})
 # dataset.append({"mac":"d","start_node":[{"pcwl_id":1,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,4),"end_node":[{"pcwl_id":5,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,14),"interval":10})
 # dataset.append({"mac":"e","start_node":[{"pcwl_id":1,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,14),"end_node":[{"pcwl_id":5,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,10,44),"interval":30})
-# # dataset.append({"mac":"f","start_node":[{"pcwl_id":9,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,14),"end_node":[{"pcwl_id":13,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,34),"interval":20})
+# dataset.append({"mac":"f","start_node":[{"pcwl_id":9,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,14),"end_node":[{"pcwl_id":13,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,34),"interval":20})
 
 # import time
 # start = time.time()
-# make_pfvinfo(dataset,db.pfvinfoexperiment)
+# make_pfvmacinfo(dataset,db.pfvmacinfo)
 # end = time.time()
 # print("time:"+str(end-start))
 
