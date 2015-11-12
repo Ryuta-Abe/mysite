@@ -23,10 +23,10 @@ def get_start_end(request):
 
   # urlからクエリの取り出し
   algorithm = int(request.GET.get('algorithm', 1))
-
+  # CONST
   MIN_NODE_NUM = 1
   MAX_NODE_NUM = 27
-
+  # 初期設定
   count = 0
   count_all = 0
   tmp_mac   = ""
@@ -54,6 +54,8 @@ def get_start_end(request):
   ### アルゴリズム1 ###
   if algorithm == 1:
 
+    # 1番目の設定
+    datas[0]['nodelist'] = sorted(data[0]['nodelist'], key=lambda x:x["dbm"], reverse=True)
     for tmp_node_id in datas[0]['nodelist']:
       tmp_node_id_list.append({"pcwl_id":convert_nodeid(tmp_node_id['node_id']),"rssi":tmp_node_id['dbm']})
     tmp_node_id = tmp_node_id_list[0]
@@ -401,6 +403,8 @@ def name_filter(mac):
     name = "Dynabook(A)"
   elif mac == "18:00:2d:62:6c:d1":
     name = "XperiaVL(A)"
+  else:
+    name = mac
   return name
 
 def distance_filter(st_list,ed_list,interval):

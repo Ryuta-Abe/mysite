@@ -5,6 +5,7 @@ from django.template import RequestContext
 
 from pfv.models import pr_req, test, tmpcol
 from pfv.convert_nodeid import *
+from pfv.get_start_end import name_filter
 from mongoengine import *
 from pymongo import *
 
@@ -19,7 +20,7 @@ db = client.nm4bd
 def analyze_direction(request):
   from datetime import datetime
 
-  ag = db.tmpcol.find().sort("_id.mac").sort("_id.get_time_no",-1).limit(10000)
+  ag = db.tmpcol.find().sort("_id.mac").sort("_id.get_time_no",-1).limit(25000)
   ana_list = []
   for jdata in ag:
     jdata['id'] = jdata['_id']
@@ -28,6 +29,7 @@ def analyze_direction(request):
     for list_data in jdata['nodelist']:
       list_data['node_id'] = convert_nodeid(list_data['node_id'])
     del(jdata['_id'])
+    jdata["id"]["mac"] = name_filter(jdata["id"]["mac"])
     ana_list.append(jdata)
   return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
                               {'ag': ana_list} 
