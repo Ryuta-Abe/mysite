@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
 from pfv.models import pr_req, test, tmpcol, pcwlroute
-from pfv.save_pfvinfo import make_pfvinfo, make_stayinfo
+from pfv.save_pfvinfo import make_pfvinfo, make_pfvmacinfo, make_stayinfo, make_staymacinfo
 from pfv.make_pcwltime import make_pcwltime
 from pfv.convert_nodeid import *
 from mongoengine import *
@@ -204,11 +204,13 @@ def get_start_end(request):
 
     # import time
     # start = time.time()
-    make_pfvinfo(data_lists,db.pfvinfo)
-    make_stayinfo(data_lists_stay,db.stayinfo)
+    # make_pfvinfo(data_lists,db.pfvinfo)
+    # make_stayinfo(data_lists_stay,db.stayinfo)
     # end = time.time()
     # print("time:"+str(end-start))
-    make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
+    # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
+    # make_pfvmacinfo(data_lists,db.pfvmacinfo)
+    make_staymacinfo(data_lists_stay,db.staymacinfo)
 
     return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                                {"datas":data_lists[:2000], "count":count, "count_all":count_all} 

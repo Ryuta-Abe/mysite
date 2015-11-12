@@ -62,7 +62,7 @@ class pfvinfoexperiment2(Document):
 class pfvmacinfo(Document):
     datetime = DateTimeField()
     mac = StringField()
-    direction = ListField(ListField(IntField()))
+    plist = ListField(DictField())
     floor = StringField()
 
     meta = {
@@ -72,6 +72,17 @@ class pfvmacinfo(Document):
 # 滞留端末情報
 class stayinfo(Document):
     plist = ListField(DictField())
+    datetime = DateTimeField()
+    floor = StringField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+# 滞留端末情報(mac情報付き)
+class staymacinfo(Document):
+    plist = ListField(DictField())
+    mac = StringField()
     datetime = DateTimeField()
     floor = StringField()
 
