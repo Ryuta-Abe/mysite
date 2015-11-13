@@ -43,7 +43,7 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 
 # データリスト画面 http://127.0.0.1:8000/pfv/data_list/  
 def data_list(request, limit=100, date_time=d):
-  dt = date_time + "00"
+  dt = int(date_time + "00")
   
   # データベースから取り出し
   dataset = []
