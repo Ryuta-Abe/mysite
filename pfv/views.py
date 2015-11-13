@@ -238,6 +238,7 @@ def pfv_graph(request):
   direction = request.GET.get('direction', '2205')
   experiment = int(request.GET.get('experiment', 0))
   language = request.GET.get('language', 'jp')
+  mac = request.GET.get('mac', '')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
@@ -245,15 +246,24 @@ def pfv_graph(request):
   st = int(direction[0:2])
   ed = int(direction[2:4])
 
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
+
   # pfv情報の取り出しとグラフデータ化
   pfvinfo_list = []
   pfvgraph_info = []
   if experiment == 1: # 実験データ
     pfvinfo_list += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  if experiment == 2: # 実験データ2
+  elif experiment == 2: # 実験データ2
     pfvinfo_list += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  else : # 非実験データ
+  elif mac == "": # すべてのmacの取り出し
     pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 特定のmacを抽出
+    pfvinfo_list += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING) 
   if len(pfvinfo_list) >= 1:
     for i in range(0,len(pfvinfo_list[0]["plist"])):
       if (pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
@@ -263,7 +273,7 @@ def pfv_graph(request):
 
   return render_to_response('pfv/pfv_graph.html',  # 使用するテンプレート
                               {'pfvgraph_info': pfvgraph_info, 'experiment':experiment
-                              ,'start_node':st, 'end_node':ed, 'language':language
+                              ,'start_node':st, 'end_node':ed, 'language':language, 'mac':mac
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
@@ -275,14 +285,25 @@ def stay_graph(request):
   date_time = request.GET.get('datetime', '20150603122130')
   node = int(request.GET.get('node', 1))
   language = request.GET.get('language', 'jp')
+  mac = request.GET.get('mac', '')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
 
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
+
   # 滞留端末情報の取り出しとグラフデータ化
   stayinfo_list = []
   staygraph_info = []
-  stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if mac == "": # すべてのmacの取り出し
+    stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 特定のmacを抽出
+    stayinfo_list += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING) 
   if len(stayinfo_list) >= 1:
     for i in range(0,len(stayinfo_list[0]["plist"])):
       if stayinfo_list[0]["plist"][i]["pcwl_id"] == node:
@@ -291,7 +312,8 @@ def stay_graph(request):
       staygraph_info.append({"datetime":stayinfo["datetime"],"size":stayinfo["plist"][num]["size"]})
 
   return render_to_response('pfv/stay_graph.html',  # 使用するテンプレート
-                              {'staygraph_info': staygraph_info, 'node':int(node), 'language':language
+                              {'staygraph_info': staygraph_info, 'node':int(node)
+                              , 'language':language, 'mac':mac
                               ,'year':lt.year,'month':lt.month,'day':lt.day
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )

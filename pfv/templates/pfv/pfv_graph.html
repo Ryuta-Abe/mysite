@@ -140,13 +140,20 @@
       d3.select("#difference_language").text("日本語");
     }　else {
       if ({{ experiment }} == 1) {
-        d3.select("#header").text("人流変化グラフ(実験用) "+"{{ start_node }}"+" → "+"{{ end_node }}");
+        var header = d3.select("#header").text("人流変化グラフ(実験用) "+"{{ start_node }}"+" → "+"{{ end_node }}"+" ");
       } else {
-        d3.select("#header").text("人流変化グラフ "+"{{ start_node }}"+" → "+"{{ end_node }}");
+        var header = d3.select("#header").text("人流変化グラフ "+"{{ start_node }}"+" → "+"{{ end_node }}"+" ");
       };
       d3.select("#datetime_header").text("取得日時：");
       d3.select("#btn_reload").text("更新");
       d3.select("#difference_language").text("English");
+    };
+    if ("{{ mac }}" != "") {
+      header.append("text").style({
+        "font-size":"14px",
+        "color":"gray",
+      })
+      .text(" Query : "+"{{ mac }}");
     };
 
     //  センサーデータセット

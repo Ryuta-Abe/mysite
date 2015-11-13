@@ -632,8 +632,9 @@
         } else if (value.slice(0,3) == "min"){
           var timerange = num*60;
         }
+        var mac = Sample_form.textbox_mac.value;
 
-        var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}";
+        var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}";
 
         $.ajax({
           type: 'GET',
@@ -867,8 +868,9 @@
       var second = ("0"+datetime.getSeconds()).slice(-2);
 
       var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
+      var mac = Sample_form.textbox_mac.value;
       
-      window.open("{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+      window.open("{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction + "&mac=" + mac + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
     // PCWLクリック時の動作
     function jump_staygraph(pcwl_id){
@@ -881,8 +883,9 @@
       var second = ("0"+datetime.getSeconds()).slice(-2);
 
       var node = ("0"+pcwl_id).slice(-2);
+      var mac = Sample_form.textbox_mac.value;
       
-      window.open("{% url 'pfv:stay_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&node=" + node + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+      window.open("{% url 'pfv:stay_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&node=" + node + "&mac=" + mac + "&language=" + "{{ language }}","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
     // 言語切替
     function change_language(){
@@ -901,6 +904,7 @@
       } else if (value.slice(0,3) == "min"){
         var timerange = num*60;
       }
+      var mac = Sample_form.textbox_mac.value;
 
       if ("{{ language }}" == "en") {
         var language = "jp";
@@ -908,7 +912,7 @@
         var language = "en";
       }
 
-      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&language=" + language;
+      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language;
     }
 
     // セレクトボックスの値をdatetimeに合わせる
