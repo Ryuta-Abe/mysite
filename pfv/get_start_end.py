@@ -209,7 +209,7 @@ def get_start_end(request):
     # end = time.time()
     # print("time:"+str(end-start))
     # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
-    # make_pfvmacinfo(data_lists,db.pfvmacinfo)
+    make_pfvmacinfo(data_lists,db.pfvmacinfo)
     make_staymacinfo(data_lists_stay,db.staymacinfo)
 
     return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート

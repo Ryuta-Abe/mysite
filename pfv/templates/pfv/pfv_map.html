@@ -42,6 +42,17 @@
          display: inline-block;
          _display: inline;
       }
+
+  *.logbox2
+      {
+         border: solid 1px #808080;
+         width: 700px;
+         height: 115px;
+         padding: 0.5em;
+         overflow: auto;
+         display: inline-block;
+         _display: inline;
+      }
 </style>
 {% endblock %}
 
@@ -51,6 +62,7 @@
   <a id="btn_staycircle" onclick="staycircle_opacity()" class="btn btn-default btn-sm"></a>
   <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
+  <a href="javascript:void(0)" id="category_3" onclick="show('3');" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
@@ -160,6 +172,15 @@
   <div id="bookmark_list" class="logbox"></div>
   <div id="bookmark_add" class="logbox"></div>
   </div>
+  <div id="layer_3" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="filter_list" class="logbox2">
+    <text id="macfilter_text"></text><br>
+    <input type="text" name="textbox_mac" size="80">
+    <input type="button" id="btn_macfilter" onclick="mac_filtering()" class="btn btn-default btn-sm">
+    <input type="button" id="btn_macreset" onclick="mac_reset()" class="btn btn-default btn-sm"><br>
+    <text id="macfilter_log"></text>
+  </div>
+  </div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
 <?xml version="1.0" standalone="no"?>
@@ -179,6 +200,10 @@
       d3.select("#header").text("People Stream Map");
       d3.select("#btn_staycircle").text("StayMAC");
       d3.select("#btn_coordinate").text("coordinate");
+      d3.select("#category_3").text("Filter");
+      d3.select("#macfilter_text").text("MAC Filter :");
+      d3.select("#btn_macfilter").attr("value","Filtering");
+      d3.select("#btn_macreset").style("color","red").attr("value","Reset Filter");
       d3.select("#datetime_header").text("datetime : ");
       d3.select("#category_1").text("adjust");
       d3.select("#btn_reload").text("Reload");
@@ -194,6 +219,10 @@
       };
       d3.select("#btn_staycircle").text("滞留");
       d3.select("#btn_coordinate").text("座標");
+      d3.select("#category_3").text("フィルタ");
+      d3.select("#macfilter_text").text("MACフィルタリング：");
+      d3.select("#btn_macfilter").attr("value","フィルタ適用");
+      d3.select("#btn_macreset").style("color","red").attr("value","フィルタ無効化");
       d3.select("#datetime_header").text("取得日時：");
       d3.select("#category_1").text("時間調整");
       d3.select("#btn_reload").text("更新");
@@ -507,6 +536,16 @@
           objID.className='close';
           d3.select("#category_2").style("color","black");
         }
+      } else if (inputData == 3){
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_3").style("color","blue");
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_3").style("color","black");
+        }
       }
     }
 
@@ -658,6 +697,51 @@
           });
         };
       }
+    }
+
+    // フィルタ関係の描画
+    Sample_form.textbox_mac.value = "{{ mac }}";
+    var macfilter_log = d3.select("#macfilter_log").style({
+      "color":"gray",
+      "font-size":"11px",
+    })
+    if ("{{ language }}" == "en") {
+      macfilter_log.text("When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24'");
+    } else {
+      macfilter_log.text("複数のMACで抽出したい場合はMAC間に「 , 」を挟んで入力。例：「20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24」");
+    };
+    function mac_filtering(){
+      var mac = Sample_form.textbox_mac.value;
+      if ((mac.length % 18) == 17) { // 特定のmacを抽出
+        Load_JSON(datetime);
+        if ("{{ language }}" == "en") {
+          macfilter_log.text("Filtered with query : "+mac);
+        } else {
+          macfilter_log.text("クエリ「"+mac+"」で抽出しました。");
+        };
+      } else if (mac.length == 0){ // すべてのmacを表示
+        Load_JSON(datetime);
+        if ("{{ language }}" == "en") {
+          macfilter_log.text("All MACs are displayed.");
+        } else {
+          macfilter_log.text("全てのMACを表示しました。");
+        };
+      } else { // 不正なクエリのため検索しない
+        if ("{{ language }}" == "en") {
+          macfilter_log.text("Your input is wrong. When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24'");
+        } else {
+          macfilter_log.text("クエリ入力に誤りがあります。複数のMACで抽出したい場合はMAC間に「 , 」を挟んで入力。例：「20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24」");
+        };
+      };
+    }
+    function mac_reset(){
+      Sample_form.textbox_mac.value = "";
+      Load_JSON(datetime);
+      if ("{{ language }}" == "en") {
+        macfilter_log.text("All MACs are displayed.");
+      } else {
+        macfilter_log.text("全てのMACを表示しました。");
+      };
     }
 
     // 座標目盛り(円)の生成
@@ -884,10 +968,11 @@
       } else if (value.slice(0,3) == "min"){
         var timerange = num*60;
       }
+      var mac = Sample_form.textbox_mac.value;
 
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }},
+        url: "{% url 'pfv:pfv_map_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac,
         dataType: 'json',
         success: function(json){
           describe_datetime();
@@ -1041,7 +1126,7 @@
     //       return pcwlnode[pcwlnode_id[d.direction[1]]]["pos_y"];
     //     },
     //   })
-      
+
     // }
 
     // animate_circle();

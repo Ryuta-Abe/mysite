@@ -27,8 +27,10 @@ client = MongoClient()
 db = client.nm4bd
 db.test.create_index([("get_time_no", DESCENDING)])
 db.pfvinfo.create_index([("datetime", ASCENDING)])
+db.pfvmacinfo.create_index([("datetime", ASCENDING)])
 db.pfvinfoexperiment.create_index([("datetime", ASCENDING)])
 db.stayinfo.create_index([("datetime", ASCENDING)])
+db.staymacinfo.create_index([("datetime", ASCENDING)])
 db.pcwltime.create_index([("datetime", DESCENDING)])
 db.pcwlroute.create_index([("query", ASCENDING)])
 
@@ -61,6 +63,7 @@ def pfv_map(request):
   date_time = request.GET.get('datetime', '20150603122130')
   timerange = int(request.GET.get('timerange', 10))
   experiment = int(request.GET.get('experiment', 0))
+  mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
 
   lt = dt_from_14digits_to_iso(date_time)
@@ -74,14 +77,23 @@ def pfv_map(request):
   bookmarks = []
   bookmarks += db.bookmark.find()
 
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
+
   # pfv情報の取り出し
   pfvinfo = []
   if experiment == 1: # 実験データ
     pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   elif experiment == 2: # 実験データ2
     pfvinfo += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  else : # 非実験データ
+  elif mac == "": # すべてのmacの取り出し
     pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 特定のmacを抽出
+    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
@@ -103,10 +115,12 @@ def pfv_map(request):
     for j in range(0,len(pfvinfo)):
       pfvinfo[j]["size"] = 0 
 
-
   # 滞留端末情報の取り出し
   stayinfo = []
-  stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if mac == "": # すべてのmacの取り出し
+    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 特定のmacを抽出
+    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(stayinfo) >= 1:
     for i in range(1,len(stayinfo)):
       for j in range(0,len(stayinfo[i]["plist"])):
@@ -135,7 +149,7 @@ def pfv_map(request):
   
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
-                               'experiment':experiment,'language':language,'timerange':timerange,
+                               'experiment':experiment,'language':language,'timerange':timerange,'mac':mac,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
                               )
@@ -147,9 +161,17 @@ def pfv_map_json(request):
   date_time = request.GET.get('datetime', '20150603122130')
   timerange = int(request.GET.get('timerange', 10))
   experiment = int(request.GET.get('experiment', 0))
+  mac = request.GET.get('mac', '')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
 
   # pfv情報の取り出し
   pfvinfo = []
@@ -157,8 +179,10 @@ def pfv_map_json(request):
     pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   elif experiment == 2: # 実験データ2
     pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
-  else : # 非実験データ
-    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)  
+  elif mac == "": # すべてのmacの取り出し
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 特定のmacを抽出
+    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING) 
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
@@ -172,17 +196,21 @@ def pfv_map_json(request):
 
   # 滞留端末情報の取り出し
   stayinfo = []
-  stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  if mac == "": # すべてのmacの取り出し
+    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  else : # 特定のmacを抽出
+    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(stayinfo) >= 1:
-    for i in range(1,len(stayinfo)):
-      for j in range(0,len(stayinfo[i]["plist"])):
-        stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
-        for mac in stayinfo[i]["plist"][j]["mac_list"]:
-          if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
-            stayinfo[i]["plist"][j]["size"] -= 1
-          else :
-            stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
-        stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
+    if mac == "":
+      for i in range(1,len(stayinfo)):
+        for j in range(0,len(stayinfo[i]["plist"])):
+          stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
+          for mac in stayinfo[i]["plist"][j]["mac_list"]:
+            if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
+              stayinfo[i]["plist"][j]["size"] -= 1
+            else :
+              stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
+          stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
     stayinfo = stayinfo[-1]["plist"]
 
   dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo}
