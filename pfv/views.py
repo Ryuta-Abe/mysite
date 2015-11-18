@@ -41,10 +41,10 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 # 4.http://127.0.0.1:8000/pfv/get_start_end/
 # 5.http://127.0.0.1:8000/pfv/pfv_map/
 
-# データリスト画面 http://127.0.0.1:8000/pfv/data_list/  
+# データリスト画面 http://127.0.0.1:8000/pfv/data_list/
 def data_list(request, limit=100, date_time=d):
   dt = int(date_time + "00")
-  
+
   # データベースから取り出し
   dataset = []
   # t = test.objects(get_time_no__lte=dt).order_by("-get_time_no").limit(int(limit))
@@ -113,7 +113,7 @@ def pfv_map(request):
       pfvinfo += db.pfvinfo.find().limit(1)
     pfvinfo = pfvinfo[0]["plist"]
     for j in range(0,len(pfvinfo)):
-      pfvinfo[j]["size"] = 0 
+      pfvinfo[j]["size"] = 0
 
   # 滞留端末情報の取り出し
   stayinfo = []
@@ -146,16 +146,16 @@ def pfv_map(request):
       "pos_y":pcwlnode[i]["pos_y"],
       "size":size
       })
-  
+
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
                                'experiment':experiment,'language':language,'timerange':timerange,'mac':mac,
                                'year':lt.year,'month':lt.month,'day':lt.day,
-                               'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
 
 # pfvマップ用JSON
-def pfv_map_json(request):  
+def pfv_map_json(request):
 
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', '20150603122130')
@@ -182,7 +182,7 @@ def pfv_map_json(request):
   elif mac == "": # すべてのmacの取り出し
     pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING) 
+    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
@@ -192,7 +192,7 @@ def pfv_map_json(request):
             if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
               pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
           pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
-    pfvinfo = pfvinfo[-1]["plist"]  
+    pfvinfo = pfvinfo[-1]["plist"]
 
   # 滞留端末情報の取り出し
   stayinfo = []
@@ -218,7 +218,7 @@ def pfv_map_json(request):
 
 # JSON出力
 def render_json_response(request, data, status=None): # response を JSON で返却
-  
+
   json_str = json.dumps(data, ensure_ascii=False, indent=2)
   callback = request.GET.get('callback')
   if not callback:
@@ -241,7 +241,7 @@ def pfv_graph(request):
   mac = request.GET.get('mac', '')
 
   lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
+  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得
 
   st = int(direction[0:2])
   ed = int(direction[2:4])
@@ -263,7 +263,7 @@ def pfv_graph(request):
   elif mac == "": # すべてのmacの取り出し
     pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    pfvinfo_list += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING) 
+    pfvinfo_list += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(pfvinfo_list) >= 1:
     for i in range(0,len(pfvinfo_list[0]["plist"])):
       if (pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
@@ -275,7 +275,7 @@ def pfv_graph(request):
                               {'pfvgraph_info': pfvgraph_info, 'experiment':experiment
                               ,'start_node':st, 'end_node':ed, 'language':language, 'mac':mac
                               ,'year':lt.year,'month':lt.month,'day':lt.day
-                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
 
 # stayグラフ
@@ -288,7 +288,7 @@ def stay_graph(request):
   mac = request.GET.get('mac', '')
 
   lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得 
+  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得
 
   # mac検索条件
   if mac != "":
@@ -303,7 +303,7 @@ def stay_graph(request):
   if mac == "": # すべてのmacの取り出し
     stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    stayinfo_list += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING) 
+    stayinfo_list += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(stayinfo_list) >= 1:
     for i in range(0,len(stayinfo_list[0]["plist"])):
       if stayinfo_list[0]["plist"][i]["pcwl_id"] == node:
@@ -315,11 +315,115 @@ def stay_graph(request):
                               {'staygraph_info': staygraph_info, 'node':int(node)
                               , 'language':language, 'mac':mac
                               ,'year':lt.year,'month':lt.month,'day':lt.day
-                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                              ,'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
 
 def mac_trace(request):
-  return 0 
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', '20150603122130')
+  timerange = int(request.GET.get('timerange', 10))
+  experiment = int(request.GET.get('experiment', 0))
+  mac = request.GET.get('mac', '')
+  language = request.GET.get('language', 'jp')
+
+  lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find()
+
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
+
+  # 指定時間のデータの取り出し
+  lt2 = int(date_time)
+  gt2 = lt2 - timerange
+  dataset = []
+  if mac == "":
+    t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2}}).sort("get_time_no", DESCENDING)
+  else :
+    t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2},"mac":{"$in":mac_query}}).sort("get_time_no", DESCENDING)
+  for data in t:
+    data["node_id"] = convert_nodeid(data["node_id"])
+    dataset.append(data)
+
+  # ブックマーク情報の取り出し
+  bookmarks = []
+  bookmarks += db.bookmark.find()
+
+  #rssiをPCWL情報にひも付け
+  _pcwlnode_with_rssi = []
+  for i in range(0,len(pcwlnode)):
+    pcwlnode[i]["rssi"] = 0
+    for j in range(0,len(dataset)):
+      if pcwlnode[i]["pcwl_id"] == dataset[j]["node_id"]:
+        pcwlnode[i]["rssi"] += dataset[j]["rssi"]
+    _pcwlnode_with_rssi.append({
+      "pcwl_id":pcwlnode[i]["pcwl_id"],
+      "pos_x":pcwlnode[i]["pos_x"],
+      "pos_y":pcwlnode[i]["pos_y"],
+      "rssi":pcwlnode[i]["rssi"]
+      })
+
+  return render_to_response('pfv/mac_trace.html',  # 使用するテンプレート
+                              {'pcwlnode': _pcwlnode_with_rssi,'bookmarks':bookmarks,
+                               'experiment':experiment,'language':language,'timerange':timerange,'mac':mac,
+                               'year':lt.year,'month':lt.month,'day':lt.day,
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second}
+                              )
+
+# # mac_trace用JSON
+# def mac_trace_json(request):
+
+#   # urlからクエリの取り出し
+#   date_time = request.GET.get('datetime', '20150603122130')
+#   timerange = int(request.GET.get('timerange', 10))
+#   experiment = int(request.GET.get('experiment', 0))
+#   mac = request.GET.get('mac', '')
+
+#   lt = dt_from_14digits_to_iso(date_time)
+#   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+#   # mac検索条件
+#   if mac != "":
+#     mac_query = [] # 検索するmacのリスト
+#     mac_num = round(len(mac)/18) # 検索するmac数
+#     for i in range(0,mac_num):
+#       mac_query.append(mac[0+i*18:17+i*18])
+
+#   # 指定時間のデータの取り出し
+#   lt2 = int(date_time)
+#   gt2 = lt2 - timerange
+#   dataset = []
+#   if mac == "":
+#     t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2}}).sort("get_time_no", DESCENDING)
+#   else :
+#     t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2},"mac":{"$in":mac_query}}).sort("get_time_no", DESCENDING)
+#   for data in t:
+#     data["node_id"] = convert_nodeid(data["node_id"])
+#     dataset.append(data)
+
+#   #rssiをPCWL情報にひも付け
+#   _pcwlnode_with_rssi = []
+#   for i in range(0,len(pcwlnode)):
+#     pcwlnode[i]["rssi"] = 0
+#     for j in range(0,len(dataset)):
+#       if pcwlnode[i]["pcwl_id"] == dataset[j]["node_id"]:
+#         pcwlnode[i]["rssi"] += dataset[j]["rssi"]
+#     _pcwlnode_with_rssi.append({
+#       "pcwl_id":pcwlnode[i]["pcwl_id"],
+#       "pos_x":pcwlnode[i]["pos_x"],
+#       "pos_y":pcwlnode[i]["pos_y"],
+#       "rssi":pcwlnode[i]["rssi"]
+#       })
+
+#   dataset = {"_pcwlnode_with_rssi":_pcwlnode_with_rssi}
+#   return render_json_response(request, dataset) # dataをJSONとして出力
 
   # pfvマップ画面 http://localhost:8000/cms/pfv_heatmap/
 def pfv_heatmap(request):
@@ -364,7 +468,7 @@ def pfv_heatmap(request):
       pfvinfo += db.pfvinfo.find().limit(1)
     pfvinfo = pfvinfo[0]["plist"]
     for j in range(0,len(pfvinfo)):
-      pfvinfo[j]["size"] = 0 
+      pfvinfo[j]["size"] = 0
 
 
   # 滞留端末情報の取り出し
@@ -395,10 +499,10 @@ def pfv_heatmap(request):
       "pos_y":pcwlnode[i]["pos_y"],
       "size":size
       })
-  
+
   return render_to_response('pfv/pfv_heatmap.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,
                                'experiment':experiment,'language':language,'timerange':timerange,
                                'year':lt.year,'month':lt.month,'day':lt.day,
-                               'hour':lt.hour,'minute':lt.minute,'second':lt.second} 
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
