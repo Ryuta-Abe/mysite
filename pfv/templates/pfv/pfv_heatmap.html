@@ -922,54 +922,25 @@
         visualize_heat_complement();
         }
       }
-      // for (var i = 0; i*coordinate_width < (1024 - coordinate_width); i++) {
-      //   for (var j = 0; j*coordinate_width < (560 - coordinate_width); j++) {
-      //     var x1 = i*coordinate_width;
-      //     var y1 = j*coordinate_width;
-      //     var x2 = (i+1)*coordinate_width;
-      //     var y2 = (j+1)*coordinate_width;
-      //     var tmp_size = [];
-      //     for (var k = 0; k < pfvinfo.length; k++) {
-      //         var c1 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[0]]];
-      //         var c2 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[1]]];
-      //         var xrange = Math.abs(c1.pos_x -c2.pos_x);
-      //         var yrange = Math.abs(c1.pos_y -c2.pos_y);
-      //       if ((x1 <= c1.pos_x) && (c1.pos_x <= x2) && (y1 <= c1.pos_y) && (c1.pos_y <= y2)) {
-      //         tmp_size.push(c1.size);
-      //       }
-      //       if ((x1 <= c2.pos_x) && (c2.pos_x <= x2) && (y1 <= c2.pos_y) && (c2.pos_y <= y2)) {
-      //         tmp_size.push(c2.size);
-      //       }
-      //     }
-      //         var t_size = 0;
-      //         for (var l = 0; l < tmp_size.length; l++) {
-      //           // console.log(tmp_size[l])
-      //           var t_size = t_size + tmp_size[l];
-      //         }
-      //         coordinate_size[count]["size"] = t_size;
-      //         count += 1;
-      //   visualize_heat_complement();
-      //   }
-      // }
 
       // 画面の更新
       var animation_time = 500;
-      marker.selectAll("path")
-          .transition().duration(animation_time)
-          .attr({
-            fill: function(d){return thermography(d.size);}
-          });
-      path.transition().duration(animation_time)
-          .attr({
-            'stroke': function(d){return thermography(d.size);},
-          })
-          .style("opacity",function(d){ // 0人ならば矢印を見えなくする
-            if (d.size == 0) {
-              return 0;
-            } else {
-              return 1;
-            };
-          })
+      // marker.selectAll("path")
+      //     .transition().duration(animation_time)
+      //     .attr({
+      //       fill: function(d){return thermography(d.size);}
+      //     });
+      // path.transition().duration(animation_time)
+      //     .attr({
+      //       'stroke': function(d){return thermography(d.size);},
+      //     })
+      //     .style("opacity",function(d){ // 0人ならば矢印を見えなくする
+      //       if (d.size == 0) {
+      //         return 0;
+      //       } else {
+      //         return 1;
+      //       };
+      //     })
       svg1.selectAll("#staycircle")
       .transition().duration(animation_time)
       .attr({

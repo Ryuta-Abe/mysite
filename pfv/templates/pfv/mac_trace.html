@@ -236,33 +236,16 @@
     var pcwlnode = [];
     var bookmarks = [];
     // var dataset = [];
+    var mac_data = [];
     {% for s in pcwlnode %}
     pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},rssi:{{ s.rssi }}});
     {% endfor %}
     {% for s in bookmarks %}
     bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
     {% endfor %}
-    // {% for s in dataset %}
-    // dataset.push({node_id:{{ s.node_id }},rssi:{{ s.rssi }},mac:"{{ s.mac }}"});
-    // {% endfor %}
-
-    // //クエリのmacの情報だけを取り出す
-    // var mac_rssi = [];
-    // for (var i = 0; i < dataset.length; i++) {
-    //   if ("{{mac}}" == dataset[i].mac) {
-    //     mac_rssi.push(dataset[i]);
-    //   }
-    // }
-
-    // //取り出した情報からrssiをpcwlnodeに組み込む
-    // for (var i = 0; i < pcwlnode.length; i++) {
-    //   pcwlnode[i].rssi = 0
-    //   for (var j = 0; j < dataset.length; j++) {
-    //     if (pcwlnode[i].pcwl_id == dataset[j].node_id) {
-    //       pcwlnode[i].rssi += dataset[j].rssi;
-    //     }
-    //   }
-    // }
+    {% for s in mac_data %}
+    mac_data.push("{{ s }}");
+    {% endfor %}
 
     // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
     var pcwlnode_id = [];
@@ -758,7 +741,7 @@
         var language = "en";
       }
 
-      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language;
+      document.location = "{% url 'pfv:mac_trace' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language;
     }
 
     // セレクトボックスの値をdatetimeに合わせる
@@ -822,7 +805,7 @@
 
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac,
+        url: "{% url 'pfv:mac_trace_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac,
         dataType: 'json',
         success: function(json){
           describe_datetime();
@@ -870,17 +853,19 @@
 
     function Reload_pfvinfo(json){
 
+      //_pcwlnode_with_rssiの更新
+      if (json["_pcwlnode_with_rssi"].length >= 1) {
+        for (var i = 0; i < pcwlnode.length; i++) {
+          pcwlnode[i].rssi = json["_pcwlnode_with_rssi"][i].rssi;
+        }
+      } else {  // rssiが空だった場合
+        for (var i = 0; i < pcwlnode.length; i++) {
+          pcwlnode[i].rssi = 0;
+        }
+      }
 
-      // //_pcwlnode_with_rssiの更新
-      // if (json["_pcwlnode_with_rssi"].length >= 1) {
-      //   for (var i = 0; i < pcwlnode.length; i++) {
-      //     pcwlnode[i].rssi = json["_pcwlnode_with_rssi"][i].rssi;
-      //   }
-      // } else {  // rssiが空だった場合
-      //   for (var i = 0; i < pcwlnode.length; i++) {
-      //     pcwlnode[i].rssi = 0;
-      //   }
-      // }
+      //mac_dataの更新
+      mac_data = json["mac_data"];
 
       // 画面の更新
       var animation_time = 500;
