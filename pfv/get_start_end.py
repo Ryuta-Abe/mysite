@@ -44,7 +44,7 @@ def get_start_end(request):
   mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
 
   # data取り出し
-  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
+  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac").limit(100)
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500}}).sort("_id.get_time_no",-1).sort("_id.mac")
 
@@ -55,15 +55,19 @@ def get_start_end(request):
   if algorithm == 1:
 
     # 1番目の設定
-    datas[0]['nodelist'] = sorted(data[0]['nodelist'], key=lambda x:x["dbm"], reverse=True)
+    datas[0]['nodelist'] = sorted(datas[0]['nodelist'], key=lambda x:x["dbm"], reverse=True)
     for tmp_node_id in datas[0]['nodelist']:
-      tmp_node_id_list.append({"pcwl_id":convert_nodeid(tmp_node_id['node_id']),"rssi":tmp_node_id['dbm']})
+      tmp_node_id_list.append({"pcwl_id":convert_nodeid(tmp_node_id['node_id'])["node_id"],
+                               "floor":convert_nodeid(tmp_node_id['node_id'])["floor"],
+                               "rssi":tmp_node_id['dbm'],
+                               })
     tmp_node_id = tmp_node_id_list[0]
 
     for data in datas:
       data['id'] = data['_id']
       for list_data in data['nodelist']:
-        list_data['node_id'] = convert_nodeid(list_data['node_id'])
+        list_data['floor']   = convert_nodeid(list_data['node_id'])['floor']
+        list_data['node_id'] = convert_nodeid(list_data['node_id'])['node_id']
         list_data["pcwl_id"] = list_data['node_id']
         del(list_data["node_id"])
 
@@ -78,8 +82,9 @@ def get_start_end(request):
         end_node_list = []
         tmp_nodelist = []
         for list_data in data['nodelist']:
-          end_node_list.append({"pcwl_id":list_data['pcwl_id'],"rssi":list_data['dbm']})
-          tmp_nodelist.append({"pcwl_id":list_data['pcwl_id'],"rssi":list_data['dbm']})
+          tmp_dict = {"pcwl_id":list_data['pcwl_id'],"floor":list_data['floor'],"rssi":list_data['dbm']}
+          end_node_list.append(tmp_dict)
+          tmp_nodelist.append(tmp_dict)
 
         node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
 
@@ -177,7 +182,7 @@ def get_start_end(request):
       # mac異なる場合
       else:
         tmp_mac = data["id"]["mac"]
-        tmp_node_id = {"pcwl_id":data["nodelist"][0]["pcwl_id"],"rssi":data["nodelist"][0]['dbm']} 
+        tmp_node_id = {"pcwl_id":data["nodelist"][0]["pcwl_id"],"floor":data["nodelist"][0]["floor"],"rssi":data["nodelist"][0]['dbm']} 
         end_node_list = []
         for end_node in data["nodelist"]:
           end_node_list.append(end_node)
@@ -211,12 +216,13 @@ def get_start_end(request):
     # end = time.time()
     # print("time:"+str(end-start))
     # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
-    make_pfvmacinfo(data_lists,db.pfvmacinfo)
-    make_staymacinfo(data_lists_stay,db.staymacinfo)
+    # make_pfvmacinfo(data_lists,db.pfvmacinfo)
+    # make_staymacinfo(data_lists_stay,db.staymacinfo)
 
     return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
                                {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
                              ) 
+
 
   ### アルゴリズム2 ###
   elif algorithm == 2:

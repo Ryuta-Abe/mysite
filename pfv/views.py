@@ -50,7 +50,7 @@ def data_list(request, limit=100, date_time=d):
   # t = test.objects(get_time_no__lte=dt).order_by("-get_time_no").limit(int(limit))
   t = db.test.find({"get_time_no":{"$lte":dt}}).sort("get_time_no", DESCENDING).limit(int(limit))
   for data in t:
-    data["node_id"] = convert_nodeid(data["node_id"])
+    data["node_id"] = convert_nodeid(data["node_id"])["node_id"]
     dataset.append(data)
   return render_to_response('pfv/data_list.html',  # 使用するテンプレート
                               {'t': dataset, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
@@ -349,7 +349,7 @@ def mac_trace(request):
   else :
     t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2},"mac":{"$in":mac_query}}).sort("get_time_no", DESCENDING)
   for data in t:
-    data["node_id"] = convert_nodeid(data["node_id"])
+    data["node_id"] = convert_nodeid(data["node_id"])["node_id"]
     dataset.append(data)
 
   # ブックマーク情報の取り出し
