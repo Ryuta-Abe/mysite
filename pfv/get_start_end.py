@@ -44,7 +44,7 @@ def get_start_end(request):
   mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
 
   # data取り出し
-  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac").limit(100)
+  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500}}).sort("_id.get_time_no",-1).sort("_id.mac")
 
@@ -147,10 +147,10 @@ def get_start_end(request):
                   tmp_node_id = data["nodelist"][num]
                   count += 1
 
-                  # 実験用
-                  if se_data["mac"] in mac_list_experiment:
-                    se_data["mac"] = name_filter(se_data["mac"])
-                    data_lists_experiment.append(se_data)
+                  # # 実験用
+                  # if se_data["mac"] in mac_list_experiment:
+                  #   se_data["mac"] = name_filter(se_data["mac"])
+                  #   data_lists_experiment.append(se_data)
                   break
 
               # 出現回数が多いとき
@@ -216,7 +216,7 @@ def get_start_end(request):
     # end = time.time()
     # print("time:"+str(end-start))
     # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
-    # make_pfvmacinfo(data_lists,db.pfvmacinfo)
+    make_pfvmacinfo(data_lists,db.pfvmacinfo)
     # make_staymacinfo(data_lists_stay,db.staymacinfo)
 
     return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート

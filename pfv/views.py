@@ -27,10 +27,10 @@ client = MongoClient()
 db = client.nm4bd
 db.test.create_index([("get_time_no", DESCENDING)])
 db.pfvinfo.create_index([("datetime", ASCENDING)])
-db.pfvmacinfo.create_index([("datetime", ASCENDING)])
+db.pfvmacinfo.create_index([("datetime", ASCENDING),("mac", ASCENDING)])
 db.pfvinfoexperiment.create_index([("datetime", ASCENDING)])
 db.stayinfo.create_index([("datetime", ASCENDING)])
-db.staymacinfo.create_index([("datetime", ASCENDING)])
+db.staymacinfo.create_index([("datetime", ASCENDING),("mac", ASCENDING)])
 db.pcwltime.create_index([("datetime", DESCENDING)])
 db.pcwlroute.create_index([("query", ASCENDING)])
 
