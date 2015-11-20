@@ -20,14 +20,16 @@ db = client.nm4bd
 def analyze_direction(request):
   from datetime import datetime
 
-  ag = db.tmpcol.find().sort("_id.mac").sort("_id.get_time_no",-1).limit(25000)
+  ag = db.tmpcol.find().sort("_id.mac").sort("_id.get_time_no",-1).limit(100)
   ana_list = []
   for jdata in ag:
     jdata['id'] = jdata['_id']
     jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
     jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
     for list_data in jdata['nodelist']:
-      list_data['node_id'] = convert_nodeid(list_data['node_id'])
+      list_data['floor']   = convert_nodeid(list_data['node_id'])['floor']
+      list_data['node_id'] = convert_nodeid(list_data['node_id'])['node_id']
+
     del(jdata['_id'])
     jdata["id"]["mac"] = name_filter(jdata["id"]["mac"])
     ana_list.append(jdata)

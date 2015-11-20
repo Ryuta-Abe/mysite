@@ -50,7 +50,7 @@ def data_list(request, limit=100, date_time=d):
   # t = test.objects(get_time_no__lte=dt).order_by("-get_time_no").limit(int(limit))
   t = db.test.find({"get_time_no":{"$lte":dt}}).sort("get_time_no", DESCENDING).limit(int(limit))
   for data in t:
-    data["node_id"] = convert_nodeid(data["node_id"])
+    data["node_id"] = convert_nodeid(data["node_id"])["node_id"]
     dataset.append(data)
   return render_to_response('pfv/data_list.html',  # 使用するテンプレート
                               {'t': dataset, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
@@ -356,9 +356,10 @@ def mac_trace(request):
     t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
   else :
     t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+
   for data in t:
     for i in range(0,len(data["nodelist"])):
-      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])
+      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
     dataset.append(data)
 
   #観測mac一覧
@@ -432,7 +433,7 @@ def mac_trace_json(request):
     t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
   for data in t:
     for i in range(0,len(data["nodelist"])):
-      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])
+      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
     dataset.append(data)
 
     #観測mac一覧
