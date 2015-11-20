@@ -318,6 +318,12 @@ def stay_graph(request):
                               ,'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
 
+#時間変換用の関数(iso形式 --> 20150603122130(str) )
+def dt_from_iso_to_str14(dt):
+
+  dt = str(dt.year)+("0"+str(dt.month))[-2:]+("0"+str(dt.day))[-2:]+("0"+str(dt.hour))[-2:]+("0"+str(dt.minute))[-2:]+("00"+str(dt.second))[-2:]
+  return dt
+
 def mac_trace(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', '20150603122130')
@@ -341,16 +347,29 @@ def mac_trace(request):
       mac_query.append(mac[0+i*18:17+i*18])
 
   # 指定時間のデータの取り出し
-  lt2 = int(date_time)
-  gt2 = lt2 - timerange
+  tmp_lt = dt_from_iso_to_str14(lt)
+  tmp_gt = dt_from_iso_to_str14(gt)
+  mod_gt = int(tmp_gt)
+  mod_lt = int(tmp_lt)
   dataset = []
   if mac == "":
-    t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2}}).sort("get_time_no", DESCENDING)
+    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
   else :
-    t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2},"mac":{"$in":mac_query}}).sort("get_time_no", DESCENDING)
+    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+
   for data in t:
-    data["node_id"] = convert_nodeid(data["node_id"])["node_id"]
+    for i in range(0,len(data["nodelist"])):
+      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
     dataset.append(data)
+
+  #観測mac一覧
+  mac_data = []
+  tmp_mac = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
+  for data in tmp_mac:
+    if data["_id"]["mac"] in mac_data:
+      pass
+    else:
+      mac_data.append(data["_id"]["mac"])
 
   # ブックマーク情報の取り出し
   bookmarks = []
@@ -360,9 +379,10 @@ def mac_trace(request):
   _pcwlnode_with_rssi = []
   for i in range(0,len(pcwlnode)):
     pcwlnode[i]["rssi"] = 0
-    for j in range(0,len(dataset)):
-      if pcwlnode[i]["pcwl_id"] == dataset[j]["node_id"]:
-        pcwlnode[i]["rssi"] += dataset[j]["rssi"]
+    for data in dataset:
+      for j in range(0,len(data["nodelist"])):
+        if pcwlnode[i]["pcwl_id"] == data["nodelist"][j]["node_id"]:
+          pcwlnode[i]["rssi"] += (data["nodelist"][j]["dbm"] + 95)
     _pcwlnode_with_rssi.append({
       "pcwl_id":pcwlnode[i]["pcwl_id"],
       "pos_x":pcwlnode[i]["pos_x"],
@@ -371,59 +391,77 @@ def mac_trace(request):
       })
 
   return render_to_response('pfv/mac_trace.html',  # 使用するテンプレート
-                              {'pcwlnode': _pcwlnode_with_rssi,'bookmarks':bookmarks,
+                              {'mac_data':mac_data,'pcwlnode': _pcwlnode_with_rssi,'bookmarks':bookmarks,
                                'experiment':experiment,'language':language,'timerange':timerange,'mac':mac,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
 
-# # mac_trace用JSON
-# def mac_trace_json(request):
+# mac_trace用JSON
+def mac_trace_json(request):
 
-#   # urlからクエリの取り出し
-#   date_time = request.GET.get('datetime', '20150603122130')
-#   timerange = int(request.GET.get('timerange', 10))
-#   experiment = int(request.GET.get('experiment', 0))
-#   mac = request.GET.get('mac', '')
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', '20150603122130')
+  timerange = int(request.GET.get('timerange', 10))
+  experiment = int(request.GET.get('experiment', 0))
+  mac = request.GET.get('mac', '')
+  language = request.GET.get('language', 'jp')
 
-#   lt = dt_from_14digits_to_iso(date_time)
-#   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+  lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
-#   # mac検索条件
-#   if mac != "":
-#     mac_query = [] # 検索するmacのリスト
-#     mac_num = round(len(mac)/18) # 検索するmac数
-#     for i in range(0,mac_num):
-#       mac_query.append(mac[0+i*18:17+i*18])
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find()
 
-#   # 指定時間のデータの取り出し
-#   lt2 = int(date_time)
-#   gt2 = lt2 - timerange
-#   dataset = []
-#   if mac == "":
-#     t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2}}).sort("get_time_no", DESCENDING)
-#   else :
-#     t = db.test.find({"get_time_no":{"$gte":gt2, "$lte":lt2},"mac":{"$in":mac_query}}).sort("get_time_no", DESCENDING)
-#   for data in t:
-#     data["node_id"] = convert_nodeid(data["node_id"])
-#     dataset.append(data)
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
 
-#   #rssiをPCWL情報にひも付け
-#   _pcwlnode_with_rssi = []
-#   for i in range(0,len(pcwlnode)):
-#     pcwlnode[i]["rssi"] = 0
-#     for j in range(0,len(dataset)):
-#       if pcwlnode[i]["pcwl_id"] == dataset[j]["node_id"]:
-#         pcwlnode[i]["rssi"] += dataset[j]["rssi"]
-#     _pcwlnode_with_rssi.append({
-#       "pcwl_id":pcwlnode[i]["pcwl_id"],
-#       "pos_x":pcwlnode[i]["pos_x"],
-#       "pos_y":pcwlnode[i]["pos_y"],
-#       "rssi":pcwlnode[i]["rssi"]
-#       })
+  # 指定時間のデータの取り出し
+  tmp_lt = dt_from_iso_to_str14(lt)
+  tmp_gt = dt_from_iso_to_str14(gt)
+  mod_gt = int(tmp_gt)
+  mod_lt = int(tmp_lt)
+  dataset = []
+  if mac == "":
+    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
+  else :
+    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+  for data in t:
+    for i in range(0,len(data["nodelist"])):
+      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
+    dataset.append(data)
 
-#   dataset = {"_pcwlnode_with_rssi":_pcwlnode_with_rssi}
-#   return render_json_response(request, dataset) # dataをJSONとして出力
+    #観測mac一覧
+  mac_data = []
+  tmp_mac = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
+  for data in tmp_mac:
+    if data["_id"]["mac"] in mac_data:
+      pass
+    else:
+      mac_data.append(data["_id"]["mac"])
+
+  #rssiをPCWL情報にひも付け
+  _pcwlnode_with_rssi = []
+  for i in range(0,len(pcwlnode)):
+    pcwlnode[i]["rssi"] = 0
+    for data in dataset:
+      for j in range(0,len(data["nodelist"])):
+        if pcwlnode[i]["pcwl_id"] == data["nodelist"][j]["node_id"]:
+          pcwlnode[i]["rssi"] += (data["nodelist"][j]["dbm"] + 95)
+    _pcwlnode_with_rssi.append({
+      "pcwl_id":pcwlnode[i]["pcwl_id"],
+      "pos_x":pcwlnode[i]["pos_x"],
+      "pos_y":pcwlnode[i]["pos_y"],
+      "rssi":pcwlnode[i]["rssi"]
+      })
+
+  info = {"_pcwlnode_with_rssi":_pcwlnode_with_rssi,"mac_data":mac_data}
+  return render_json_response(request, info) # dataをJSONとして出力
 
   # pfvマップ画面 http://localhost:8000/cms/pfv_heatmap/
 def pfv_heatmap(request):
