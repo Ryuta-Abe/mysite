@@ -29,6 +29,13 @@ class pcwlnode(Document):
         "db_alias" : "nm4bd",
     }
 
+    # サンプル
+    # "pcwl_id" : 2, 
+    # "pos_x" : 990, 
+    # "pos_y" : 130, 
+    # "next_id" : [ 1, 3 ]
+    # "floor" : "W2-6F", 
+
 # 人流情報
 class pfvinfo(Document):
     plist = ListField(DictField())
@@ -38,6 +45,11 @@ class pfvinfo(Document):
     meta = {
         "db_alias" : "nm4bd",
     }
+
+    # サンプル
+    # "datetime" : ISODate("2015-06-03T13:04:06Z"), 
+    # "floor" : "W2-6F", 
+    # "plist" : [ { "direction" : [ 1, 2 ], "size" : 0 }, { "direction" : [ 2, 1 ], "size" : 0 },...]
 
 # 人流情報(6F実験用)
 class pfvinfoexperiment(Document):
@@ -69,6 +81,12 @@ class pfvmacinfo(Document):
         "db_alias" : "nm4bd",
     }
 
+    # サンプル
+    # "datetime" : ISODate("2015-06-03T13:04:06Z"), 
+    # "floor" : "W2-6F", 
+    # "mac" : "00:24:d6:43:e7:dc", 
+    # "plist" : [ { "direction" : [ 1, 2 ], "size" : 0 }, { "direction" : [ 2, 1 ], "size" : 0 },...]
+
 # 滞留端末情報
 class stayinfo(Document):
     plist = ListField(DictField())
@@ -78,6 +96,11 @@ class stayinfo(Document):
     meta = {
         "db_alias" : "nm4bd",
     }
+
+    # サンプル
+    # "datetime" : ISODate("2015-09-25T18:11:37Z"), 
+    # "floor" : "W2-6F", 
+    # "plist" : [ { "pcwl_id" : 1, "size" : 0 }, { "pcwl_id" : 2, "size" : 1 },...]
 
 # 滞留端末情報(mac情報付き)
 class staymacinfo(Document):
@@ -90,6 +113,12 @@ class staymacinfo(Document):
         "db_alias" : "nm4bd",
     }
 
+    # サンプル
+    # "datetime" : ISODate("2015-09-25T18:11:37Z"), 
+    # "floor" : "W2-6F", 
+    # "mac" : "54:9f:13:10:a3:b4"
+    # "plist" : [ { "pcwl_id" : 1, "size" : 0 }, { "pcwl_id" : 2, "size" : 1 },...]
+
 # ブックマーク情報
 class bookmark(Document):
     name = StringField(max_length=255)
@@ -99,6 +128,11 @@ class bookmark(Document):
     meta = {
         "db_alias" : "nm4bd",
     }
+
+    # サンプル
+    # "name" : "6月3日人流データ", 
+    # "url" : "?datetime=20150603122120&timerange=60&experiment=0&language=jp", 
+    # "frequency" : 0
 
 class test(Document):
     _id          = StringField(max_length=255)
@@ -129,6 +163,10 @@ class tmpcol(Document):
         "db_alias" : "nm4bd",
     }
 
+    # サンプル
+    # "_id" : { "get_time_no" : NumberLong("20150603060002"), "mac" : "00:15:af:e4:e1:ac" }, 
+    # "nodelist" : [ { "node_id" : 1237, "dbm" : -89 } ]
+
 class pcwlroute(Document):
     query = ListField(IntField())
     dlist = ListField(ListField(DictField()))
@@ -138,6 +176,11 @@ class pcwlroute(Document):
         "db_alias" : "nm4bd",
     }
 
+    # サンプル
+    # "query" : [ 14, 24 ], 
+    # "floor" : "W2-6F", 
+    # "dlist" : [ [ { "distance" : 60.8276253029822, "direction" : [ 14, 15 ] }, { "distance" : 68.00735254367721, "direction" : [ 15, 16 ] }, { "distance" : 75.16648189186454, "direction" : [ 16, 24 ] } ] ]
+
 class pcwltime(Document):
     _id = StringField()
     datetime = DateTimeField()
@@ -145,3 +188,6 @@ class pcwltime(Document):
     meta = {
         "db_alias" : "nm4bd",
     }
+
+    # サンプル
+    # "datetime" : ISODate("2015-06-03T14:23:39Z")

@@ -1079,6 +1079,7 @@
                 return 0;
             };
           })
+      // animate_circle();
     }
 
     d3.select("#Auto_Animation").style("color","black");
@@ -1102,36 +1103,44 @@
       slide_DT(-1);
     }
 
-    // function animate_circle(){
-    //   // path.style("opacity",0.2);
-    //   // pcwlnodeのマッピング
-    //   var g = svg1.selectAll("g.pfvcircle")
-    //   .data(pfvinfo)
-    //   .enter()
-    //   .append("circle")
-    //   .attr({
-    //     "cx": function(d){
-    //       return pcwlnode[pcwlnode_id[d.direction[0]]]["pos_x"];
-    //     },
-    //     "cy": function(d){
-    //       return pcwlnode[pcwlnode_id[d.direction[0]]]["pos_y"];
-    //     },
-    //     "r": 7,
-    //     "fill": function(d){
-    //       return thermography(d.size);
-    //     },
-    //   })
-    //   .transition().duration(1000)
-    //   .attr({
-    //     "cx": function(d){
-    //       return pcwlnode[pcwlnode_id[d.direction[1]]]["pos_x"];
-    //     },
-    //     "cy": function(d){
-    //       return pcwlnode[pcwlnode_id[d.direction[1]]]["pos_y"];
-    //     },
-    //   })
+    function animate_circle(){
+      // path.style("opacity",0.2);
+      // pcwlnodeのマッピング
+      var g = svg1.selectAll("g.pfvcircle")
+      .data(pfvinfo)
+      .enter()
+      .append("circle")
+      .attr({
+        "cx": function(d){
+          return pcwlnode[pcwlnode_id[d.direction[0]]]["pos_x"];
+        },
+        "cy": function(d){
+          return pcwlnode[pcwlnode_id[d.direction[0]]]["pos_y"];
+        },
+        "r": 7,
+        "fill": function(d){
+          return thermography(d.size);
+        },
+      })
+      .style("opacity",function(d){
+        if (d.size == 0) {
+          return 0;
+        } else {
+          return 1;
+        };
+      })
+      .transition().duration(1000)
+      .attr({
+        "cx": function(d){
+          return pcwlnode[pcwlnode_id[d.direction[1]]]["pos_x"];
+        },
+        "cy": function(d){
+          return pcwlnode[pcwlnode_id[d.direction[1]]]["pos_y"];
+        },
+      })
+      .remove()
 
-    // }
+    }
 
     // animate_circle();
 
