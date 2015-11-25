@@ -65,6 +65,7 @@ def pfv_map(request):
   experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
@@ -125,12 +126,13 @@ def pfv_map(request):
     for i in range(1,len(stayinfo)):
       for j in range(0,len(stayinfo[i]["plist"])):
         stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
-        for mac in stayinfo[i]["plist"][j]["mac_list"]:
-          if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
-            stayinfo[i]["plist"][j]["size"] -= 1
-          else :
-            stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
-        stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
+        if mac == "":
+          for mac in stayinfo[i]["plist"][j]["mac_list"]:
+            if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
+              stayinfo[i]["plist"][j]["size"] -= 1
+            else :
+              stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
+          stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
     stayinfo = stayinfo[-1]["plist"]
 
   # 滞留端末情報をPCWL情報にひも付け
@@ -149,7 +151,7 @@ def pfv_map(request):
 
   return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                               {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
-                               'experiment':experiment,'language':language,'timerange':timerange,'mac':mac,
+                               'experiment':experiment,'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
@@ -162,6 +164,7 @@ def pfv_map_json(request):
   timerange = int(request.GET.get('timerange', 10))
   experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
+  floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
@@ -201,10 +204,10 @@ def pfv_map_json(request):
   else : # 特定のmacを抽出
     stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
   if len(stayinfo) >= 1:
-    if mac == "":
-      for i in range(1,len(stayinfo)):
-        for j in range(0,len(stayinfo[i]["plist"])):
-          stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
+    for i in range(1,len(stayinfo)):
+      for j in range(0,len(stayinfo[i]["plist"])):
+        stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
+        if mac == "":
           for mac in stayinfo[i]["plist"][j]["mac_list"]:
             if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
               stayinfo[i]["plist"][j]["size"] -= 1
@@ -239,6 +242,7 @@ def pfv_graph(request):
   experiment = int(request.GET.get('experiment', 0))
   language = request.GET.get('language', 'jp')
   mac = request.GET.get('mac', '')
+  floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得
@@ -286,6 +290,7 @@ def stay_graph(request):
   node = int(request.GET.get('node', 1))
   language = request.GET.get('language', 'jp')
   mac = request.GET.get('mac', '')
+  floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得
