@@ -72,7 +72,7 @@ def pfv_map(request):
 
   # pcwl情報の取り出し
   pcwlnode = []
-  pcwlnode += db.pcwlnode.find()
+  pcwlnode += db.pcwlnode.find({"floor":floor})
 
   # ブックマーク情報の取り出し
   bookmarks = []
