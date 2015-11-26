@@ -817,6 +817,7 @@
       $.ajax({
         type: 'GET',
         url: "{% url 'pfv:pfv_map_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }},
+          // timerange + "&experiment=" + {{ experiment }} + "&floor=" + "{{ floor }}",
         dataType: 'json',
         success: function(json){
           describe_datetime();

@@ -160,11 +160,6 @@
     document.write('　　');
     document.write('<span>');
 
-    document.write('<select name="selectbox_timerange">');
-    timerange_list = [10,20,30,60,120,300,600]
-    timerange_list_id = make_selectbox(timerange_list);
-    document.write('</select>');
-
   </script>
   <text id="time_interval_text"></text>
   </span></div>
@@ -209,7 +204,7 @@
       d3.select("#btn_reload").text("Reload");
       d3.select("#btn_back").text("Back");
       d3.select("#btn_forward").text("Forward");
-      d3.select("#time_interval_text").text(":Data referenced from this time ago.");
+      d3.select("#time_interval_text").text(":Data referenced from ten seconds ago.");
       d3.select("#difference_language").text("日本語");
     } else {
       if (is_experiment({{ experiment }})) {
@@ -228,7 +223,7 @@
       d3.select("#btn_reload").text("更新");
       d3.select("#btn_back").text("戻る");
       d3.select("#btn_forward").text("進む");
-      d3.select("#time_interval_text").text("間の人流データを表示");
+      d3.select("#time_interval_text").text("10秒間の人流データを表示");
       d3.select("#difference_language").text("English");
     };
 
@@ -281,9 +276,9 @@
         .style("left", (d3.event.pageX + 20) + "px")
         .style("top", (d3.event.pageY + 20) + "px")
         if ("{{ language }}" == "en") {
-          div.text("rssi: "+d.rssi);
+          div.text("dbm: "+d.rssi);
         } else {
-          div.text("rssi: "+d.rssi);
+          div.text("dBm: "+d.rssi);
         };
     })
     // マウスがバーから離れたら説明文をけす
@@ -484,16 +479,10 @@
         var minute = ("0"+datetime.getMinutes()).slice(-2);
         var second = ("0"+datetime.getSeconds()).slice(-2);
 
-        var value = Sample_form.selectbox_timerange.value;
-        var num = parseInt(value.slice(-2));
-        if (value.slice(0,3) == "sec"){
-          var timerange = num;
-        } else if (value.slice(0,3) == "min"){
-          var timerange = num*60;
-        }
         var mac = Sample_form.textbox_mac.value;
 
-        var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}";
+        var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}";
+        // var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + "{{ floor }}";
 
         $.ajax({
           type: 'GET',
@@ -644,8 +633,8 @@
 
     // 気温に対応した色を返す(サーモグラフィ風)
     function thermography(tu){
-      threshold_H = 30.0; // この温度以上は赤色
-      threshold_L = 10.0; // この温度以下は青色
+      threshold_H = -60.0; // この温度以上は赤色
+      threshold_L = -90.0; // この温度以下は青色
       if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
         return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
       } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
@@ -675,11 +664,12 @@
     var w = 1000;
     var h = 100;
     var padding = 30;
-    var max = 40; // 最大表示人数
+    var max = -55; // 最大表示人数
+    var min = -95;
 
     //スケール関数の生成
     var xScale = d3.scale.linear()
-                     .domain([0, max])
+                     .domain([min, max])
                      .range([padding, w - padding *2]);
 
     // x軸の定義
@@ -701,7 +691,7 @@
 
     // 棒グラフの追加
     var temperature = [];
-    for (var i = 0; i < max; i++) {
+    for (var i = -95; i < max; i++) {
       temperature.push(i);
     };
     svg2.selectAll("rect.temperature")
@@ -726,13 +716,6 @@
       var minute = ("0"+datetime.getMinutes()).slice(-2);
       var second = ("0"+datetime.getSeconds()).slice(-2);
 
-      var value = Sample_form.selectbox_timerange.value;
-      var num = parseInt(value.slice(-2));
-      if (value.slice(0,3) == "sec"){
-        var timerange = num;
-      } else if (value.slice(0,3) == "min"){
-        var timerange = num*60;
-      }
       var mac = Sample_form.textbox_mac.value;
 
       if ("{{ language }}" == "en") {
@@ -741,7 +724,8 @@
         var language = "en";
       }
 
-      document.location = "{% url 'pfv:mac_trace' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language;
+      document.location = "{% url 'pfv:mac_trace' %}"+"?datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language;
+      // document.location = "{% url 'pfv:mac_trace' %}"+"?datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language + "&floor=" + "{{ floor }}";
     }
 
     // セレクトボックスの値をdatetimeに合わせる
@@ -768,9 +752,6 @@
     var datetime = new Date(year,month,day,hour,minute,second);
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
-    // セレクトボックスの値をtimerangeに合わせる
-    document.Sample_form.selectbox_timerange.selectedIndex = timerange_list_id["{{ timerange }}"];
-
     function describe_datetime(){
       if ("{{ language }}" == "en") {
         d3.select("#got_datetime").text(String(datetime).slice(4,24));
@@ -794,18 +775,12 @@
       var minute = ("0"+datetime.getMinutes()).slice(-2);
       var second = ("0"+datetime.getSeconds()).slice(-2);
 
-      var value = Sample_form.selectbox_timerange.value;
-      var num = parseInt(value.slice(-2));
-      if (value.slice(0,3) == "sec"){
-        var timerange = num;
-      } else if (value.slice(0,3) == "min"){
-        var timerange = num*60;
-      }
       var mac = Sample_form.textbox_mac.value;
 
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:mac_trace_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac,
+        url: "{% url 'pfv:mac_trace_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac,
+          // + {{ experiment }} + "&mac=" + mac + "&floor=" + "{{ floor }}",
         dataType: 'json',
         success: function(json){
           describe_datetime();
@@ -864,9 +839,9 @@
         }
       }
 
-      //mac_dataの更新
-      mac_data = json["mac_data"];
-      console.log(mac_data)
+      // //mac_dataの更新
+      // mac_data = json["mac_data"];
+      // console.log(mac_data)
 
       // 画面の更新
       var animation_time = 500;
