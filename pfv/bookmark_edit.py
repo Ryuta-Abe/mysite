@@ -26,11 +26,13 @@ def bookmark_edit(request):
   timerange = int(request.GET.get('timerange', 10))
   experiment = int(request.GET.get('experiment', 0))
   language = request.GET.get('language', 'jp')
+  mac = request.GET.get('mac', '')
+  floor = request.GET.get('floor', 'W2-6F')
   delete = int(request.GET.get('delete', 0))
 
   # ブックマーク追加
   if add == 1:
-    url = "?datetime="+date_time+"&timerange="+str(timerange)+"&experiment="+str(experiment)+"&language="+language
+    url = "?datetime="+date_time+"&timerange="+str(timerange)+"&experiment="+str(experiment)+"&language="+language+"&mac="+mac+"&floor="+floor
     db.bookmark.insert({'url':url,'name':name,'frequency':0})
     return render_json_response(request,{'url':url,'name':name,'frequency':0})
 
