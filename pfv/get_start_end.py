@@ -20,40 +20,40 @@ db = client.nm4bd
 db.tmpcol.create_index([("get_time_no", DESCENDING), ("mac", ASCENDING)])
 
 def get_start_end(request):
+  from datetime import datetime, timedelta
 
   # urlからクエリの取り出し
   algorithm = int(request.GET.get('algorithm', 1))
   # CONST
   MIN_NODE_NUM = 1
   MAX_NODE_NUM = 27
+  FLOOR_LIST   = ["W2-6F","W2-7F"]
+  mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
+  
   # 初期設定
-  count = 0
+  count     = 0
   count_all = 0
   tmp_mac   = ""
+  tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
   data_lists = []
   data_lists_stay = []
   data_lists_experiment = []
   node_history = []
   start_nodelist = []
   tmp_node_id_list = []
-  nodecnt_dict = {}
-  for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
-    nodecnt_dict.update({num:0})
 
-  # 6F実験で用いた端末のMACリスト
-  mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
+  nodecnt_dict = {}
+  for floor in FLOOR_LIST:
+    nodecnt_dict.update({floor:{}})
+    for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
+      nodecnt_dict[floor].update({num:0})
 
   # data取り出し
   datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
-  # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500}}).sort("_id.get_time_no",-1).sort("_id.mac")
-
-  from datetime import datetime, timedelta
-  tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
 
   ### アルゴリズム1 ###
   if algorithm == 1:
-
     # 1番目の設定
     datas[0]['nodelist'] = sorted(datas[0]['nodelist'], key=lambda x:x["dbm"], reverse=True)
     for tmp_node_id in datas[0]['nodelist']:
@@ -93,13 +93,15 @@ def get_start_end(request):
           his_node_cnt = len(history["node"])
           if not(data['id']['get_time_no'] - time_range <= history["dt"]):
             for h_num in range(0, his_node_cnt):
-              tmp_num = history["node"][h_num]["pcwl_id"]
-              nodecnt_dict.update({tmp_num : nodecnt_dict[tmp_num]-1})
+              tmp_num   = history["node"][h_num]["pcwl_id"]
+              tmp_floor = history["node"][h_num]["floor"]
+              nodecnt_dict[tmp_floor].update({tmp_num : nodecnt_dict[tmp_floor][tmp_num]-1})
             node_history.remove(history)
 
         for num in range(0, node_cnt):
-          tmp_num = data["nodelist"][num]['pcwl_id']
-          nodecnt_dict.update({tmp_num : nodecnt_dict[tmp_num]+1})
+          tmp_num   = data["nodelist"][num]['pcwl_id']
+          tmp_floor = data["nodelist"][num]['floor']
+          nodecnt_dict[tmp_floor].update({tmp_num : nodecnt_dict[tmp_floor][tmp_num]+1})
 
         # 時間間隔チェック
         if ((data['id']['get_time_no'] - tmp_startdt).seconds <= 60):
@@ -107,15 +109,17 @@ def get_start_end(request):
           del(data['_id'])
 
           for num in range(0, node_cnt):
-            tmp_num = data["nodelist"][num]['pcwl_id']
+            tmp_num   = data["nodelist"][num]['pcwl_id']
+            tmp_floor = data["nodelist"][num]['floor']
 
             # node_idが一致しない場合(flow)
-            if data["nodelist"][num]["pcwl_id"] != tmp_node_id["pcwl_id"]:
+            if (data["nodelist"][num]["pcwl_id"] != tmp_node_id["pcwl_id"])and(data["nodelist"][num]["floor"] == tmp_node_id["floor"]):
               # 出現回数による除外
-              if (nodecnt_dict[tmp_num] <= 4):
+              if (nodecnt_dict[tmp_floor][tmp_num] <= 4):
                 # 経路情報の取り出し
                 route_info = [] 
                 route_info += db.pcwlroute.find({"$and":[
+                                                          {"floor" : tmp_node_id["floor"]},
                                                           {"query" : tmp_node_id["pcwl_id"]}, 
                                                           {"query" : data["nodelist"][num]["pcwl_id"]}
                                                         ]})
@@ -142,6 +146,7 @@ def get_start_end(request):
                               "interval"  :(tmp_enddt - tmp_startdt).seconds,
                               "start_node":[tmp_node_id],
                               "end_node"  :[data["nodelist"][num]],
+                              "floor"     :tmp_node_id["floor"],
                               }
                   data_lists.append(se_data)
                   tmp_node_id = data["nodelist"][num]
@@ -158,13 +163,14 @@ def get_start_end(request):
                 break
 
             # node_idが一致(stay)
-            elif data["nodelist"][num]["pcwl_id"] == tmp_node_id["pcwl_id"]:
+            elif (data["nodelist"][num]["pcwl_id"] == tmp_node_id["pcwl_id"])and(data["nodelist"][num]["floor"] == tmp_node_id["floor"]):
               se_data =  {"mac":data["id"]["mac"],
                           "start_time":tmp_startdt,
                           "end_time"  :tmp_enddt,
                           "interval"  :(tmp_enddt - tmp_startdt).seconds,
                           "start_node":tmp_node_id["pcwl_id"],
                           "end_node"  :data["nodelist"][num]["pcwl_id"],
+                          "floor"     :tmp_node_id["floor"],
                           }
               data_lists_stay.append(se_data)
               break
@@ -176,8 +182,6 @@ def get_start_end(request):
           tmp_node_id_list = end_node_list
           tmp_node_id = tmp_node_id_list[0]
           tmp_startdt = data['id']['get_time_no']
-
-
 
       # mac異なる場合
       else:
@@ -196,12 +200,15 @@ def get_start_end(request):
 
         node_history.append({"node":tmp_nodelist, "dt":data['id']['get_time_no']})
         nodecnt_dict = {}
-        for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
-          nodecnt_dict.update({num:0})
+        for floor in FLOOR_LIST:
+          nodecnt_dict.update({floor:{}})
+          for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
+            nodecnt_dict[floor].update({num:0})
 
         for num in range(0, node_cnt):
-          tmp_num = data["nodelist"][num]['pcwl_id']
-          nodecnt_dict.update({tmp_num : nodecnt_dict[tmp_num]+1})
+          tmp_num   = data["nodelist"][num]['pcwl_id']
+          tmp_floor = data["nodelist"][num]['floor']
+          nodecnt_dict[tmp_floor].update({tmp_num : nodecnt_dict[tmp_floor][tmp_num]+1})
 
       count_all += 1
 
@@ -216,7 +223,7 @@ def get_start_end(request):
     # end = time.time()
     # print("time:"+str(end-start))
     # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
-    make_pfvmacinfo(data_lists,db.pfvmacinfo)
+    # make_pfvmacinfo(data_lists,db.pfvmacinfo)
     # make_staymacinfo(data_lists_stay,db.staymacinfo)
 
     return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
