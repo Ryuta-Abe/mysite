@@ -74,7 +74,7 @@ class pfvinfoexperiment2(Document):
 class pfvmacinfo(Document):
     datetime = DateTimeField()
     mac = StringField()
-    plist = ListField(DictField())
+    route = ListField(DictField())
     floor = StringField()
 
     meta = {
@@ -86,6 +86,7 @@ class pfvmacinfo(Document):
     # "floor" : "W2-6F", 
     # "mac" : "00:24:d6:43:e7:dc", 
     # "plist" : [ { "direction" : [ 1, 2 ], "size" : 0 }, { "direction" : [ 2, 1 ], "size" : 0 },...]
+    # "route" : [[1,2],[2,3],[3,4]]
 
 # 滞留端末情報
 class stayinfo(Document):
@@ -104,7 +105,7 @@ class stayinfo(Document):
 
 # 滞留端末情報(mac情報付き)
 class staymacinfo(Document):
-    plist = ListField(DictField())
+    pcwl_id = IntField()
     mac = StringField()
     datetime = DateTimeField()
     floor = StringField()

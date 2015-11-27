@@ -52,7 +52,18 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 # class pfvmacinfo(Document):
 #     datetime = DateTimeField()
 #     mac = StringField()
-#     plist = ListField(DictField())
+#     route = ListField(ListField(IntField))
+#     floor = StringField()
+
+#     meta = {
+#         "db_alias" : "nm4bd",
+#     }
+
+# # 人流情報(mac情報付き)
+# class staymacinfo(Document):
+#     datetime = DateTimeField()
+#     mac = StringField()
+#     pcwl_id = IntField()
 #     floor = StringField()
 
 #     meta = {
@@ -166,6 +177,14 @@ def optimize_routeinfo(st_list,ed_list,route_info): # 向きの最適化と各�
 
 	return output
 
+def select_one_route(route_info): # 入力：複数の経路、出力：最もaddが大きい経路1つ
+	add_max = 0
+	for route in route_info:
+		if add_max < route["add"]:
+			add_max = route["add"]
+			output = route
+	return [output]
+
 def make_pfvinfo(dataset,db_name):
 	# 開始時にDBを初期化
 	db_name.remove()
@@ -249,18 +268,8 @@ def is_experiment(db_name): # 実験用DBか否かを判定
 # mac情報付きpfvinfo
 def make_pfvmacinfo(dataset,db_name):
 	# 開始時にDBを初期化
-	db_name.remove()
-
-	# 空のplistを作成
-	emp_plist = []
-	# ノード同士の全組み合わせで経路情報を記録
-	for i in range(0,len(_pcwlnode)):
-		for j in range(0,len(_pcwlnode)):
-			st = _pcwlnode[i]["pcwl_id"] # 出発点
-			ed = _pcwlnode[j]["pcwl_id"] # 到着点
-			# iとjが隣接ならば人流0人でplistに加える
-			if ed in _pcwlnode[i]["next_id"]:
-				emp_plist.append({"direction":[st,ed],"size":0})
+	db.pfvmacinfo.remove()
+	db.staymacinfo.remove()
 
 	progress = 0
 	for data in dataset:
@@ -273,6 +282,8 @@ def make_pfvmacinfo(dataset,db_name):
 													{"query" : data["end_node"][0]["pcwl_id"]}
 												]})
 		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+		if len(route_info) >= 2:
+			route_info = select_one_route(route_info) # addが最大の1つの経路のみ取り出す
 
 		if num >= 1:
 			for route in route_info: # ある経路に対して以下を実行
@@ -314,15 +325,16 @@ def make_pfvmacinfo(dataset,db_name):
 						tmp_st_ed_info.append(node["direction"])
 					st_ed_info = [tmp_st_ed_info]
 
-				# pfv情報の登録
+				# 人流情報or滞留情報の登録
+				location = data["start_node"][0]["pcwl_id"] # 現在位置の情報
 				for j in range(0,num):
-					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
-						tmp_plist = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":"W2-6F"}
-						for dire in st_ed_info[j]:
-							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] += route["add"]
-						db_name.insert(tmp_plist)
-						for dire in st_ed_info[j]:
-							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] -= route["add"]
+					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が異なる場合は人流情報を記録
+						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"route":st_ed_info[j],"floor":"W2-6F"}
+						db_name.insert(new_data)
+						location = st_ed_info[j][-1][-1]
+					else: # j番目の時刻において出発点到着点が同じ場合は滞留情報を記録
+						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"pcwl_id":location,"floor":"W2-6F"}
+						db.staymacinfo.insert(new_data)
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
@@ -361,13 +373,6 @@ def make_stayinfo(dataset,db_name):
 		db_name.create_index([("datetime", ASCENDING)])
 
 def make_staymacinfo(dataset,db_name):
-	# stayinfoを初期化
-	db_name.remove()
-
-	# 空のplistを作成
-	emp_plist = []
-	for node in _pcwlnode:
-		emp_plist.append({"pcwl_id":node["pcwl_id"],"size":0})
 
 	progress = 0
 	for data in dataset:
@@ -377,13 +382,9 @@ def make_staymacinfo(dataset,db_name):
 
 		for i in range(0,num):
 
-			# 滞留端末情報の一時データ取り出し
-			tmp_plist = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":"W2-6F"}
-
 			# 滞留端末情報更新
-			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] += 1
+			new_data = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"pcwl_id":data["start_node"],"floor":"W2-6F"}
 			db_name.insert(tmp_plist)
-			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] -= 1
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
@@ -392,12 +393,12 @@ def make_staymacinfo(dataset,db_name):
 		
 # # 出発時刻、出発点、到着時刻、到着点のデータセット
 # dataset = []
-# dataset.append({"mac":"a","start_node":[{"pcwl_id":1,"rssi":-60},{"pcwl_id":21,"rssi":-65},{"pcwl_id":27,"rssi":-70}],"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":[{"pcwl_id":11,"rssi":-60},{"pcwl_id":12,"rssi":-65}],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})
-# dataset.append({"mac":"b","start_node":[{"pcwl_id":5,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,24),"end_node":[{"pcwl_id":9,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":30})
-# dataset.append({"mac":"c","start_node":[{"pcwl_id":13,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,54),"end_node":[{"pcwl_id":9,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,4),"interval":10})
-# dataset.append({"mac":"d","start_node":[{"pcwl_id":1,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,4),"end_node":[{"pcwl_id":5,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,14),"interval":10})
-# dataset.append({"mac":"e","start_node":[{"pcwl_id":1,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,14),"end_node":[{"pcwl_id":5,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,10,44),"interval":30})
-# dataset.append({"mac":"f","start_node":[{"pcwl_id":9,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,14),"end_node":[{"pcwl_id":13,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,34),"interval":20})
+# dataset.append({"mac":"aa:aa:aa:aa:aa:aa","start_node":[{"pcwl_id":1,"rssi":-60},{"pcwl_id":21,"rssi":-65},{"pcwl_id":27,"rssi":-70}],"start_time":datetime.datetime(2015,6,3,12,10,4),"end_node":[{"pcwl_id":11,"rssi":-60},{"pcwl_id":12,"rssi":-65}],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":50})
+# dataset.append({"mac":"bb:bb:bb:bb:bb:bb","start_node":[{"pcwl_id":5,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,24),"end_node":[{"pcwl_id":9,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,10,54),"interval":30})
+# dataset.append({"mac":"cc:cc:cc:cc:cc:cc","start_node":[{"pcwl_id":13,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,54),"end_node":[{"pcwl_id":9,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,4),"interval":10})
+# dataset.append({"mac":"dd:dd:dd:dd:dd:dd","start_node":[{"pcwl_id":1,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,4),"end_node":[{"pcwl_id":2,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,14),"interval":30})
+# dataset.append({"mac":"ee:ee:ee:ee:ee:ee","start_node":[{"pcwl_id":1,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,10,14),"end_node":[{"pcwl_id":5,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,10,44),"interval":30})
+# dataset.append({"mac":"ff:ff:ff:ff:ff:ff","start_node":[{"pcwl_id":9,"rssi":-60}],"start_time":datetime.datetime(2015,6,3,12,11,14),"end_node":[{"pcwl_id":13,"rssi":-60}],"end_time":datetime.datetime(2015,6,3,12,11,34),"interval":20})
 
 # import time
 # start = time.time()
@@ -405,4 +406,4 @@ def make_staymacinfo(dataset,db_name):
 # end = time.time()
 # print("time:"+str(end-start))
 
-print("エラー無しやな")
+# print("エラー無しやな")
