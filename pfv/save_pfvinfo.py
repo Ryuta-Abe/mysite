@@ -61,45 +61,56 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 
 # ここまでコメントアウト
 
-# PCWLノード情報取り出し
-_pcwlnode = []
-# _pcwlnode += pcwlnode.objects()
-_pcwlnode += db.pcwlnode.find()
+floor_list = ["W2-6F","W2-7F"]
+pfvinfo_dict  = {}
+stayinfo_dict = {}
 
-# st,edからpfvinfoの登録順を求める(例：pfvinfo_id[3][4] = 4)
-pfvinfo_id = []
-for i in range(0,99):
-	pfvinfo_id.append([0]*99)
-count = 0
-for i in range(0,len(_pcwlnode)):
-	for j in range(0,len(_pcwlnode)):
-		st = _pcwlnode[i]["pcwl_id"] # 出発点
-		ed = _pcwlnode[j]["pcwl_id"] # 到着点
-		if ed in _pcwlnode[i]["next_id"]:
-			pfvinfo_id[st][ed] = count
-			count += 1
+_pcwlnode = {}
 
-# idからstayinfoの登録順を求める
-stayinfo_id = [0]*99
-for i in range(0,len(_pcwlnode)):
-	stayinfo_id[_pcwlnode[i]["pcwl_id"]] = i
+for floor in floor_list:
+	# PCWLノード情報取り出し
+	# _pcwlnode += pcwlnode.objects()
+	node_list = []
+	node_list += db.pcwlnode.find({"floor":floor})
+	_pcwlnode.update({floor:node_list})
+	# _pcwlnode += db.pcwlnode.find({"floor":floor})
+
+	# st,edからpfvinfoの登録順を求める(例：pfvinfo_id[3][4] = 4)
+	pfvinfo_id = []
+	for i in range(0,99):
+		pfvinfo_id.append([0]*99)
+	count = 0
+	for i in range(0,len(_pcwlnode[floor])):
+		for j in range(0,len(_pcwlnode[floor])):
+			st = _pcwlnode[floor][i]["pcwl_id"] # 出発点
+			ed = _pcwlnode[floor][j]["pcwl_id"] # 到着点
+			if ed in _pcwlnode[floor][i]["next_id"]:
+				pfvinfo_id[st][ed] = count
+				count += 1
+	pfvinfo_dict.update({floor:pfvinfo_id})
+
+	# idからstayinfoの登録順を求める
+	stayinfo_id = [0]*99
+	for i in range(0,len(_pcwlnode[floor])):
+		stayinfo_id[_pcwlnode[floor][i]["pcwl_id"]] = i
+		stayinfo_dict.update({floor:stayinfo_id})
 
 # pfvinfo関係
-def make_empty_pfvinfo(dt,db_name): # 空のpfvinfoを作成
+def make_empty_pfvinfo(dt,db_name,floor): # 空のpfvinfoを作成
 	# print(str(dt)+"の空のpfvinfoを作成")
 	plist = []
 	# ノード同士の全組み合わせで経路情報を記録
-	for i in range(0,len(_pcwlnode)):
-		for j in range(0,len(_pcwlnode)):
-			st = _pcwlnode[i]["pcwl_id"] # 出発点
-			ed = _pcwlnode[j]["pcwl_id"] # 到着点
+	for i in range(0,len(_pcwlnode[floor])):
+		for j in range(0,len(_pcwlnode[floor])):
+			st = _pcwlnode[floor][i]["pcwl_id"] # 出発点
+			ed = _pcwlnode[floor][j]["pcwl_id"] # 到着点
 			# iとjが隣接ならば人流0人でplistに加える
-			if ed in _pcwlnode[i]["next_id"]:
+			if ed in _pcwlnode[floor][i]["next_id"]:
 				if is_experiment(db_name):
 					plist.append({"direction":[st,ed],"size":0,"mac_list":[]})
 				else :
 					plist.append({"direction":[st,ed],"size":0})
-	return {'datetime':dt,'plist':plist}
+	return {'datetime':dt,'plist':plist, "floor":floor}
 
 def optimize_routeinfo(st_list,ed_list,route_info): # 向きの最適化と各経路の重みを計算
 	output = []
@@ -169,18 +180,18 @@ def optimize_routeinfo(st_list,ed_list,route_info): # 向きの最適化と各�
 def make_pfvinfo(dataset,db_name):
 	# 開始時にDBを初期化
 	db_name.remove()
-
 	for data in dataset:
 		interval = round(data["interval"])
 		num = round(interval / 10) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
+													{"floor" : data["floor"]},
 													{"query" : data["start_node"][0]["pcwl_id"]}, 
 													{"query" : data["end_node"][0]["pcwl_id"]}
 												]})
 		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
-		print("[出発点,到着点] = "+str([data["start_node"][0]["pcwl_id"], data["end_node"][0]["pcwl_id"]])+" , 間隔 = "+str(interval)+" 秒")
+		print("[出発点,到着点] = "+str([data["start_node"][0]["pcwl_id"], data["end_node"][0]["pcwl_id"]])+" , 間隔 = "+str(interval)+" 秒 floor:"+data["floor"])
 
 		if num >= 1:
 			for route in route_info: # ある経路に対して以下を実行
@@ -227,16 +238,16 @@ def make_pfvinfo(dataset,db_name):
 				# pfv情報の登録
 				for j in range(0,num):
 					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
-						tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[j]["datetime"]}})
+						tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[j]["datetime"]},"floor":data["floor"]})
 						if tmp_plist == None: # この時間の情報がまだDBに登録されていない場合
-							tmp_plist = make_empty_pfvinfo(tlist[j]["datetime"],db_name) # この時間の空の情報を作成
+							tmp_plist = make_empty_pfvinfo(tlist[j]["datetime"], db_name, data["floor"]) # この時間の空の情報を作成
 						for dire in st_ed_info[j]:
-							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] += route["add"]
+							tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["size"] += route["add"]
 							if is_experiment(db_name):
-								if data["mac"] not in tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["mac_list"]:
-									tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["mac_list"] += [data["mac"]]
+								if data["mac"] not in tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["mac_list"]:
+									tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["mac_list"] += [data["mac"]]
 						db_name.save(tmp_plist)
-						print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info)))
+						print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info))+" floor:"+data["floor"])
 
 		db_name.create_index([("datetime", ASCENDING)])
 
@@ -251,24 +262,26 @@ def make_pfvmacinfo(dataset,db_name):
 	# 開始時にDBを初期化
 	db_name.remove()
 
-	# 空のplistを作成
-	emp_plist = []
-	# ノード同士の全組み合わせで経路情報を記録
-	for i in range(0,len(_pcwlnode)):
-		for j in range(0,len(_pcwlnode)):
-			st = _pcwlnode[i]["pcwl_id"] # 出発点
-			ed = _pcwlnode[j]["pcwl_id"] # 到着点
-			# iとjが隣接ならば人流0人でplistに加える
-			if ed in _pcwlnode[i]["next_id"]:
-				emp_plist.append({"direction":[st,ed],"size":0})
 
 	progress = 0
 	for data in dataset:
+		# 空のplistを作成
+		emp_plist = []
+		# ノード同士の全組み合わせで経路情報を記録
+		for i in range(0,len(_pcwlnode[data["floor"]])):
+			for j in range(0,len(_pcwlnode[data["floor"]])):
+				st = _pcwlnode[data["floor"]][i]["pcwl_id"] # 出発点
+				ed = _pcwlnode[data["floor"]][j]["pcwl_id"] # 到着点
+				# iとjが隣接ならば人流0人でplistに加える
+				if ed in _pcwlnode[data["floor"]][i]["next_id"]:
+					emp_plist.append({"direction":[st,ed],"size":0})
+
 		interval = round(data["interval"])
 		num = round(interval / 10) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
+													{"floor" : data["floor"]},
 													{"query" : data["start_node"][0]["pcwl_id"]}, 
 													{"query" : data["end_node"][0]["pcwl_id"]}
 												]})
@@ -317,12 +330,14 @@ def make_pfvmacinfo(dataset,db_name):
 				# pfv情報の登録
 				for j in range(0,num):
 					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
-						tmp_plist = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":"W2-6F"}
+						tmp_plist = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":data["floor"]}
 						for dire in st_ed_info[j]:
-							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] += route["add"]
+							# print(pfvinfo_id)
+							# print(tmp_plist["plist"])
+							tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["size"] += route["add"]
 						db_name.insert(tmp_plist)
 						for dire in st_ed_info[j]:
-							tmp_plist["plist"][pfvinfo_id[dire[0]][dire[1]]]["size"] -= route["add"]
+							tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["size"] -= route["add"]
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
@@ -330,12 +345,12 @@ def make_pfvmacinfo(dataset,db_name):
 		db_name.create_index([("datetime", ASCENDING)])
 
 # 滞留端末情報stayinfo関係
-def make_empty_stayinfo(dt): # 空のstayinfoを作成
+def make_empty_stayinfo(dt,floor): # 空のstayinfoを作成
 	# print(str(dt)+"の空のstayinfoを作成")
 	plist = []
-	for node in _pcwlnode:
+	for node in _pcwlnode[floor]:
 		plist.append({"pcwl_id":node["pcwl_id"],"size":0,"mac_list":[]})
-	return {'datetime':dt,'plist':plist}
+	return {'datetime':dt,'plist':plist,'floor':floor}
 
 def make_stayinfo(dataset,db_name):
 	# stayinfoを初期化
@@ -349,13 +364,13 @@ def make_stayinfo(dataset,db_name):
 		for i in range(0,num):
 
 			# 滞留端末情報の一時データ取り出し
-			tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[i]["datetime"]}})
+			tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[i]["datetime"]},"floor":data["floor"]})
 			if tmp_plist == None: # この時間の情報がまだDBに登録されていない場合
-				tmp_plist = make_empty_stayinfo(tlist[i]["datetime"]) # この時間の空の情報を作成
+				tmp_plist = make_empty_stayinfo(tlist[i]["datetime"],data["floor"]) # この時間の空の情報を作成
 
 				# 滞留端末情報更新
-			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] += 1
-			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["mac_list"] += [data["mac"]]
+			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["size"] += 1
+			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["mac_list"] += [data["mac"]]
 			db_name.save(tmp_plist)
 		print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
 		db_name.create_index([("datetime", ASCENDING)])
@@ -364,10 +379,14 @@ def make_staymacinfo(dataset,db_name):
 	# stayinfoを初期化
 	db_name.remove()
 
-	# 空のplistを作成
-	emp_plist = []
-	for node in _pcwlnode:
-		emp_plist.append({"pcwl_id":node["pcwl_id"],"size":0})
+	emp_pdict = {}
+	for floor in floor_list:
+		# 空のplistを作成
+		emp_plist = []
+		for node in _pcwlnode[floor]:
+			emp_plist.append({"pcwl_id":node["pcwl_id"],"size":0})
+
+		emp_pdict.update({floor:emp_plist})
 
 	progress = 0
 	for data in dataset:
@@ -378,12 +397,12 @@ def make_staymacinfo(dataset,db_name):
 		for i in range(0,num):
 
 			# 滞留端末情報の一時データ取り出し
-			tmp_plist = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":"W2-6F"}
+			tmp_plist = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"plist":emp_pdict[data["floor"]],"floor":data["floor"]}
 
 			# 滞留端末情報更新
-			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] += 1
+			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["size"] += 1
 			db_name.insert(tmp_plist)
-			tmp_plist["plist"][stayinfo_id[data["start_node"]]]["size"] -= 1
+			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["size"] -= 1
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
