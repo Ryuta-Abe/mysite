@@ -752,9 +752,9 @@
       "font-size":"11px",
     })
     if ("{{ language }}" == "en") {
-      macfilter_log.text("When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24'");
+      macfilter_log.text("When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '90:b6:86:52:77:2a,80:be:05:6c:6b:2b,98:e0:d9:35:92:4d'");
     } else {
-      macfilter_log.text("複数のMACで抽出したい場合はMAC間に「 , 」を挟んで入力。例：「20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24」");
+      macfilter_log.text("複数のMACで抽出したい場合はMAC間に「 , 」を挟んで入力。例：「90:b6:86:52:77:2a,80:be:05:6c:6b:2b,98:e0:d9:35:92:4d」");
     };
     function mac_filtering(){
       var mac = Sample_form.textbox_mac.value;

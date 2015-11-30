@@ -187,13 +187,13 @@ def pfv_map_json(request):
   # pfv情報の取り出し
   pfvinfo = []
   if experiment == 1: # 実験データ
-    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   elif experiment == 2: # 実験データ2
-    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   elif mac == "": # すべてのmacの取り出し
-    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query},"floor":floor}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
@@ -208,9 +208,9 @@ def pfv_map_json(request):
   # 滞留端末情報の取り出し
   stayinfo = []
   if mac == "": # すべてのmacの取り出し
-    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
+    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query},"floor":floor}).sort("datetime", ASCENDING)
   if len(stayinfo) >= 1:
     for i in range(1,len(stayinfo)):
       for j in range(0,len(stayinfo[i]["plist"])):
@@ -343,7 +343,7 @@ def mac_trace(request):
   experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
-  # floor = request.GET.get('floor', 'W2-6F')
+  floor = request.GET.get('floor', 'W2-6F')
 
   timerange = 10
   lt = dt_from_14digits_to_iso(date_time)
@@ -351,8 +351,8 @@ def mac_trace(request):
 
   # pcwl情報の取り出し
   pcwlnode = []
-  pcwlnode += db.pcwlnode.find()
-  # pcwlnode += db.pcwlnode.find({"floor":floor})
+  # pcwlnode += db.pcwlnode.find()
+  pcwlnode += db.pcwlnode.find({"floor":floor})
 
   # mac検索条件
   if mac != "":
@@ -371,7 +371,7 @@ def mac_trace(request):
     # t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
     t = []
   else :
-    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query},"floor":floor}).sort("_id.get_time_no", DESCENDING)
 
   for data in t:
     for i in range(0,len(data["nodelist"])):
@@ -435,7 +435,7 @@ def mac_trace_json(request):
   experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
-  # floor = request.GET.get('floor', 'W2-6F')
+  floor = request.GET.get('floor', 'W2-6F')
 
   timerange = 10
   lt = dt_from_14digits_to_iso(date_time)
@@ -443,8 +443,8 @@ def mac_trace_json(request):
 
   # pcwl情報の取り出し
   pcwlnode = []
-  pcwlnode += db.pcwlnode.find()
-  # pcwlnode += db.pcwlnode.find({"floor":floor})
+  # pcwlnode += db.pcwlnode.find()
+  pcwlnode += db.pcwlnode.find({"floor":floor})
 
   # mac検索条件
   if mac != "":
@@ -463,7 +463,7 @@ def mac_trace_json(request):
     # t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
     t = []
   else :
-    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query},"floor":floor}).sort("_id.get_time_no", DESCENDING)
   for data in t:
     for i in range(0,len(data["nodelist"])):
       data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
@@ -530,11 +530,11 @@ def pfv_heatmap(request):
   # pfv情報の取り出し
   pfvinfo = []
   if experiment == 1: # 実験データ
-    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   elif experiment == 2: # 実験データ2
-    pfvinfo += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   else : # 非実験データ
-    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   if len(pfvinfo) >= 1:
     for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
       for j in range(0,len(pfvinfo[i]["plist"])):
@@ -559,7 +559,7 @@ def pfv_heatmap(request):
 
   # 滞留端末情報の取り出し
   stayinfo = []
-  stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
   if len(stayinfo) >= 1:
     for i in range(1,len(stayinfo)):
       for j in range(0,len(stayinfo[i]["plist"])):
