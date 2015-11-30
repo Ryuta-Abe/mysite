@@ -62,7 +62,6 @@ def pfv_map(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', '20150603122130')
   timerange = int(request.GET.get('timerange', 10))
-  experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
@@ -125,7 +124,7 @@ def pfv_map(request):
 
     return render_to_response('pfv/pfv_map.html',  # 使用するテンプレート
                                 {'pcwlnode': _pcwlnode_with_stayinfo,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
-                                 'experiment':experiment,'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
+                                 'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
                                  'year':lt.year,'month':lt.month,'day':lt.day,
                                  'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                                 )
@@ -133,33 +132,32 @@ def pfv_map(request):
   else : # macを絞り込んだビューを表示
 
     # mac検索条件
-    if mac != "":
-      mac_query = [] # 検索するmacのリスト
-      mac_num = round(len(mac)/18) # 検索するmac数
-      for i in range(0,mac_num):
-        mac_query.append(mac[0+i*18:17+i*18])
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
 
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
-    color_count = 0
+    mac_color = {} # 例：{'00:24:d6:6e:e3:24': 'blue', '90:b6:86:2e:3b:06': 'red'}
+    for i in range(0,len(mac_query)):
+      mac_color.update({mac_query[i]:color_list[i]})
 
     # pfv情報の取り出し
     pfvinfo = []
-    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
     for data in pfvinfo:
-      data["color"] = color_list[color_count]
-      color_count += 1
+      data["color"] = mac_color[data["mac"]]
 
     # 滞留端末情報の取り出し
     stayinfo = []
-    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
+    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
     for data in stayinfo:
-      data["color"] = color_list[color_count]
-      color_count += 1    
+      data["color"] = mac_color[data["mac"]]   
 
     return render_to_response('pfv/pfv_map_mac.html',  # 使用するテンプレート
-                                {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
-                                 'experiment':experiment,'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
+                                {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'stayinfo': stayinfo,'bookmarks':bookmarks,
+                                 'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
                                  'year':lt.year,'month':lt.month,'day':lt.day,
                                  'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                                 )
@@ -170,59 +168,68 @@ def pfv_map_json(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', '20150603122130')
   timerange = int(request.GET.get('timerange', 10))
-  experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
-  # mac検索条件
-  if mac != "":
-    mac_query = [] # 検索するmacのリスト
-    mac_num = round(len(mac)/18) # 検索するmac数
-    for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+  if mac == "": # 全macのビューを表示
 
-  # pfv情報の取り出し
-  pfvinfo = []
-  if experiment == 1: # 実験データ
-    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
-  elif experiment == 2: # 実験データ2
-    pfvinfo += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
-  elif mac == "": # すべてのmacの取り出し
-    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
-  else : # 特定のmacを抽出
-    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query},"floor":floor}).sort("datetime", ASCENDING)
-  if len(pfvinfo) >= 1:
-    for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
-      for j in range(0,len(pfvinfo[i]["plist"])):
-        pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
-        if (experiment == 1) or (experiment == 2): # 実験データ
-          for mac in pfvinfo[i]["plist"][j]["mac_list"]:
-            if mac not in pfvinfo[i-1]["plist"][j]["mac_list"]:
-              pfvinfo[i-1]["plist"][j]["mac_list"] += [mac]
-          pfvinfo[i]["plist"][j]["mac_list"] = pfvinfo[i-1]["plist"][j]["mac_list"]
-    pfvinfo = pfvinfo[-1]["plist"]
+    # pfv情報の取り出し
+    pfvinfo = []
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    if len(pfvinfo) >= 1:
+      for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
+        for j in range(0,len(pfvinfo[i]["plist"])):
+          pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
+      pfvinfo = pfvinfo[-1]["plist"]
+    else :
+      pfvinfo += db.pfvinfo.find().limit(1)
+      pfvinfo = pfvinfo[0]["plist"]
+      for j in range(0,len(pfvinfo)):
+        pfvinfo[j]["size"] = 0
 
-  # 滞留端末情報の取り出し
-  stayinfo = []
-  if mac == "": # すべてのmacの取り出し
-    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt},"floor":floor}).sort("datetime", ASCENDING)
-  else : # 特定のmacを抽出
-    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query},"floor":floor}).sort("datetime", ASCENDING)
-  if len(stayinfo) >= 1:
-    for i in range(1,len(stayinfo)):
-      for j in range(0,len(stayinfo[i]["plist"])):
-        stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
-        if mac == "":
+    # 滞留端末情報の取り出し
+    stayinfo = []
+    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+    if len(stayinfo) >= 1:
+      for i in range(1,len(stayinfo)):
+        for j in range(0,len(stayinfo[i]["plist"])):
+          stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
           for mac in stayinfo[i]["plist"][j]["mac_list"]:
             if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
               stayinfo[i]["plist"][j]["size"] -= 1
             else :
               stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
           stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
-    stayinfo = stayinfo[-1]["plist"]
+      stayinfo = stayinfo[-1]["plist"]
+
+  else : # macを絞り込んだビューを表示
+
+    # mac検索条件
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18])
+
+    # macの色づけ
+    color_list = ["blue","red","green","orange","pink"]
+    mac_color = {} # 例：{'00:24:d6:6e:e3:24': 'blue', '90:b6:86:2e:3b:06': 'red'}
+    for i in range(0,len(mac_query)):
+      mac_color.update({mac_query[i]:color_list[i]})
+
+    # pfv情報の取り出し
+    pfvinfo = []
+    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+    for data in pfvinfo:
+      data["color"] = mac_color[data["mac"]]
+
+    # 滞留端末情報の取り出し
+    stayinfo = []
+    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+    for data in stayinfo:
+      data["color"] = mac_color[data["mac"]] 
 
   dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo}
   return render_json_response(request, dataset) # dataをJSONとして出力

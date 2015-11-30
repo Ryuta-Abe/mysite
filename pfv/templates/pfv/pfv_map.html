@@ -157,7 +157,7 @@
     document.write('<a type="button" id="btn_back" onclick="slide_DT(1)" class="btn btn-default btn-sm"></a>');
     document.write('<a type="button" id="btn_forward" onclick="slide_DT(-1)" class="btn btn-default btn-sm"></a>');
     document.write('<a onclick="Auto_Animation()" class="btn btn-default btn-sm" id="btn_Auto">Animation</a>');
-    document.write('<a onclick="Auto_Animation2()" class="btn btn-default btn-sm" id="btn_Auto2">Animation2</a>');
+    // document.write('<a onclick="Auto_Animation2()" class="btn btn-default btn-sm" id="btn_Auto2">Animation2</a>');
     document.write('</span>');
     document.write('　　');
     document.write('<span>');
@@ -217,11 +217,7 @@
       d3.select("#time_interval_text").text(":Data referenced from this time ago.");
       d3.select("#difference_language").text("日本語");
     } else {
-      if (is_experiment({{ experiment }})) {
-        d3.select("#header").text("人流マップ(実験用)");
-      } else {
-        d3.select("#header").text("人流マップ");
-      };
+      d3.select("#header").text("人流マップ");
       d3.select("#btn_staycircle").text("滞留");
       d3.select("#btn_coordinate").text("座標");
       d3.select("#category_3").text("フィルタ");
@@ -255,16 +251,9 @@
     {% for s in bookmarks %}
     bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
     {% endfor %}
-    if (is_experiment({{ experiment }})) {
-      {% for s in pfvinfo %}
-      pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},mac_list:[]});
-      {% endfor %}
-      // d3.select("body").append("p").text("pfvinfo[0][mac_list] = "+pfvinfo[0]["mac_list"].length);
-    } else {
-      {% for s in pfvinfo %}
-      pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }}});
-      {% endfor %}
-    };
+    {% for s in pfvinfo %}
+    pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }}});
+    {% endfor %}
 
     // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
     var pcwlnode_id = [];
@@ -446,14 +435,8 @@
             div.style("width", "150px")
             .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1));
           } else {
-            if (is_experiment({{ experiment }})) {
-              var len = d.mac_list.length*120 + 50;
-              div.style("width", len+"px")
-              .text(d.size.toFixed(1) + " : " + d.mac_list);
-            } else {
-              div.style("width", "150px")
-              .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1)+"人");
-            };
+            div.style("width", "150px")
+            .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size.toFixed(1)+"人");
           };
       })
       // マウスがバーから離れたら説明文をけす
@@ -759,14 +742,13 @@
     function mac_filtering(){
       var mac = Sample_form.textbox_mac.value;
       if ((mac.length % 18) == 17) { // 特定のmacを抽出
-        Load_JSON(datetime);
         if ("{{ language }}" == "en") {
           macfilter_log.text("Filtered with query : "+mac);
         } else {
-          macfilter_log.text("クエリ「"+mac+"」で抽出しました。");
+          macfilter_log.text("別ウインドウでクエリ「"+mac+"」で抽出しました。");
         };
+        jump_pfv_map_mac();
       } else if (mac.length == 0){ // すべてのmacを表示
-        Load_JSON(datetime);
         if ("{{ language }}" == "en") {
           macfilter_log.text("All MACs are displayed.");
         } else {
@@ -847,15 +829,6 @@
       }
     }
 
-    // 実験用マップか否か判定
-    function is_experiment(num){
-      if ((num == 1)||(num == 2)) {
-        return true;
-      } else {
-        return false;
-      };
-    }
-
     // 人数参考バーの表示
     // 幅（Width）と高さ（ height）
     var w = 1000;
@@ -863,44 +836,47 @@
     var padding = 30;
     var max = 10; // 最大表示人数
 
-    //スケール関数の生成
-    var xScale = d3.scale.linear()
-                     .domain([0, max])
-                     .range([padding, w - padding *2]);
+    function make_temperature_graph(){
+      //スケール関数の生成
+      var xScale = d3.scale.linear()
+                       .domain([0, max])
+                       .range([padding, w - padding *2]);
 
-    // x軸の定義
-    var xAxis = d3.svg.axis()  // ここのsvgは変数名じゃない！；；
-                  .scale(xScale)
-                  .orient("bottom")
-                  .ticks(10);  // 大雑把に目盛りの個数を設定
-    if ("{{ language }}" == "en") {
-      xAxis.tickFormat(function(d) { return d; });
-    } else {
-      xAxis.tickFormat(function(d) { return d + "人"; });
-    };
+      // x軸の定義
+      var xAxis = d3.svg.axis()  // ここのsvgは変数名じゃない！；；
+                    .scale(xScale)
+                    .orient("bottom")
+                    .ticks(10);  // 大雑把に目盛りの個数を設定
+      if ("{{ language }}" == "en") {
+        xAxis.tickFormat(function(d) { return d; });
+      } else {
+        xAxis.tickFormat(function(d) { return d + "人"; });
+      };
 
-    // x軸の生成
-    svg2.append("g")
-      .attr("class", "axis")  // "axis" クラスを定義
-      .attr("transform", "translate(0," + (h - padding) + ")")
-      .call(xAxis);
+      // x軸の生成
+      svg2.append("g")
+        .attr("class", "axis")  // "axis" クラスを定義
+        .attr("transform", "translate(0," + (h - padding) + ")")
+        .call(xAxis);
 
-    // 棒グラフの追加
-    var temperature = [];
-    for (var i = 0; i < max; i++) {
-      temperature.push(i);
-    };
-    svg2.selectAll("rect.temperature")
-    .data(temperature)
-    .enter()
-    .append("rect")
-    .attr({
-      "x": function(d){ return xScale(d);},
-      "y": padding,
-      "width": (w - padding*3)/temperature.length,
-      "height": h - padding*2 - 10,
-      "fill": function(d){ return thermography(d);},
-    });
+      // 棒グラフの追加
+      var temperature = [];
+      for (var i = 0; i < max; i++) {
+        temperature.push(i);
+      };
+      svg2.selectAll("rect.temperature")
+      .data(temperature)
+      .enter()
+      .append("rect")
+      .attr({
+        "x": function(d){ return xScale(d);},
+        "y": padding,
+        "width": (w - padding*3)/temperature.length,
+        "height": h - padding*2 - 10,
+        "fill": function(d){ return thermography(d);},
+      });
+    }
+    make_temperature_graph();
 
     // 矢印クリック時の動作
     function jump_pfvgraph(dir){
@@ -911,6 +887,10 @@
     function jump_staygraph(pcwl_id){
       var node = ("0"+pcwl_id).slice(-2);
       window.open("{% url 'pfv:stay_graph' %}"+ make_url_query() + "&node=" + node,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+    }
+    // macフィルタしたページにジャンプ
+    function jump_pfv_map_mac(){
+      window.open("{% url 'pfv:pfv_map' %}"+ make_url_query(),"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
     // 言語切替
     function change_language(){
@@ -937,7 +917,7 @@
         var language = "en";
       }
 
-      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + language;
+      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange  + "&mac=" + mac + "&language=" + language;
     }
 
     // セレクトボックスの値をdatetimeに合わせる
@@ -962,7 +942,7 @@
     }
     describe_datetime();
 
-    // datetime,language,floor,mac,experiment,timerangeのurlクエリを出力する
+    // datetime,language,floor,mac,timerangeのurlクエリを出力する
     function make_url_query(){
       var year = datetime.getFullYear();
       var month = ("0"+(datetime.getMonth()+1)).slice(-2);
@@ -980,7 +960,7 @@
       }
       var mac = Sample_form.textbox_mac.value;
 
-      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
+      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
       return url;
     }
 
@@ -1043,16 +1023,10 @@
       if (json["pfvinfo"].length >= 1) {
         for (var i = 0; i < pfvinfo.length; i++) {
           pfvinfo[i].size = json["pfvinfo"][i].size;
-          if (is_experiment({{ experiment }})) {
-            pfvinfo[i].mac_list = json["pfvinfo"][i].mac_list;
-          };
         }
       } else {  // pfvinfoが空だった場合
         for (var i = 0; i < pfvinfo.length; i++) {
           pfvinfo[i].size = 0;
-          if (is_experiment({{ experiment }})) {
-            pfvinfo[i].mac_list = "";
-          };
         }
       };
       // stayinfoの更新
