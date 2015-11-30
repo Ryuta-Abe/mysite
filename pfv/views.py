@@ -155,7 +155,7 @@ def pfv_map(request):
     stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}}).sort("datetime", ASCENDING)
     for data in stayinfo:
       data["color"] = color_list[color_count]
-      color_count += 1
+      color_count += 1    
 
     return render_to_response('pfv/pfv_map_mac.html',  # 使用するテンプレート
                                 {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':bookmarks,

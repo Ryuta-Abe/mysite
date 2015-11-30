@@ -74,7 +74,7 @@ class pfvinfoexperiment2(Document):
 class pfvmacinfo(Document):
     datetime = DateTimeField()
     mac = StringField()
-    route = ListField(DictField())
+    route = ListField(ListField(IntField))
     floor = StringField()
 
     meta = {

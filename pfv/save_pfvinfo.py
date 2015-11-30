@@ -280,7 +280,9 @@ def make_pfvmacinfo(dataset,db_name):
 		route_info += db.pcwlroute.find({"$and": [
 													{"query" : data["start_node"][0]["pcwl_id"]}, 
 													{"query" : data["end_node"][0]["pcwl_id"]}
-												]})
+												]
+												# ,"floor":data["floor"]
+												})
 		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
 		if len(route_info) >= 2:
 			route_info = select_one_route(route_info) # addが最大の1つの経路のみ取り出す
@@ -329,11 +331,11 @@ def make_pfvmacinfo(dataset,db_name):
 				location = data["start_node"][0]["pcwl_id"] # 現在位置の情報
 				for j in range(0,num):
 					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が異なる場合は人流情報を記録
-						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"route":st_ed_info[j],"floor":"W2-6F"}
+						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"route":st_ed_info[j],"floor":data["floor"]}
 						db_name.insert(new_data)
 						location = st_ed_info[j][-1][-1]
 					else: # j番目の時刻において出発点到着点が同じ場合は滞留情報を記録
-						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"pcwl_id":location,"floor":"W2-6F"}
+						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"pcwl_id":location,"floor":data["floor"]}
 						db.staymacinfo.insert(new_data)
 
 		progress += 1
@@ -383,8 +385,8 @@ def make_staymacinfo(dataset,db_name):
 		for i in range(0,num):
 
 			# 滞留端末情報更新
-			new_data = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"pcwl_id":data["start_node"],"floor":"W2-6F"}
-			db_name.insert(tmp_plist)
+			new_data = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"pcwl_id":data["start_node"],"floor":data["floor"]}
+			db_name.insert(new_data)
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
