@@ -246,6 +246,7 @@
     var bookmarks = [];
     var pfvinfo = [];
     var stayinfo = [];
+    var reference_color = [];
     {% for s in pcwlnode %}
     pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
     {% endfor %}
@@ -257,6 +258,9 @@
     {% endfor %}
     {% for s in stayinfo %}
     stayinfo.push({pcwl_id:{{ s.pcwl_id }},mac:"{{ s.mac }}",color:"{{ s.color }}"});
+    {% endfor %}
+    {% for s in reference_color %}
+    reference_color.push({mac:"{{ s.mac }}",color:"{{ s.color }}"});
     {% endfor %}
 
     // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
@@ -785,6 +789,7 @@
           macfilter_log.text("別ウインドウで全てのMACを表示しました。");
         };
         jump_pfv_map();
+        flag_macfilter = false;
       } else { // 不正なクエリのため検索しない
         if ("{{ language }}" == "en") {
           macfilter_log.text("Your input is wrong. When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24'");
@@ -872,19 +877,19 @@
       // 開始時に前の画面を消去
       svg2.select("#g_color_reference").remove();
 
-      // 参照画面用のデータを作成
-      color_reference = [];
-      for (var i = 0; i < pfvinfo.length; i++) {
-        color_reference.push({"mac":pfvinfo[i]["mac"],"color":pfvinfo[i]["color"]});
-      };
-      for (var i = 0; i < stayinfo.length; i++) {
-        color_reference.push({"mac":stayinfo[i]["mac"],"color":stayinfo[i]["color"]});
-      };
+      // // 参照画面用のデータを作成
+      // color_reference = [];
+      // for (var i = 0; i < pfvinfo.length; i++) {
+      //   color_reference.push({"mac":pfvinfo[i]["mac"],"color":pfvinfo[i]["color"]});
+      // };
+      // for (var i = 0; i < stayinfo.length; i++) {
+      //   color_reference.push({"mac":stayinfo[i]["mac"],"color":stayinfo[i]["color"]});
+      // };
 
       // 参照画面を描画
       var g_color_reference = svg2.append("g").attr("id","g_color_reference")
       .selectAll("g.color_reference")
-      .data(color_reference)
+      .data(reference_color)
       .enter()
       .append("g")
       .attr({
@@ -1065,6 +1070,10 @@
       stayinfo = [];
       for (var i = 0; i < json["stayinfo"].length; i++) {
         stayinfo.push(json["stayinfo"][i]);
+      };
+      // reference_colorの更新(抽出mac変更時のみ)
+      if (flag_macfilter) {
+        reference_color = json["reference_color"];
       };
       // 画面の更新
       if (flag_Auto2) {

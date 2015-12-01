@@ -140,8 +140,10 @@ def pfv_map(request):
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
     mac_color = {} # 例：{'00:24:d6:6e:e3:24': 'blue', '90:b6:86:2e:3b:06': 'red'}
+    reference_color = [] # htmlに送る用の参照色データ
     for i in range(0,len(mac_query)):
       mac_color.update({mac_query[i]:color_list[i]})
+      reference_color.append({"mac":mac_query[i],"color":color_list[i]})
 
     # pfv情報の取り出し
     pfvinfo = []
@@ -157,7 +159,7 @@ def pfv_map(request):
 
     return render_to_response('pfv/pfv_map_mac.html',  # 使用するテンプレート
                                 {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'stayinfo': stayinfo,'bookmarks':bookmarks,
-                                 'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
+                                 'language':language,'timerange':timerange,'mac':mac, 'floor':floor,'reference_color':reference_color,
                                  'year':lt.year,'month':lt.month,'day':lt.day,
                                  'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                                 )
@@ -216,8 +218,10 @@ def pfv_map_json(request):
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
     mac_color = {} # 例：{'00:24:d6:6e:e3:24': 'blue', '90:b6:86:2e:3b:06': 'red'}
+    reference_color = [] # htmlに送る用の参照色データ
     for i in range(0,len(mac_query)):
       mac_color.update({mac_query[i]:color_list[i]})
+      reference_color.append({"mac":mac_query[i],"color":color_list[i]})
 
     # pfv情報の取り出し
     pfvinfo = []
@@ -231,7 +235,7 @@ def pfv_map_json(request):
     for data in stayinfo:
       data["color"] = mac_color[data["mac"]] 
 
-  dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo}
+  dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo,"reference_color":reference_color}
   return render_json_response(request, dataset) # dataをJSONとして出力
 
 # JSON出力
