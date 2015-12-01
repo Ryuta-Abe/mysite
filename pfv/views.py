@@ -100,11 +100,11 @@ def pfv_map(request):
       for i in range(1,len(stayinfo)):
         for j in range(0,len(stayinfo[i]["plist"])):
           stayinfo[i]["plist"][j]["size"] += stayinfo[i-1]["plist"][j]["size"]
-          for mac in stayinfo[i]["plist"][j]["mac_list"]:
-            if mac in stayinfo[i-1]["plist"][j]["mac_list"]:
+          for new_mac in stayinfo[i]["plist"][j]["mac_list"]:
+            if new_mac in stayinfo[i-1]["plist"][j]["mac_list"]:
               stayinfo[i]["plist"][j]["size"] -= 1
             else :
-              stayinfo[i-1]["plist"][j]["mac_list"] += [mac]
+              stayinfo[i-1]["plist"][j]["mac_list"] += [new_mac]
           stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
       stayinfo = stayinfo[-1]["plist"]
 
@@ -207,6 +207,9 @@ def pfv_map_json(request):
           stayinfo[i]["plist"][j]["mac_list"] = stayinfo[i-1]["plist"][j]["mac_list"]
       stayinfo = stayinfo[-1]["plist"]
 
+    # 送信するデータセット
+    dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo}
+
   else : # macを絞り込んだビューを表示
 
     # mac検索条件
@@ -235,7 +238,9 @@ def pfv_map_json(request):
     for data in stayinfo:
       data["color"] = mac_color[data["mac"]] 
 
-  dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo,"reference_color":reference_color}
+    # 送信するデータセット
+    dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo,"reference_color":reference_color}
+
   return render_json_response(request, dataset) # dataをJSONとして出力
 
 # JSON出力

@@ -1113,12 +1113,23 @@
     }
 
     // 実験中のボールアニメーション
+    var tmp_timerange_order; // ボールアニメーション実行前のtimerange値を記録
     function Auto_Animation2(){
+      // timerange値を取得
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      }
+      // flagによりアニメーション実行or停止
       if (flag_Auto2) {
         flag_Auto2 = !flag_Auto2;
         d3.select("#btn_Auto2").style("color","black");
         clearInterval(Timer);
         animate_circle.remove();
+        document.Sample_form.selectbox_timerange.selectedIndex = tmp_timerange_order;
         // stayed_circle.remove();
         make_path();
         describe_datetime();   
@@ -1126,6 +1137,8 @@
         flag_Auto2 = !flag_Auto2;
         d3.select("#g_arrow").remove();
         d3.select("#g_staycircle").remove();
+        document.Sample_form.selectbox_timerange.selectedIndex = 0; // ボールアニメーション中はtimerange=10固定
+        tmp_timerange_order = timerange_list_id[String(timerange)];
         Auto_Ajax();
         d3.select("#btn_Auto2").style("color","blue");
         Timer = setInterval(Auto_Ajax,1000);
