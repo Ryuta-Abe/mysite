@@ -177,6 +177,14 @@ def optimize_routeinfo(st_list,ed_list,route_info): # 向きの最適化と各�
 
 	return output
 
+def select_one_route(route_info): # 入力：複数の経路、出力：最もaddが大きい経路1つ
+	add_max = 0
+	for route in route_info:
+		if add_max < route["add"]:
+			add_max = route["add"]
+			output = route
+	return [output]
+
 def make_pfvinfo(dataset,db_name):
 	# 開始時にDBを初期化
 	db_name.remove()
@@ -260,22 +268,11 @@ def is_experiment(db_name): # 実験用DBか否かを判定
 # mac情報付きpfvinfo
 def make_pfvmacinfo(dataset,db_name):
 	# 開始時にDBを初期化
-	db_name.remove()
-
+	db.pfvmacinfo.remove()
+	db.staymacinfo.remove()
 
 	progress = 0
 	for data in dataset:
-		# 空のplistを作成
-		emp_plist = []
-		# ノード同士の全組み合わせで経路情報を記録
-		for i in range(0,len(_pcwlnode[data["floor"]])):
-			for j in range(0,len(_pcwlnode[data["floor"]])):
-				st = _pcwlnode[data["floor"]][i]["pcwl_id"] # 出発点
-				ed = _pcwlnode[data["floor"]][j]["pcwl_id"] # 到着点
-				# iとjが隣接ならば人流0人でplistに加える
-				if ed in _pcwlnode[data["floor"]][i]["next_id"]:
-					emp_plist.append({"direction":[st,ed],"size":0})
-
 		interval = round(data["interval"])
 		num = round(interval / 10) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
@@ -284,8 +281,12 @@ def make_pfvmacinfo(dataset,db_name):
 													{"floor" : data["floor"]},
 													{"query" : data["start_node"][0]["pcwl_id"]}, 
 													{"query" : data["end_node"][0]["pcwl_id"]}
-												]})
+												]
+												# ,"floor":data["floor"]
+												})
 		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
+		if len(route_info) >= 2:
+			route_info = select_one_route(route_info) # addが最大の1つの経路のみ取り出す
 
 		if num >= 1:
 			for route in route_info: # ある経路に対して以下を実行
@@ -327,17 +328,16 @@ def make_pfvmacinfo(dataset,db_name):
 						tmp_st_ed_info.append(node["direction"])
 					st_ed_info = [tmp_st_ed_info]
 
-				# pfv情報の登録
+				# 人流情報or滞留情報の登録
+				location = data["start_node"][0]["pcwl_id"] # 現在位置の情報
 				for j in range(0,num):
-					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
-						tmp_plist = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"plist":emp_plist,"floor":data["floor"]}
-						for dire in st_ed_info[j]:
-							# print(pfvinfo_id)
-							# print(tmp_plist["plist"])
-							tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["size"] += route["add"]
-						db_name.insert(tmp_plist)
-						for dire in st_ed_info[j]:
-							tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["size"] -= route["add"]
+					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が異なる場合は人流情報を記録
+						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"route":st_ed_info[j],"floor":data["floor"]}
+						db_name.insert(new_data)
+						location = st_ed_info[j][-1][-1]
+					else: # j番目の時刻において出発点到着点が同じ場合は滞留情報を記録
+						new_data = {"datetime":tlist[j]["datetime"],"mac":data["mac"],"pcwl_id":location,"floor":data["floor"]}
+						db.staymacinfo.insert(new_data)
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
@@ -376,17 +376,6 @@ def make_stayinfo(dataset,db_name):
 		db_name.create_index([("datetime", ASCENDING)])
 
 def make_staymacinfo(dataset,db_name):
-	# stayinfoを初期化
-	db_name.remove()
-
-	emp_pdict = {}
-	for floor in floor_list:
-		# 空のplistを作成
-		emp_plist = []
-		for node in _pcwlnode[floor]:
-			emp_plist.append({"pcwl_id":node["pcwl_id"],"size":0})
-
-		emp_pdict.update({floor:emp_plist})
 
 	progress = 0
 	for data in dataset:
@@ -395,14 +384,10 @@ def make_staymacinfo(dataset,db_name):
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
 		for i in range(0,num):
-
-			# 滞留端末情報の一時データ取り出し
-			tmp_plist = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"plist":emp_pdict[data["floor"]],"floor":data["floor"]}
-
+			
 			# 滞留端末情報更新
-			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["size"] += 1
-			db_name.insert(tmp_plist)
-			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["size"] -= 1
+			new_data = {"datetime":tlist[i]["datetime"],"mac":data["mac"],"pcwl_id":data["start_node"],"floor":data["floor"]}
+			db_name.insert(new_data)
 
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
