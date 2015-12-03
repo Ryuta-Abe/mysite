@@ -135,7 +135,7 @@ def pfv_map(request):
     mac_query = [] # 検索するmacのリスト
     mac_num = round(len(mac)/18) # 検索するmac数
     for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+      mac_query.append(mac[0+i*18:17+i*18].lower())
 
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
@@ -155,7 +155,7 @@ def pfv_map(request):
     stayinfo = []
     stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
     for data in stayinfo:
-      data["color"] = mac_color[data["mac"]]   
+      data["color"] = mac_color[data["mac"]]  
 
     return render_to_response('pfv/pfv_map_mac.html',  # 使用するテンプレート
                                 {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'stayinfo': stayinfo,'bookmarks':bookmarks,
@@ -216,7 +216,7 @@ def pfv_map_json(request):
     mac_query = [] # 検索するmacのリスト
     mac_num = round(len(mac)/18) # 検索するmac数
     for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+      mac_query.append(mac[0+i*18:17+i*18].lower())
 
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
@@ -279,7 +279,7 @@ def pfv_graph(request):
     mac_query = [] # 検索するmacのリスト
     mac_num = round(len(mac)/18) # 検索するmac数
     for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+      mac_query.append(mac[0+i*18:17+i*18].lower())
 
   # pfv情報の取り出しとグラフデータ化
   pfvinfo_list = []
