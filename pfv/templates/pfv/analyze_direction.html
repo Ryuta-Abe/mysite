@@ -21,8 +21,11 @@ table {
         <th class="table-filterable">get_time_no</th>
 <!--         <th>nodelist_nodeid</th>
         <th>nodelist_dbm</th> -->
+        <th>floor</th>
         <th>node1</th>
+        <th>floor</th>
         <th>node2</th>
+        <th>floor</th>
         <th>node3</th>
       </tr>
     </thead>
@@ -32,8 +35,11 @@ table {
           <td align="center">{{s.id.mac}}</td>
           <td align="center">{{s.id.get_time_no}}</td>
           <!-- <td>{{s.nodelist}} </td> -->
+          <td align="center">{{s.nodelist.0.floor}}</td>
           <td align="right">{{s.nodelist.0.node_id}}({{s.nodelist.0.dbm}}dB)　　　　　　　　</td>
+          <td align="center">{{s.nodelist.1.floor}}</td>
           <td align="right">{{s.nodelist.1.node_id}}({{s.nodelist.1.dbm}}dB)　　　　　　　　</td>
+          <td align="center">{{s.nodelist.2.floor}}</td>
           <td align="right">{{s.nodelist.2.node_id}}({{s.nodelist.2.dbm}}dB)　　　　　　　　</td>
         </tr>
       </tbody>

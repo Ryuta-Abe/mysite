@@ -20,7 +20,7 @@ db = client.nm4bd
 def analyze_direction(request):
   from datetime import datetime
 
-  ag = db.tmpcol.find().sort("_id.mac").sort("_id.get_time_no",-1).limit(100)
+  ag = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01"}}).sort("_id.mac").sort("_id.get_time_no",-1).limit(5000)
   ana_list = []
   for jdata in ag:
     jdata['id'] = jdata['_id']
