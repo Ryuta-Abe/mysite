@@ -54,7 +54,30 @@ def data_list(request, limit=100, date_time=d):
     dataset.append(data)
   return render_to_response('pfv/data_list.html',  # 使用するテンプレート
                               {'t': dataset, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
-                               'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} )
+                               'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]}
+                            )
+
+def analyze_direction(request,mac="",date_time=d, limit=100):
+  from datetime import datetime
+  dt = int(date_time + "00")
+
+  # $regex(正規表現) を使うと部分一致の検索が可能
+  ag = db.tmpcol.find({"_id.mac":{"$regex":mac},"_id.get_time_no":{"$lte":dt}}).sort("_id.mac").sort("_id.get_time_no",-1).limit(int(limit))
+  ana_list = []
+  for jdata in ag:
+    jdata['id'] = jdata['_id']
+    jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
+    jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
+    for list_data in jdata['nodelist']:
+      list_data['floor']   = convert_nodeid(list_data['node_id'])['floor']
+      list_data['node_id'] = convert_nodeid(list_data['node_id'])['node_id']
+
+    del(jdata['_id'])
+    ana_list.append(jdata)
+  return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
+                              {'ag': ana_list, 'mac':mac, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
+                               'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} 
+                            )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
 def pfv_map(request):

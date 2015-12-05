@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from pfv import views, make_pfvinfo, aggregate, analyze, get_start_end, bookmark_edit
+from pfv import views, make_pfvinfo, aggregate, get_start_end, bookmark_edit
 
 urlpatterns = patterns('',
 
@@ -13,7 +13,6 @@ urlpatterns = patterns('',
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
 
     url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
-    url(r'^analyze/$', analyze.analyze_direction, name='analyze_direction'),
     url(r'^get_start_end/$', get_start_end.get_start_end, name='get_start_end'),
     url(r'^XXX/$', make_pfvinfo.XXX, name='XXX'),
     url(r'^mac_trace/$', views.mac_trace, name='mac_trace'), #mac_trace
@@ -22,5 +21,10 @@ urlpatterns = patterns('',
     url(r'^data_list/$', views.data_list, name='data_list'),
     url(r'^data_list/limit=(?P<limit>\d+)/$', views.data_list, name='data_list'),
     url(r'^data_list/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.data_list, name='data_list'),
+
+    url(r'^analyze/$', views.analyze_direction, name='analyze_direction'),
+    url(r'^analyze/mac=(?P<mac>[\w,\W]*)/$', views.analyze_direction, name='analyze_direction'),
+    url(r'^analyze/limit=(?P<limit>\d+)/$', views.analyze_direction, name='analyze_direction'),
+    url(r'^analyze/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.analyze_direction, name='analyze_direction'),
 
 )

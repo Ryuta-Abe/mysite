@@ -28,7 +28,6 @@ def get_start_end(request):
   MIN_NODE_NUM = 1
   MAX_NODE_NUM = 27
   FLOOR_LIST   = ["W2-6F","W2-7F"]
-  mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
   
   # 初期設定
   count     = 0
