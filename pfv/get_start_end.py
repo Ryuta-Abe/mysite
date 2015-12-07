@@ -28,7 +28,6 @@ def get_start_end(request):
   MIN_NODE_NUM = 1
   MAX_NODE_NUM = 27
   FLOOR_LIST   = ["W2-6F","W2-7F"]
-  mac_list_experiment = ["90:b6:86:52:77:2a","80:be:05:6c:6b:2b","98:e0:d9:35:92:4d","18:cf:5e:4a:3a:17","18:00:2d:62:6c:d1"]
   
   # 初期設定
   count     = 0
@@ -50,6 +49,7 @@ def get_start_end(request):
 
   # data取り出し
   datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
+  # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.mac":"80:be:05:6c:6b:2b"}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
@@ -79,6 +79,7 @@ def get_start_end(request):
       # mac確認
       if (data["id"]["mac"] == tmp_mac):
         data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
+        # print(data['id']['get_time_no'])
         data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["dbm"], reverse=True)
         end_node_list = []
         tmp_nodelist = []
@@ -91,8 +92,9 @@ def get_start_end(request):
 
         # node_history作成
         for history in node_history:
-          his_node_cnt = len(history["node"])
-          if not(data['id']['get_time_no'] - time_range <= history["dt"]):
+          # node_cnt     = min(len(data["nodelist"]), 3)
+          his_node_cnt = min(len(history["node"]),3)
+          if (data['id']['get_time_no'] - time_range > history["dt"]):
             for h_num in range(0, his_node_cnt):
               tmp_num   = history["node"][h_num]["pcwl_id"]
               tmp_floor = history["node"][h_num]["floor"]
@@ -151,16 +153,14 @@ def get_start_end(request):
                               }
                   data_lists.append(se_data)
                   tmp_node_id = data["nodelist"][num]
+                  tmp_startdt = data['id']['get_time_no']
                   count += 1
-
-                  # # 実験用
-                  # if se_data["mac"] in mac_list_experiment:
-                  #   se_data["mac"] = name_filter(se_data["mac"])
-                  #   data_lists_experiment.append(se_data)
                   break
 
               # 出現回数が多いとき
               else:
+                tmp_startdt = data['id']['get_time_no']
+                tmp_node_id = data["nodelist"][num]
                 break
 
             # node_idが一致(stay)
@@ -174,15 +174,28 @@ def get_start_end(request):
                           "floor"     :tmp_node_id["floor"],
                           }
               data_lists_stay.append(se_data)
+              tmp_startdt = data['id']['get_time_no']
               break
-
-          tmp_startdt = data['id']['get_time_no']
 
         # 時間間隔60秒より大
         else:
           tmp_node_id_list = end_node_list
           tmp_node_id = tmp_node_id_list[0]
           tmp_startdt = data['id']['get_time_no']
+          nodecnt_dict = {}
+          for floor in FLOOR_LIST:
+            nodecnt_dict.update({floor:{}})
+            for num in range(MIN_NODE_NUM, MAX_NODE_NUM+1):
+              nodecnt_dict[floor].update({num:0})
+
+          for num in range(0, node_cnt):
+            tmp_num   = data["nodelist"][num]['pcwl_id']
+            tmp_floor = data["nodelist"][num]['floor']
+            nodecnt_dict[tmp_floor].update({tmp_num : nodecnt_dict[tmp_floor][tmp_num]+1})
+
+          node_history = []
+          node_history.append({"node":end_node_list, "dt":data['id']['get_time_no']})
+
 
       # mac異なる場合
       else:
