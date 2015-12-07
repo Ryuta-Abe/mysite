@@ -155,7 +155,7 @@ def pfv_map(request):
     stayinfo = []
     stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
     for data in stayinfo:
-      data["color"] = mac_color[data["mac"]]   
+      data["color"] = mac_color[data["mac"]]
 
     return render_to_response('pfv/pfv_map_mac.html',  # 使用するテンプレート
                                 {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'stayinfo': stayinfo,'bookmarks':bookmarks,
@@ -236,7 +236,7 @@ def pfv_map_json(request):
     stayinfo = []
     stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
     for data in stayinfo:
-      data["color"] = mac_color[data["mac"]] 
+      data["color"] = mac_color[data["mac"]]
 
     # 送信するデータセット
     dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo,"reference_color":reference_color}
@@ -387,7 +387,7 @@ def mac_trace(request):
     # t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
     t = []
   else :
-    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+    t = db.tmpcol.find({"_id.get_time_no":{"$gt":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
 
   for data in t:
     for i in range(0,len(data["nodelist"])):
@@ -478,7 +478,7 @@ def mac_trace_json(request):
     # t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt}}).sort("_id.get_time_no", DESCENDING)
     t = []
   else :
-    t = db.tmpcol.find({"_id.get_time_no":{"$gte":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+    t = db.tmpcol.find({"_id.get_time_no":{"$gt":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
   for data in t:
     for i in range(0,len(data["nodelist"])):
       data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
@@ -538,7 +538,7 @@ def pfv_heatmap(request):
 
   #heatmapinfoからの取り出し
   heatmapinfo = []
-  heatmapinfo += db.heatmapinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  heatmapinfo += db.heatmapinfo.find({"datetime":{"$gt":gt, "$lte":lt}}).sort("datetime", ASCENDING)
 
   coordinate_size = []
   for info in heatmapinfo:
@@ -564,7 +564,7 @@ def pfv_heatmap_json(request):
 
   #heatmapinfoからの取り出し
   heatmapinfo = []
-  heatmapinfo += db.heatmapinfo.find({"datetime":{"$gte":gt, "$lte":lt}}).sort("datetime", ASCENDING)
+  heatmapinfo += db.heatmapinfo.find({"datetime":{"$gt":gt, "$lte":lt}}).sort("datetime", ASCENDING)
 
   coordinate_size = []
   for info in heatmapinfo:

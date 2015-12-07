@@ -571,7 +571,9 @@
       //     "fill": function(d){ return thermography(d.size)},
       // });
 
-      complement.data(json["coordinate_size"]).attr({
+      complement.data(json["coordinate_size"])
+      .transition().duration(300)
+      .attr({
         "x": function(d){ return d.pos_x;},
         "y": function(d){ return d.pos_y;},
         "fill": function(d){return thermography(d.size);},

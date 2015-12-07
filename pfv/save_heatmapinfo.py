@@ -5,24 +5,11 @@ import math
 from mongoengine import *
 from pymongo import *
 
-# from pfv.models import pcwlnode, pfvinfo, pfvmacinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwlroute, pcwltime, stayinfo, staymacinfo, heatmapinfo
+from pfv.models import pcwlnode, pfvinfo, pfvmacinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwlroute, pcwltime, stayinfo, staymacinfo, heatmapinfo
 
 client = MongoClient()
 db = client.nm4bd
-db.pcwltime.create_index([("datetime", ASCENDING)])
 db.pfvinfo.create_index([("datetime", ASCENDING)])
-db.stayinfo.create_index([("datetime", ASCENDING)])
-db.pcwlroute.create_index([("query", ASCENDING)])
-
-# heatmapinfoのモデル
-class heatmapinfo(Document):
-    datetime = DateTimeField()
-    coordinate_size = ListField(DictField())
-    floor = StringField()
-
-    meta = {
-        "db_alias" : "nm4bd",
-    }
 
 #座標の作成
 coordinate_width = 50
@@ -39,18 +26,27 @@ while hor * coordinate_width < 1024:
     ver = 0
 
 # pcwl情報の取り出し
-pcwlnode = []
-pcwlnode += db.pcwlnode.find()
+pcwlnode_6F = []
+pcwlnode_7F = []
+pcwlnode_6F += db.pcwlnode.find({"floor":"W2-6F"})
+pcwlnode_7F += db.pcwlnode.find({"floor":"W2-7F"})
 
 #plist内のdirectionと座標を紐付け
-def direction_to_coordinate(direction):
+def direction_to_coordinate(direction,floor):
     coordinate_info = []
     point_list = []
-    for i in pcwlnode:
-        if i["pcwl_id"] == direction[0]:
-            c1 = i
-        if i["pcwl_id"] == direction[1]:
-            c2 = i
+    if floor == "W2-6F":
+        for i in pcwlnode_6F:
+            if i["pcwl_id"] == direction[0]:
+                c1 = i
+            if i["pcwl_id"] == direction[1]:
+                c2 = i
+    else:
+        for i in pcwlnode_7F:
+            if i["pcwl_id"] == direction[0]:
+                c1 = i
+            if i["pcwl_id"] == direction[1]:
+                c2 = i
     point_list.append({"pos_x":c1["pos_x"], "pos_y":c1["pos_y"]})
     point_list.append({"pos_x":c2["pos_x"], "pos_y":c2["pos_y"]})
     center_x = (c1["pos_x"] + c2["pos_x"]) / 2
@@ -79,27 +75,6 @@ def direction_to_coordinate(direction):
         ver = 0
     return coordinate_info
 
-# #heatmap用のデータをheatmapinfoに保存
-# def save_heatmapinfo(coordinate_info):
-#     # 開始時にDBを初期化
-#     db.heatmapinfo.remove()
-
-#     pfvinfo = []
-#     pfvinfo += db.pfvinfo.find()
-#     for i in pfvinfo:
-#         size_list = []
-#         for plist in i["plist"]:
-#             tmp_info = direction_to_coordinate(plist["direction"])
-#             for k in tmp_info:
-#                 size_list.append({"pos_x":k["pos_x"],"pos_y":k["pos_y"],"size":plist["size"]})
-#         _heatmapinfo = heatmapinfo(
-#                         datetime = i["datetime"],
-#                         coordinate_size = size_list,
-#                         # floor = i["floor"],
-#                                     )
-#         _heatmapinfo.save()
-    # return render_to_response('pfv/pfv_heatmap.html')
-
 #heatmap用のデータをheatmapinfoに保存
 def save_heatmapinfo(coordinate_info):
     # 開始時にDBを初期化
@@ -119,7 +94,7 @@ def save_heatmapinfo(coordinate_info):
                 y = ver * coordinate_width
                 for plist in i["plist"]:
                     if plist["size"] != 0:
-                        tmp_info = direction_to_coordinate(plist["direction"])
+                        tmp_info = direction_to_coordinate(plist["direction"],i["floor"])
                         for k in tmp_info:
                             if k["pos_x"] == x and k["pos_y"] == y:
                                 size_count += plist["size"]
@@ -128,16 +103,11 @@ def save_heatmapinfo(coordinate_info):
             hor += 1
             ver = 0
         hor = 0
-        _heatmapinfo = heatmapinfo(
-                        datetime = i["datetime"],
-                        coordinate_size = size_list,
-                        floor = i["floor"],
-                                    )
-        _heatmapinfo.save()
+        save_data = {"datetime":i["datetime"],"coordinate_size":size_list,"floor":i["floor"]}
+        db.heatmapinfo.insert(save_data)
 
 #save手順
 #save_heatmapinfoをurlsのimportに追加
-#urlsのpfv_heatmapをコメントアウトし、以下を追加
-#url(r'^pfv_heatmap/$', save_heatmapinfo.save_heatmapinfo, name='save_heatmapinfo'), #save用
+#url(r'^test/$', save_heatmapinfo.save_heatmapinfo, name='save_heatmapinfo'), #save用
 #以下のurlで実行
-#http://localhost:8000/pfv/pfv_heatmap/
+#http://localhost:8000/pfv/test/
