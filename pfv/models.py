@@ -30,11 +30,11 @@ class pcwlnode(Document):
     }
 
     # サンプル
-    # "pcwl_id" : 2, 
-    # "pos_x" : 990, 
-    # "pos_y" : 130, 
+    # "pcwl_id" : 2,
+    # "pos_x" : 990,
+    # "pos_y" : 130,
     # "next_id" : [ 1, 3 ]
-    # "floor" : "W2-6F", 
+    # "floor" : "W2-6F",
 
 # 人流情報
 class pfvinfo(Document):
@@ -47,8 +47,8 @@ class pfvinfo(Document):
     }
 
     # サンプル
-    # "datetime" : ISODate("2015-06-03T13:04:06Z"), 
-    # "floor" : "W2-6F", 
+    # "datetime" : ISODate("2015-06-03T13:04:06Z"),
+    # "floor" : "W2-6F",
     # "plist" : [ { "direction" : [ 1, 2 ], "size" : 0 }, { "direction" : [ 2, 1 ], "size" : 0 },...]
 
 # 人流情報(6F実験用)
@@ -82,9 +82,9 @@ class pfvmacinfo(Document):
     }
 
     # サンプル
-    # "datetime" : ISODate("2015-06-03T13:04:06Z"), 
-    # "floor" : "W2-6F", 
-    # "mac" : "00:24:d6:43:e7:dc", 
+    # "datetime" : ISODate("2015-06-03T13:04:06Z"),
+    # "floor" : "W2-6F",
+    # "mac" : "00:24:d6:43:e7:dc",
     # "plist" : [ { "direction" : [ 1, 2 ], "size" : 0 }, { "direction" : [ 2, 1 ], "size" : 0 },...]
     # "route" : [[1,2],[2,3],[3,4]]
 
@@ -99,8 +99,8 @@ class stayinfo(Document):
     }
 
     # サンプル
-    # "datetime" : ISODate("2015-09-25T18:11:37Z"), 
-    # "floor" : "W2-6F", 
+    # "datetime" : ISODate("2015-09-25T18:11:37Z"),
+    # "floor" : "W2-6F",
     # "plist" : [ { "pcwl_id" : 1, "size" : 0 }, { "pcwl_id" : 2, "size" : 1 },...]
 
 # 滞留端末情報(mac情報付き)
@@ -115,8 +115,8 @@ class staymacinfo(Document):
     }
 
     # サンプル
-    # "datetime" : ISODate("2015-09-25T18:11:37Z"), 
-    # "floor" : "W2-6F", 
+    # "datetime" : ISODate("2015-09-25T18:11:37Z"),
+    # "floor" : "W2-6F",
     # "mac" : "54:9f:13:10:a3:b4"
     # "plist" : [ { "pcwl_id" : 1, "size" : 0 }, { "pcwl_id" : 2, "size" : 1 },...]
 
@@ -131,8 +131,8 @@ class bookmark(Document):
     }
 
     # サンプル
-    # "name" : "6月3日人流データ", 
-    # "url" : "?datetime=20150603122120&timerange=60&experiment=0&language=jp", 
+    # "name" : "6月3日人流データ",
+    # "url" : "?datetime=20150603122120&timerange=60&experiment=0&language=jp",
     # "frequency" : 0
 
 class test(Document):
@@ -165,7 +165,7 @@ class tmpcol(Document):
     }
 
     # サンプル
-    # "_id" : { "get_time_no" : NumberLong("20150603060002"), "mac" : "00:15:af:e4:e1:ac" }, 
+    # "_id" : { "get_time_no" : NumberLong("20150603060002"), "mac" : "00:15:af:e4:e1:ac" },
     # "nodelist" : [ { "node_id" : 1237, "dbm" : -89 } ]
 
 class pcwlroute(Document):
@@ -178,8 +178,8 @@ class pcwlroute(Document):
     }
 
     # サンプル
-    # "query" : [ 14, 24 ], 
-    # "floor" : "W2-6F", 
+    # "query" : [ 14, 24 ],
+    # "floor" : "W2-6F",
     # "dlist" : [ [ { "distance" : 60.8276253029822, "direction" : [ 14, 15 ] }, { "distance" : 68.00735254367721, "direction" : [ 15, 16 ] }, { "distance" : 75.16648189186454, "direction" : [ 16, 24 ] } ] ]
 
 class pcwltime(Document):
@@ -192,3 +192,13 @@ class pcwltime(Document):
 
     # サンプル
     # "datetime" : ISODate("2015-06-03T14:23:39Z")
+
+# heatmapの色づけ情報
+class heatmapinfo(Document):
+    datetime = DateTimeField()
+    coordinate_size = ListField(DictField())
+    floor = StringField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }

@@ -61,6 +61,7 @@
 <form name="Sample_form" action="Sample.html">
   <!-- <a id="btn_staycircle" onclick="staycircle_opacity()" class="btn btn-default btn-sm"></a> -->
   <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
+  <a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
   <a href="javascript:void(0)" id="category_3" onclick="show('3');" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
@@ -167,6 +168,9 @@
   <div id="bookmark_list" class="logbox"></div>
   <div id="bookmark_add" class="logbox"></div>
   </div>
+  <div id="layer_4" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="floor_list" class="logbox"></div>
+  </div>
   <div id="layer_3" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
   <div id="filter_list" class="logbox2">
     <text id="macfilter_text"></text><br>
@@ -180,7 +184,7 @@
 <br><!-- ボタンと地図の間にスペースを -->
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
- <image x="0" y="0" width="100%" height="100%" opacity="0.7" xlink:href="http://160.16.74.119/~abe/images/6F_west2.jpg"></image>
+ <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
 </svg>
 <div id="tooltip_div"></div>
 <svg id="svg2" width="1000" height="100"></svg>
@@ -227,6 +231,14 @@
       d3.select("#difference_language").text("English");
     };
 
+    // マップ画像の挿入
+    if ("{{ floor }}" == "W2-6F") {
+      var file_name = "6F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-7F"){
+      var file_name = "7F_west2.jpg";
+    };
+    d3.select("#map_image").attr("xlink:href","http://160.16.74.119/~abe/images/"+file_name);
+
     // データセットの定義
     var pcwlnode = [];
     var bookmarks = [];
@@ -247,6 +259,16 @@
     for (var i = 0; i < pcwlnode.length; i++) {
       pcwlnode_id[pcwlnode[i].pcwl_id] = i;
     };
+
+        // 取得時間を表示
+    var year = parseInt({{ year }});
+    var month = parseInt({{ month }})-1;
+    var day = parseInt({{ day }});
+    var hour = parseInt({{ hour }});
+    var minute = parseInt({{ minute }});
+    var second = parseInt({{ second }});
+    var datetime = new Date(year,month,day,hour,minute,second);
+    set_selectbox(); // セレクトボックスにdatetimeをセット
 
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
@@ -400,8 +422,41 @@
           objID.className='close';
           d3.select("#category_3").style("color","black");
         }
+      } else if (inputData == 4){
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_4").style("color","blue");
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_4").style("color","black");
+        }
       }
     }
+    // // Floor関係の描画
+    var floor_list = ["W2-6F","W2-7F"];
+    for (var i = 0; i < floor_list.length; i++) {
+      add_floor_list(floor_list[i]);
+    };
+    if (floor_list.length < 4) {
+      add_space_floor(4 - floor_list.length);
+    };
+    function add_floor_list(floor_name){ // 1つのフロアを表に書き足す
+      floor = floor_name;
+      var url = "{% url 'pfv:mac_trace' %}"+make_url_query();
+      d3.select("#floor_list").append("p")
+      .append("a")
+      .text(floor_name+" ")
+      .attr("href",url);
+    }
+    function add_space_floor(num){ // 表を整えるためにスペースを作る
+      var book = d3.select("#floor_list");
+      for (var i = 0; i < num; i++) {
+        book.append("p").attr("id","space").text("_"); // 間隔調整
+      };
+    }
+    var floor = "{{ floor }}";
 
     // ブックマーク関係の描画
     for (var i = 0; i < bookmarks.length; i++) {
@@ -472,18 +527,7 @@
     function add_new_bookmark(){ // テキストボックスを読み取り新規ブックマークの作成
       var name = Sample_form.textbox_new_bookmark_name.value;
       if (name != "") {
-        var year = datetime.getFullYear();
-        var month = ("0"+(datetime.getMonth()+1)).slice(-2);
-        var day = ("0"+datetime.getDate()).slice(-2);
-        var hour = ("0"+datetime.getHours()).slice(-2);
-        var minute = ("0"+datetime.getMinutes()).slice(-2);
-        var second = ("0"+datetime.getSeconds()).slice(-2);
-
-        var mac = Sample_form.textbox_mac.value;
-
-        var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}";
-        // var send_url = "?add=1&name=" + name + "&datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + "{{ floor }}";
-
+        var send_url = make_url_query() + "&add=1&name=" + name;
         $.ajax({
           type: 'GET',
           url: "{% url 'pfv:bookmark_edit' %}"+send_url,
@@ -761,13 +805,8 @@
     }
     describe_datetime();
 
-    /***********************************
-                Ajax関係
-   ************************************/
-
-   // datetimeに対応したJSONをajaxで読み込む
-    function Load_JSON(datetime){
-
+    // datetime,language,floor,mac,experimentのurlクエリを出力する
+    function make_url_query(){
       var year = datetime.getFullYear();
       var month = ("0"+(datetime.getMonth()+1)).slice(-2);
       var day = ("0"+datetime.getDate()).slice(-2);
@@ -777,10 +816,19 @@
 
       var mac = Sample_form.textbox_mac.value;
 
+      var url = "?datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
+      return url;
+    }
+
+    /***********************************
+                Ajax関係
+   ************************************/
+
+   // datetimeに対応したJSONをajaxで読み込む
+    function Load_JSON(datetime){
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:mac_trace_json' %}"+"?datetime=" + year + month + day + hour + minute + second + "&experiment=" + {{ experiment }} + "&mac=" + mac,
-          // + {{ experiment }} + "&mac=" + mac + "&floor=" + "{{ floor }}",
+        url: "{% url 'pfv:mac_trace_json' %}"+make_url_query(),
         dataType: 'json',
         success: function(json){
           describe_datetime();

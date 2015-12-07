@@ -8,7 +8,8 @@ urlpatterns = patterns('',
     url(r'^pfv_map_json/$', views.pfv_map_json, name='pfv_map_json'), #pfvマップ用JSON
     url(r'^pfv_graph/$', views.pfv_graph, name='pfv_graph'),   # pfvグラフ
     url(r'^stay_graph/$', views.stay_graph, name='stay_graph'),   # stayグラフ
-    url(r'^pfv_heatmap/$', views.pfv_heatmap, name='pfv_heatmap'), #pfvマップ
+    url(r'^pfv_heatmap/$', views.pfv_heatmap, name='pfv_heatmap'), #heatmap
+    url(r'^pfv_heatmap_json/$', views.pfv_heatmap_json, name='pfv_heatmap_json'), #heatmap用json
 
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
 
