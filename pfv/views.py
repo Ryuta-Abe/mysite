@@ -56,6 +56,28 @@ def data_list(request, limit=100, date_time=d):
                               {'t': dataset, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
                                'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} )
 
+def analyze_direction(request,mac="",date_time=d, limit=100):
+  from datetime import datetime
+  dt = int(date_time + "00")
+
+  # $regex(正規表現) を使うと部分一致の検索が可能
+  ag = db.tmpcol.find({"_id.mac":{"$regex":mac},"_id.get_time_no":{"$lte":dt}}).sort("_id.mac").sort("_id.get_time_no",-1).limit(int(limit))
+  ana_list = []
+  for jdata in ag:
+    jdata['id'] = jdata['_id']
+    jdata['id']['get_time_no'] = datetime.strptime(str(jdata['id']['get_time_no']), '%Y%m%d%H%M%S')
+    jdata['nodelist'] = sorted(jdata['nodelist'], key=lambda x:x["dbm"], reverse=True)
+    for list_data in jdata['nodelist']:
+      list_data['floor']   = convert_nodeid(list_data['node_id'])['floor']
+      list_data['node_id'] = convert_nodeid(list_data['node_id'])['node_id']
+
+    del(jdata['_id'])
+    ana_list.append(jdata)
+  return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
+                              {'ag': ana_list, 'mac':mac, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
+                               'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} 
+                            )
+
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
 def pfv_map(request):
 
@@ -135,31 +157,35 @@ def pfv_map(request):
     mac_query = [] # 検索するmacのリスト
     mac_num = round(len(mac)/18) # 検索するmac数
     for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+      mac_query.append(mac[0+i*18:17+i*18].lower())
 
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
-    mac_color = {} # 例：{'00:24:d6:6e:e3:24': 'blue', '90:b6:86:2e:3b:06': 'red'}
-    reference_color = [] # htmlに送る用の参照色データ
+    pfvinfo = []
     for i in range(0,len(mac_query)):
-      mac_color.update({mac_query[i]:color_list[i]})
-      reference_color.append({"mac":mac_query[i],"color":color_list[i]})
+      pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
 
     # pfv情報の取り出し
-    pfvinfo = []
-    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
-    for data in pfvinfo:
-      data["color"] = mac_color[data["mac"]]
+    tmp_pfvinfo = []
+    tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
 
     # 滞留端末情報の取り出し
-    stayinfo = []
-    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
-    for data in stayinfo:
-      data["color"] = mac_color[data["mac"]]
+    tmp_stayinfo = []
+    tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+    # pfvinfoにroute情報をひも付け
+    for t_data in tmp_pfvinfo:
+      for p_data in pfvinfo:
+        if t_data["mac"] == p_data["mac"]:
+          p_data["route"].append(t_data["route"])
+    for t_data in tmp_stayinfo:
+      for p_data in pfvinfo:
+        if t_data["mac"] == p_data["mac"]:
+          p_data["route"].append([[t_data["pcwl_id"]]])
 
     return render_to_response('pfv/pfv_map_mac.html',  # 使用するテンプレート
-                                {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'stayinfo': stayinfo,'bookmarks':bookmarks,
-                                 'language':language,'timerange':timerange,'mac':mac, 'floor':floor,'reference_color':reference_color,
+                                {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
+                                 'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
                                  'year':lt.year,'month':lt.month,'day':lt.day,
                                  'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                                 )
@@ -216,30 +242,34 @@ def pfv_map_json(request):
     mac_query = [] # 検索するmacのリスト
     mac_num = round(len(mac)/18) # 検索するmac数
     for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+      mac_query.append(mac[0+i*18:17+i*18].lower())
 
     # macの色づけ
     color_list = ["blue","red","green","orange","pink"]
-    mac_color = {} # 例：{'00:24:d6:6e:e3:24': 'blue', '90:b6:86:2e:3b:06': 'red'}
-    reference_color = [] # htmlに送る用の参照色データ
+    pfvinfo = []
     for i in range(0,len(mac_query)):
-      mac_color.update({mac_query[i]:color_list[i]})
-      reference_color.append({"mac":mac_query[i],"color":color_list[i]})
+      pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
 
     # pfv情報の取り出し
-    pfvinfo = []
-    pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
-    for data in pfvinfo:
-      data["color"] = mac_color[data["mac"]]
+    tmp_pfvinfo = []
+    tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
 
     # 滞留端末情報の取り出し
-    stayinfo = []
-    stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
-    for data in stayinfo:
-      data["color"] = mac_color[data["mac"]]
+    tmp_stayinfo = []
+    tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+    # pfvinfoにroute情報をひも付け
+    for t_data in tmp_pfvinfo:
+      for p_data in pfvinfo:
+        if t_data["mac"] == p_data["mac"]:
+          p_data["route"].append(t_data["route"])
+    for t_data in tmp_stayinfo:
+      for p_data in pfvinfo:
+        if t_data["mac"] == p_data["mac"]:
+          p_data["route"].append([[t_data["pcwl_id"]]])
 
     # 送信するデータセット
-    dataset = {"pfvinfo":pfvinfo,"stayinfo":stayinfo,"reference_color":reference_color}
+    dataset = {"pfvinfo":pfvinfo}
 
   return render_json_response(request, dataset) # dataをJSONとして出力
 
@@ -279,7 +309,7 @@ def pfv_graph(request):
     mac_query = [] # 検索するmacのリスト
     mac_num = round(len(mac)/18) # 検索するmac数
     for i in range(0,mac_num):
-      mac_query.append(mac[0+i*18:17+i*18])
+      mac_query.append(mac[0+i*18:17+i*18]).lower()
 
   # pfv情報の取り出しとグラフデータ化
   pfvinfo_list = []
