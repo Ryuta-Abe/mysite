@@ -17,10 +17,11 @@ db = client.nm4bd
 
 def aggregate_data(request):
   ### testコレクションにstr型のget_time_noが入ってしまった場合にコメントアウト ###
-  # datas = db.test.find()
-  # for data in datas:
-  #   data["get_time_no"] = int(data["get_time_no"])
-  #   db.test.save(data)
+  datas = db.test.find()
+  for data in datas:
+    data["get_time_no"] = int(data["get_time_no"])
+    data["dt_end0"]     = int(str(data["get_time_no"])[0:13] + "0")
+    db.test.save(data)
   #################################################################
 
   ag = test._get_collection().aggregate([
@@ -28,7 +29,7 @@ def aggregate_data(request):
                                           {"$group":
                                             {"_id":
                                               {"mac":"$mac", 
-                                               "get_time_no":"$get_time_no",
+                                               "get_time_no":"$dt_end0",
                                               },
                                              "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
                                             },

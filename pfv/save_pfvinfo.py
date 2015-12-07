@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 import math
 
@@ -188,6 +189,7 @@ def select_one_route(route_info): # 入力：複数の経路、出力：最もad
 def make_pfvinfo(dataset,db_name):
 	# 開始時にDBを初期化
 	db_name.remove()
+	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
 		num = round(interval / 10) # 40秒間隔の場合, num = 4
@@ -199,11 +201,11 @@ def make_pfvinfo(dataset,db_name):
 													{"query" : data["end_node"][0]["pcwl_id"]}
 												]})
 		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
-		print("[出発点,到着点] = "+str([data["start_node"][0]["pcwl_id"], data["end_node"][0]["pcwl_id"]])+" , 間隔 = "+str(interval)+" 秒 floor:"+data["floor"])
+		# print("[出発点,到着点] = "+str([data["start_node"][0]["pcwl_id"], data["end_node"][0]["pcwl_id"]])+" , 間隔 = "+str(interval)+" 秒 floor:"+data["floor"])
 
 		if num >= 1:
 			for route in route_info: # ある経路に対して以下を実行
-				print("add = "+str(route["add"]))
+				# print("add = "+str(route["add"]))
 
 				# 抜けている出発到着情報の補完
 				if num > 1:
@@ -241,7 +243,7 @@ def make_pfvinfo(dataset,db_name):
 					for node in route["route"]:
 						tmp_st_ed_info.append(node["direction"])
 					st_ed_info = [tmp_st_ed_info]
-				print("st_ed_info = "+str(st_ed_info))
+				# print("st_ed_info = "+str(st_ed_info))
 
 				# pfv情報の登録
 				for j in range(0,num):
@@ -255,8 +257,11 @@ def make_pfvinfo(dataset,db_name):
 								if data["mac"] not in tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["mac_list"]:
 									tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["mac_list"] += [data["mac"]]
 						db_name.save(tmp_plist)
-						print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info))+" floor:"+data["floor"])
+						# print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info))+" floor:"+data["floor"])
 
+		progress += 1
+		if ((progress % 1000) == 0) or (progress == len(dataset)):
+			print("pfvinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
 		db_name.create_index([("datetime", ASCENDING)])
 
 def is_experiment(db_name): # 実験用DBか否かを判定
@@ -356,6 +361,7 @@ def make_stayinfo(dataset,db_name):
 	# stayinfoを初期化
 	db_name.remove()
 
+	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
 		num = round(interval / 10) # 40秒間隔の場合, num = 4
@@ -372,7 +378,11 @@ def make_stayinfo(dataset,db_name):
 			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["size"] += 1
 			tmp_plist["plist"][stayinfo_dict[data["floor"]][data["start_node"]]]["mac_list"] += [data["mac"]]
 			db_name.save(tmp_plist)
-		print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
+		# print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
+		if ((progress % 1000) == 0) or (progress == len(dataset)):
+			print("stayinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+			print(data["start_time"])
+		progress += 1
 		db_name.create_index([("datetime", ASCENDING)])
 
 def make_staymacinfo(dataset,db_name):

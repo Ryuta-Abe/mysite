@@ -748,6 +748,7 @@
           macfilter_log.text("別ウインドウでクエリ「"+mac+"」で抽出しました。");
         };
         jump_pfv_map_mac();
+        Sample_form.textbox_mac.value = "";
       } else if (mac.length == 0){ // すべてのmacを表示
         if ("{{ language }}" == "en") {
           macfilter_log.text("All MACs are displayed.");
