@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from pfv import views, make_pfvinfo, aggregate, get_start_end, bookmark_edit
+from pfv import views, make_pfvinfo, aggregate, get_start_end, bookmark_edit, realtime
 
 urlpatterns = patterns('',
 
@@ -12,6 +12,8 @@ urlpatterns = patterns('',
     url(r'^pfv_heatmap_json/$', views.pfv_heatmap_json, name='pfv_heatmap_json'), #heatmap用json
 
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
+
+    url(r'^rt_raw_save/$', realtime.rt_raw_save, name='rt_raw_save'), # RealTime用生データ登録
 
     url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
     url(r'^get_start_end/$', get_start_end.get_start_end, name='get_start_end'),

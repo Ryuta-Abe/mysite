@@ -135,6 +135,18 @@ class bookmark(Document):
     # "url" : "?datetime=20150603122120&timerange=60&experiment=0&language=jp",
     # "frequency" : 0
 
+# RealTimeビュー用生データ(Real Time RAW data)
+class rtraw(Document):
+    node_id     = IntField()
+    get_time_no = IntField()
+    mac         = StringField(max_length=255)
+    rssi        = IntField()
+    dbm        = IntField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 class test(Document):
     _id          = StringField(max_length=255)
     node_id     = IntField()

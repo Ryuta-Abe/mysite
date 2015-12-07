@@ -232,6 +232,7 @@
       d3.select("#time_interval_text").text("間の人流データを表示");
       d3.select("#difference_language").text("English");
     };
+    Sample_form.textbox_mac.value = "{{ mac }}";
 
     // マップ画像の挿入
     if ("{{ floor }}" == "W2-6F") {
@@ -729,7 +730,6 @@
     }
 
     // フィルタ関係の描画
-    Sample_form.textbox_mac.value = "{{ mac }}";
     var macfilter_log = d3.select("#macfilter_log").style({
       "color":"gray",
       "font-size":"11px",
