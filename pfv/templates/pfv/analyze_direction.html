@@ -16,7 +16,7 @@ table {
     <form name="Sample_form" action="Sample.html">
       <text id="macaddr">MAC：</text>
       <input type="text" name="textbox_mac" size="17", value="{{ mac }}">
-      <input type="button" value="更新" onclick="reload_mac()" class="btn btn-default btn-sm">
+      <!-- <input type="button" value="更新" onclick="reload_mac()" class="btn btn-default btn-sm"> -->
       <text id="id2">表示件数：</text>
       <input type="text" name="textbox_limit" size="5", value="{{ limit }}">
       <input type="button" value="更新" onclick="reload()" class="btn btn-default btn-sm">
@@ -152,19 +152,23 @@ table {
     </table>
     <script type="text/javascript">
 
-    function reload_mac(){
-      var mac = Sample_form.textbox_mac.value;
-      if (mac == ""){
-        mac = "0";
-      }
-      document.location = "http://localhost:8000/pfv/analyze/mac=" + mac;
-    }
+    // function reload_mac(){
+    //   var mac = Sample_form.textbox_mac.value;
+    //   if (mac == ""){
+    //     mac = "0";
+    //   }
+    //   document.location = "http://localhost:8000/pfv/analyze/mac=" + mac;
+    // }
     function reload(){
+      var mac   = Sample_form.textbox_mac.value;
       var limit = Sample_form.textbox_limit.value;
       if (limit == ""){
         limit = 25;
-      }
-      document.location = "http://localhost:8000/pfv/analyze/limit=" + limit;
+      };
+      if (mac == "") {
+        mac = ":";
+      };
+      document.location = "http://localhost:8000/pfv/analyze/mac=" + mac + "/limit=" + limit;
     }
     function reload_datetime(){
       var limit = Sample_form.textbox_limit.value;

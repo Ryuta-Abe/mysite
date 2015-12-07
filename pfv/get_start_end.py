@@ -177,6 +177,10 @@ def get_start_end(request):
               tmp_startdt = data['id']['get_time_no']
               break
 
+            # 階層が異なる場合
+            else:
+              break
+
         # 時間間隔60秒より大
         else:
           tmp_node_id_list = end_node_list
