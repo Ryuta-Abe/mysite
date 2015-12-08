@@ -48,8 +48,8 @@ def get_start_end(request):
       nodecnt_dict[floor].update({num:0})
 
   # data取り出し
-  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
-  # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",-1).sort("_id.mac")
+  # datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
+  datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.mac":"80:be:05:6c:6b:2b"}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
@@ -179,6 +179,8 @@ def get_start_end(request):
 
             # 階層が異なる場合
             else:
+              tmp_startdt = data['id']['get_time_no']
+              tmp_node_id = data["nodelist"][num]
               break
 
         # 時間間隔60秒より大
