@@ -969,7 +969,7 @@
         var language = "en";
       }
 
-      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + language;
+      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + language + "&floor=" + floor;
     }
 
     // セレクトボックスの値をdatetimeに合わせる

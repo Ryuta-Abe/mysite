@@ -34,9 +34,9 @@ def rt_raw_save(request):
   # Real Time RAW data 削除(指定のmacのみ)
   elif delete == 1:
     db.rtraw.remove({"mac":mac})
-    return render_json_response(request,{'response':'mac:'+str(mac)+' rtraw deleted'})
+    return render_json_response(request,{'response':'mac:'+str(mac)+' rtraw was deleted'})
 
   # Real Time RAW data 全削除
   elif delete == 2:
     db.rtraw.remove()
-    return render_json_response(request,{'response':'All rtraw deleted'})
+    return render_json_response(request,{'response':'All rtraw were deleted'})
