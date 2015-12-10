@@ -37,7 +37,6 @@
 {% block content %}
 <h3 id="header" class="page-header"></h3>
 <form name="Sample_form" action="Sample.html">
-  <a id="btn_staycircle" onclick="staycircle_opacity()" class="btn btn-default btn-sm"></a>
   <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
@@ -160,8 +159,7 @@
 
     // ヘッダーやその他文字の表示
     if ("{{ language }}" == "en") {
-      d3.select("#header").text("People Stream Map");
-      d3.select("#btn_staycircle").text("StayMAC");
+      d3.select("#header").text("People Stream Heat Map");
       d3.select("#btn_coordinate").text("coordinate");
       d3.select("#datetime_header").text("datetime : ");
       d3.select("#category_1").text("adjust");
@@ -171,8 +169,7 @@
       d3.select("#time_interval_text").text(":Data referenced from this time ago.");
       d3.select("#difference_language").text("日本語");
     } else {
-      d3.select("#header").text("人流マップ");
-      d3.select("#btn_staycircle").text("滞留");
+      d3.select("#header").text("人流ヒートマップ");
       d3.select("#btn_coordinate").text("座標");
       d3.select("#datetime_header").text("取得日時：");
       d3.select("#category_1").text("時間調整");
@@ -188,8 +185,6 @@
     {% for s in coordinate_size %}
     coordinate_size.push({"pos_x":{{ s.pos_x }}, "pos_y":{{ s.pos_y }}, "size":{{ s.size }}});
     {% endfor %}
-
-    console.log(coordinate_size)
 
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
@@ -226,41 +221,6 @@
       "fill": thermography(0),
     })
 
-      // for (var i = 0; i*coordinate_width < (1024 - coordinate_width); i++) {
-      //   for (var j = 0; j*coordinate_width < (560 - coordinate_width); j++) {
-      //     var x1 = i*coordinate_width;
-      //     var y1 = j*coordinate_width;
-      //     var x2 = (i+1)*coordinate_width;
-      //     var y2 = (j+1)*coordinate_width;
-      //     var tmp_size = [];
-      //     for (var k = 0; k < pfvinfo.length; k++) {
-      //         var point_list = [];
-      //         var c1 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[0]]];
-      //         var c2 = pcwlnode[pcwlnode_id[pfvinfo[k].direction[1]]];
-      //         var center_x = (c1.pos_x + c2.pos_x) / 2;
-      //         var center_y = (c1.pos_y + c2.pos_y) / 2;
-      //         var center_x_1 = (c1.pos_x + center_x) / 2;
-      //         var center_y_1 = (c1.pos_y + center_y) / 2;
-      //         var center_x_2 = (c2.pos_x + center_x) / 2;
-      //         var center_y_2 = (c2.pos_y + center_y) / 2;
-      //         point_list.push({x:c1.pos_x, y:c1.pos_y, size:pfvinfo[k].size}, {x:center_x_1, y:center_y_1, size:pfvinfo[k].size}, {x:center_x, y:center_y, size:pfvinfo[k].size}, {x:center_x_2, y:center_y_2, size:pfvinfo[k].size}, {x:c2.pos_x, y:c2.pos_y, size:pfvinfo[k].size});
-      //         for (var m = 0; m < point_list.length; m++) {
-      //           if ((x1 <= point_list[m].x) && (point_list[m].x <= x2) && (y1 <= point_list[m].y) && (point_list[m].y <= y2)) {
-      //             tmp_size.push(point_list[m].size);
-      //             break;
-      //       }
-      //     }
-      //     }
-      //         var t_size = 0;
-      //         for (var l = 0; l < tmp_size.length; l++) {
-      //           var t_size = t_size + tmp_size[l];
-      //         }
-      //         coordinate_size.push({x:x1, y:y1, size:t_size})
-      //   visualize_heat_complement();
-      //   }
-      // }
-
-
     function visualize_heat_complement(){
       var svg2 = d3.select("#svg2")
         svg2.transition().duration(1000).style("opacity",1);
@@ -281,6 +241,44 @@
     }
     visualize_heat_complement();
 ////////////////////////////////////////////////////////////////
+
+    // 座標目盛り(円)の生成
+    svg1.append("g").attr("id","g_coordinate").style("opacity",0);
+    svg1.select("#g_coordinate").selectAll("g.coordinate")
+    .data(coordinate)
+    .enter()
+    .append("circle")
+    .attr({
+      "cx": function(d) { return d.x;},
+      "cy": function(d) { return d.y;},
+      "r": 3,
+      "fill": "purple",
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+      if (flag_opacity){ // 座標可視状態なら説明を出す
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background","purple")
+        .style("width", "150px" )
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        .text("x = " + d.x + " , y = " + d.y)
+      }
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0)
+    });
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
 
     // 座標目盛りの透明度をトグルで切り替える
     var flag_opacity = false;
@@ -633,8 +631,6 @@
     //     }
     //   });
     // }
-    console.log("test")
-
 
   </script>
   {% endblock content %}

@@ -75,7 +75,7 @@ def analyze_direction(request,mac="",date_time=d, limit=100):
     ana_list.append(jdata)
   return render_to_response('pfv/analyze_direction.html',  # 使用するテンプレート
                               {'ag': ana_list, 'mac':mac, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
-                               'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} 
+                               'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]}
                             )
 
 # pfvマップ画面 http://localhost:8000/cms/pfv_map/
@@ -572,8 +572,16 @@ def pfv_heatmap(request):
 
   coordinate_size = []
   for info in heatmapinfo:
+    tmp_coordinatesize = []
     for cs in info["coordinate_size"]:
-      coordinate_size.append(cs)
+      tmp_coordinatesize.append(cs)
+    coordinate_size.append(tmp_coordinatesize)
+
+  if len(coordinate_size) > 1:
+    for i in range(1,len(coordinate_size)):
+      for j in range (0,252):
+        coordinate_size[0][j]["size"] += coordinate_size[i][j]["size"]
+  coordinate_size = coordinate_size[0]
 
   return render_to_response('pfv/pfv_heatmap.html',  # 使用するテンプレート
                               {'floor':floor,'coordinate_size':coordinate_size,'language':language,'timerange':timerange,
@@ -598,8 +606,16 @@ def pfv_heatmap_json(request):
 
   coordinate_size = []
   for info in heatmapinfo:
+    tmp_coordinatesize = []
     for cs in info["coordinate_size"]:
-      coordinate_size.append(cs)
+      tmp_coordinatesize.append(cs)
+    coordinate_size.append(tmp_coordinatesize)
+
+  if len(coordinate_size) > 1:
+    for i in range(1,len(coordinate_size)):
+      for j in range (0,252):
+        coordinate_size[0][j]["size"] += coordinate_size[i][j]["size"]
+  coordinate_size = coordinate_size[0]
 
   info = {"coordinate_size":coordinate_size}
   return render_json_response(request, info) # dataをJSONとして出力
