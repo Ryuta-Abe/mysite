@@ -110,7 +110,7 @@ def pfv_map(request):
           pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
       pfvinfo = pfvinfo[-1]["plist"]
     else :
-      pfvinfo += db.pfvinfo.find().limit(1)
+      pfvinfo += db.pfvinfo.find({"floor":floor}).limit(1)
       pfvinfo = pfvinfo[0]["plist"]
       for j in range(0,len(pfvinfo)):
         pfvinfo[j]["size"] = 0
@@ -213,7 +213,7 @@ def pfv_map_json(request):
           pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
       pfvinfo = pfvinfo[-1]["plist"]
     else :
-      pfvinfo += db.pfvinfo.find().limit(1)
+      pfvinfo += db.pfvinfo.find({"floor":floor}).limit(1)
       pfvinfo = pfvinfo[0]["plist"]
       for j in range(0,len(pfvinfo)):
         pfvinfo[j]["size"] = 0
