@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}人流マップ{% endblock title %}
+{% block title %}{{ floor }}{% endblock title %}
 
 {% block extrahead %}
 <style>
@@ -106,7 +106,7 @@
       var second_text = "秒";
     };
 
-    var year_list = [2014,2015];
+    var year_list = [2014,2015,2016];
 
     document.write('<select name="textbox_year">');
     for (var i = 0; i < year_list.length; i++) {
@@ -202,7 +202,7 @@
 
     // ヘッダーやその他文字の表示
     if ("{{ language }}" == "en") {
-      d3.select("#header").text("People Stream Map");
+      d3.select("#header").text("{{ floor }} People Stream Map");
       d3.select("#btn_staycircle").text("StayMAC");
       d3.select("#btn_coordinate").text("coordinate");
       d3.select("#category_3").text("Filter");
@@ -217,7 +217,7 @@
       d3.select("#time_interval_text").text(":Data referenced from this time ago.");
       d3.select("#difference_language").text("日本語");
     } else {
-      d3.select("#header").text("人流マップ");
+      d3.select("#header").text("{{ floor }} 人流マップ");
       d3.select("#btn_staycircle").text("滞留");
       d3.select("#btn_coordinate").text("座標");
       d3.select("#category_3").text("フィルタ");
@@ -621,12 +621,10 @@
       add_space_floor(4 - floor_list.length);
     };
     function add_floor_list(floor_name){ // 1つのフロアを表に書き足す
-      floor = floor_name;
-      var url = "{% url 'pfv:pfv_map' %}"+make_url_query();
       d3.select("#floor_list").append("p")
       .append("a")
       .text(floor_name+" ")
-      .attr("href",url);
+      .attr("onclick","jump_floor('"+floor_name+"')");
     }
     function add_space_floor(num){ // 表を整えるためにスペースを作る
       var book = d3.select("#floor_list");
@@ -940,36 +938,22 @@
       var node = ("0"+pcwl_id).slice(-2);
       window.open("{% url 'pfv:stay_graph' %}"+ make_url_query() + "&node=" + node,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
+    // 別のフロアへジャンプ
+    function jump_floor(floor_name){
+      document.location = "{% url 'pfv:pfv_map' %}"+ make_url_query() + "&floor=" + floor_name;
+    }
     // すべてのmacを表示したページにジャンプ
     function jump_pfv_map(){
       window.open("{% url 'pfv:pfv_map' %}"+ make_url_query()+"&mac=","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
     // 言語切替
     function change_language(){
-
-      var year = datetime.getFullYear();
-      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
-      var day = ("0"+datetime.getDate()).slice(-2);
-      var hour = ("0"+datetime.getHours()).slice(-2);
-      var minute = ("0"+datetime.getMinutes()).slice(-2);
-      var second = ("0"+datetime.getSeconds()).slice(-2);
-
-      var value = Sample_form.selectbox_timerange.value;
-      var num = parseInt(value.slice(-2));
-      if (value.slice(0,3) == "sec"){
-        var timerange = num;
-      } else if (value.slice(0,3) == "min"){
-        var timerange = num*60;
-      }
-      var mac = Sample_form.textbox_mac.value;
-
       if ("{{ language }}" == "en") {
         var language = "jp";
       } else {
         var language = "en";
       }
-
-      document.location = "{% url 'pfv:pfv_map' %}"+"?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + language + "&floor=" + floor;
+      document.location = "{% url 'pfv:pfv_map' %}"+ make_url_query() + "&language=" + language;
     }
 
     // セレクトボックスの値をdatetimeに合わせる
