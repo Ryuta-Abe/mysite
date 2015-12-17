@@ -386,6 +386,7 @@ def make_stayinfo(dataset,db_name):
 		db_name.create_index([("datetime", ASCENDING)])
 
 def make_staymacinfo(dataset,db_name):
+	db_name.remove()
 
 	progress = 0
 	for data in dataset:
