@@ -48,8 +48,8 @@ def get_start_end(request):
       nodecnt_dict[floor].update({num:0})
 
   # data取り出し
-  # datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
-  datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",-1).sort("_id.mac")
+  datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
+  # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.mac":"80:be:05:6c:6b:2b"}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
@@ -238,12 +238,12 @@ def get_start_end(request):
 
     # import time
     # start = time.time()
-    make_pfvinfo(data_lists,db.pfvinfo)
-    make_stayinfo(data_lists_stay,db.stayinfo)
+    # make_pfvinfo(data_lists,db.pfvinfo)
+    # make_stayinfo(data_lists_stay,db.stayinfo)
     # end = time.time()
     # print("time:"+str(end-start))
     # make_pfvinfo(data_lists_experiment,db.pfvinfoexperiment)
-    make_pfvmacinfo(data_lists,db.pfvmacinfo)
+    # make_pfvmacinfo(data_lists,db.pfvmacinfo)
     make_staymacinfo(data_lists_stay,db.staymacinfo)
 
     return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
