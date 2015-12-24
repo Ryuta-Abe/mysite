@@ -27,6 +27,14 @@ FLOOR_LIST   = ["W2-6F","W2-7F"]
 time_range = timedelta(minutes=1) # 過去の参照時間幅設定
 
 def get_start_end(request):
+
+  datas, count, count_all = get_start_end_mod(request)  
+
+  return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
+                             {"datas":datas, "count":count, "count_all":count_all} 
+                           ) 
+
+def get_start_end_mod(request):
   from datetime import datetime, timedelta
   # urlからクエリの取り出し
   algorithm = int(request.GET.get('algorithm', 1))
@@ -47,7 +55,6 @@ def get_start_end(request):
   # data取り出し
   # datas = db.tmpcol.find().sort("_id.get_time_no",-1).sort("_id.mac")
   datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",-1).sort("_id.mac")
-  # datas = db.tmpcol.find({"_id.mac":"80:be:05:6c:6b:2b"}).sort("_id.get_time_no",-1).sort("_id.mac")
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
   ### アルゴリズム1 ###
@@ -176,9 +183,10 @@ def get_start_end(request):
     # end = time.time()
     # print("time:"+str(end-start))
 
-    return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
-                               {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
-                             ) 
+    return(data_lists[:2000], count, count_all)
+    # return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
+    #                            {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
+    #                          ) 
 
 # 実験用 mac→name フィルタ
 def name_filter(mac):

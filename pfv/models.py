@@ -180,6 +180,34 @@ class tmpcol(Document):
     # "_id" : { "get_time_no" : NumberLong("20150603060002"), "mac" : "00:15:af:e4:e1:ac" },
     # "nodelist" : [ { "node_id" : 1237, "dbm" : -89 } ]
 
+# RT用過去データ一時保存コレクション
+class pastdata(Document):
+    mac         = StringField()
+    pastlist    = ListField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
+    # サンプル
+    # "mac" : "xx:xx:xx:xx:xx:xx",
+    # "pastlist": [ {"dt":datetime.datetime(2015,12,3,12,35,00),
+    #                 "start_node":12,
+    #                 "node_history":[{"dt":datetime.datetime(2015,12,3,12,34,50),
+    #                                   "node":[{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},
+    #                                           {                                         },...
+    #                                   },
+    #                                   {"dt":...}
+    #                                ],
+    #                 "nodecnt_dict":{"W2-6F":{1:0,2:0,3:0...},
+    #                                 "W2-7F":{1:0,2:0,3:0...}
+    #                                }                 
+    #                },
+    #                {"dt":...
+    #                },...
+    #             ]
+
+
 class pcwlroute(Document):
     query = ListField(IntField())
     dlist = ListField(ListField(DictField()))
