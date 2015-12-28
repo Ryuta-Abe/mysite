@@ -191,20 +191,17 @@ class pastdata(Document):
 
     # サンプル
     # "mac" : "xx:xx:xx:xx:xx:xx",
+    # "nodecnt_dict":{"W2-6F":{1:0,2:0,3:0...},
+    #                 "W2-7F":{1:0,2:0,3:0...}
+    #                },    
     # "pastlist": [ {"dt":datetime.datetime(2015,12,3,12,35,00),
-    #                 "start_node":12,
-    #                 "node_history":[{"dt":datetime.datetime(2015,12,3,12,34,50),
-    #                                   "node":[{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},
-    #                                           {                                         },...
-    #                                   },
-    #                                   {"dt":...}
-    #                                ],
-    #                 "nodecnt_dict":{"W2-6F":{1:0,2:0,3:0...},
-    #                                 "W2-7F":{1:0,2:0,3:0...}
-    #                                }                 
-    #                },
-    #                {"dt":...
-    #                },...
+    #                "start_node":12,
+    #                "node":[{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},
+    #                         {                                         },...
+    #                        ],
+    #               },
+    #               {"dt":...
+    #               },...
     #             ]
 
 
