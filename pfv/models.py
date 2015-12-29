@@ -183,6 +183,8 @@ class tmpcol(Document):
 # RT用過去データ一時保存コレクション
 class pastdata(Document):
     mac         = StringField()
+    update_dt   = DateTimeField()
+    nodecnt_dict= DictField() 
     pastlist    = ListField()
 
     meta = {
@@ -191,11 +193,12 @@ class pastdata(Document):
 
     # サンプル
     # "mac" : "xx:xx:xx:xx:xx:xx",
+    # "update_dt":datetime.datetime(2015,12,3,12,35,30),
     # "nodecnt_dict":{"W2-6F":{1:0,2:0,3:0...},
     #                 "W2-7F":{1:0,2:0,3:0...}
     #                },    
     # "pastlist": [ {"dt":datetime.datetime(2015,12,3,12,35,00),
-    #                "start_node":12,
+    #                "start_node":{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},
     #                "node":[{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},
     #                         {                                         },...
     #                        ],
