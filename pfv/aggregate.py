@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, pcwltime, tmpcol
+from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata
 from pfv.get_start_end import get_start_end, get_start_end_mod
 from mongoengine import *
 from pymongo import *
@@ -40,15 +40,15 @@ def process_all(request):
   st = time.time()
   print("aggregate partly")
   # startdt_int14 = 20150603000000
-  startdt_int14 = 20151203123700
+  startdt_int14 = 20151203123500
   enddt_int14   = 20991231235959
   all_bool      = True
 
   aggregate_mod(request, startdt_int14, enddt_int14, all_bool)
-  get_start_end_mod(request)
+  db.pastdata.remove()
+  get_start_end_mod(request, False)
   ed = time.time()
   print(ed - st)
-
 
   return render_to_response('pfv/aggregate_data.html',  # 使用するテンプレート
                               {} 
