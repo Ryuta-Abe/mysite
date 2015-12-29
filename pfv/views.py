@@ -103,7 +103,7 @@ def pfv_map(request):
 
     # pfv情報の取り出し
     pfvinfo = []
-    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
     if len(pfvinfo) >= 1:
       for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
         for j in range(0,len(pfvinfo[i]["plist"])):
@@ -117,7 +117,7 @@ def pfv_map(request):
 
     # 滞留端末情報の取り出し
     stayinfo = []
-    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    stayinfo += db.stayinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
     if len(stayinfo) >= 1:
       for i in range(1,len(stayinfo)):
         for j in range(0,len(stayinfo[i]["plist"])):
@@ -167,11 +167,11 @@ def pfv_map(request):
 
     # pfv情報の取り出し
     tmp_pfvinfo = []
-    tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+    tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
 
     # 滞留端末情報の取り出し
     tmp_stayinfo = []
-    tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+    tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
 
     # pfvinfoにroute情報をひも付け
     for t_data in tmp_pfvinfo:
@@ -206,7 +206,7 @@ def pfv_map_json(request):
 
     # pfv情報の取り出し
     pfvinfo = []
-    pfvinfo += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    pfvinfo += db.pfvinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
     if len(pfvinfo) >= 1:
       for i in range(1,len(pfvinfo)): # timerange内のpfv情報を合成
         for j in range(0,len(pfvinfo[i]["plist"])):
@@ -220,7 +220,7 @@ def pfv_map_json(request):
 
     # 滞留端末情報の取り出し
     stayinfo = []
-    stayinfo += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    stayinfo += db.stayinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
     if len(stayinfo) >= 1:
       for i in range(1,len(stayinfo)):
         for j in range(0,len(stayinfo[i]["plist"])):
@@ -252,11 +252,11 @@ def pfv_map_json(request):
 
     # pfv情報の取り出し
     tmp_pfvinfo = []
-    tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+    tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
 
     # 滞留端末情報の取り出し
     tmp_stayinfo = []
-    tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+    tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
 
     # pfvinfoにroute情報をひも付け
     for t_data in tmp_pfvinfo:
@@ -315,13 +315,13 @@ def pfv_graph(request):
   pfvinfo_list = []
   pfvgraph_info = []
   if experiment == 1: # 実験データ
-    pfvinfo_list += db.pfvinfoexperiment.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    pfvinfo_list += db.pfvinfoexperiment.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
   elif experiment == 2: # 実験データ2
-    pfvinfo_list += db.pfvinfoexperiment2.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    pfvinfo_list += db.pfvinfoexperiment2.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
   elif mac == "": # すべてのmacの取り出し
-    pfvinfo_list += db.pfvinfo.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    pfvinfo_list += db.pfvinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    pfvinfo_list += db.pfvmacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+    pfvinfo_list += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
   if len(pfvinfo_list) >= 1:
     for i in range(0,len(pfvinfo_list[0]["plist"])):
       if (pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
@@ -360,9 +360,9 @@ def stay_graph(request):
   stayinfo_list = []
   staygraph_info = []
   if mac == "": # すべてのmacの取り出し
-    stayinfo_list += db.stayinfo.find({"datetime":{"$gte":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    stayinfo_list += db.stayinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
   else : # 特定のmacを抽出
-    stayinfo_list += db.staymacinfo.find({"datetime":{"$gte":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+    stayinfo_list += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
   if len(stayinfo_list) >= 1:
     for i in range(0,len(stayinfo_list[0]["plist"])):
       if stayinfo_list[0]["plist"][i]["pcwl_id"] == node:
