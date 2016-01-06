@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata
+from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp
 from pfv.get_start_end import get_start_end, get_start_end_mod
 from mongoengine import *
 from pymongo import *
@@ -26,7 +26,7 @@ def aggregate_data(request):
   enddt_int14   = 20991231235959
   all_bool      = True
 
-  aggregate_mod(request, startdt_int14, enddt_int14, all_bool)
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, False)
   ed = time.time()
   print(ed - st)
 
@@ -44,9 +44,9 @@ def process_all(request):
   enddt_int14   = 20991231235959
   all_bool      = True
 
-  aggregate_mod(request, startdt_int14, enddt_int14, all_bool)
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, False)
   db.pastdata.remove()
-  get_start_end_mod(request, False)
+  get_start_end_mod(False)
   ed = time.time()
   print(ed - st)
 
@@ -54,9 +54,27 @@ def process_all(request):
                               {} 
                             )
 
+startdt_int14 = 20151203123500
+enddt_int14   = 20991231235959
 
+def realtime(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True):
+  import time
+  st = time.time()
+  print("RealTime process")
+  # startdt_int14 = 20150603000000
+  # startdt_int14 = 20151203123500
+  # enddt_int14   = 20991231235959
+  all_bool      = DEBUG
 
-def aggregate_mod(request, startdt_int14, enddt_int14, all_bool):
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, True)
+  if DEBUG == True:
+    db.pastdata.remove()
+
+  get_start_end_mod(False)
+  ed = time.time()
+  print(ed - st)
+
+def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   ### testコレクションにstr型のget_time_noが入ってしまった場合にコメントアウト ###
   # datas = db.test.find()
   # for data in datas:
@@ -64,8 +82,12 @@ def aggregate_mod(request, startdt_int14, enddt_int14, all_bool):
   #   data["dt_end0"]     = int(str(data["get_time_no"])[0:13] + "0")
   #   db.test.save(data)
   #################################################################
+  if RT_flag:
+    col_name = rttmp
+  else:
+    col_name = test  
 
-  ag = test._get_collection().aggregate([
+  ag = col_name._get_collection().aggregate([
                                           # {"$limit":1000},
                                           {"$match":
                                                   {"dt_end0":
@@ -106,21 +128,9 @@ def aggregate_mod(request, startdt_int14, enddt_int14, all_bool):
   for jdata in jdatas:
     jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
     del(jdata['_id'])
-    if tmp_time == 0:
-      tmp_time = jdata['datetime']
-    else:
-      j_tmp_time = tmp_time - jdata['datetime']
-      j_time = j_tmp_time.total_seconds()
-      if round(j_time / 10) == 0:
-        tmp_time = jdata['datetime']
-      else:
-        timedata = pcwltime(
-                            datetime = tmp_time,
-                           )
-        timedata.save()
-        tmp_time = jdata['datetime']
-
-  timedata = pcwltime(
-                      datetime = tmp_time,
-                     )
-  timedata.save()
+    count = db.pcwltime.find({"datetime":jdata['datetime']}).count()
+    if (count == 0):
+      timedata = pcwltime(
+                          datetime = jdata['datetime'],
+                         )
+      timedata.save()

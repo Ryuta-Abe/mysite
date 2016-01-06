@@ -186,9 +186,11 @@ def select_one_route(route_info): # 入力：複数の経路、出力：最もad
 			output = route
 	return [output]
 
-def make_pfvinfo(dataset,db_name):
+def make_pfvinfo(dataset,db_name,all_flag):
 	# 開始時にDBを初期化
-	db_name.remove()
+	if all_flag:
+		db_name.remove()
+	
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
@@ -262,7 +264,7 @@ def make_pfvinfo(dataset,db_name):
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
 			print("pfvinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
-		db_name.create_index([("datetime", ASCENDING)])
+		# db_name.create_index([("datetime", ASCENDING)])
 
 def is_experiment(db_name): # 実験用DBか否かを判定
 	if (db_name == db.pfvinfoexperiment) or (db_name == db.pfvinfoexperiment2):
@@ -271,10 +273,11 @@ def is_experiment(db_name): # 実験用DBか否かを判定
 		return False
 
 # mac情報付きpfvinfo
-def make_pfvmacinfo(dataset,db_name):
+def make_pfvmacinfo(dataset,db_name,all_flag):
 	# 開始時にDBを初期化
-	db.pfvmacinfo.remove()
-	db.staymacinfo.remove()
+	if all_flag:
+		db_name.remove()
+		db.staymacinfo.remove()
 
 	progress = 0
 	for data in dataset:
@@ -347,7 +350,7 @@ def make_pfvmacinfo(dataset,db_name):
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
 			print("pfvmacinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
-		db_name.create_index([("datetime", ASCENDING)])
+		# db_name.create_index([("datetime", ASCENDING)])
 
 # 滞留端末情報stayinfo関係
 def make_empty_stayinfo(dt,floor): # 空のstayinfoを作成
@@ -357,9 +360,10 @@ def make_empty_stayinfo(dt,floor): # 空のstayinfoを作成
 		plist.append({"pcwl_id":node["pcwl_id"],"size":0,"mac_list":[]})
 	return {'datetime':dt,'plist':plist,'floor':floor}
 
-def make_stayinfo(dataset,db_name):
+def make_stayinfo(dataset,db_name,all_flag):
 	# stayinfoを初期化
-	db_name.remove()
+	if all_flag:
+		db_name.remove()
 
 	progress = 0
 	for data in dataset:
@@ -383,10 +387,11 @@ def make_stayinfo(dataset,db_name):
 			print("stayinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
 			print(data["start_time"])
 		progress += 1
-		db_name.create_index([("datetime", ASCENDING)])
+		# db_name.create_index([("datetime", ASCENDING)])
 
-def make_staymacinfo(dataset,db_name):
-	db_name.remove()
+def make_staymacinfo(dataset,db_name,all_flag):
+	if all_flag:
+		db_name.remove()
 
 	progress = 0
 	for data in dataset:
@@ -403,7 +408,7 @@ def make_staymacinfo(dataset,db_name):
 		progress += 1
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
 			print("staymacinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
-		db_name.create_index([("datetime", ASCENDING)])
+		# db_name.create_index([("datetime", ASCENDING)])
 		
 # # 出発時刻、出発点、到着時刻、到着点のデータセット
 # dataset = []
@@ -420,4 +425,4 @@ def make_staymacinfo(dataset,db_name):
 # end = time.time()
 # print("time:"+str(end-start))
 
-print("エラー無しやな")
+# print("エラー無しやな")
