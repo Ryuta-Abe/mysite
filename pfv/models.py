@@ -161,6 +161,20 @@ class test(Document):
     	"db_alias" : "nm4bd",
     }
 
+class rttmp(Document):
+    _id          = StringField(max_length=255)
+    node_id     = IntField()
+    get_time_no = IntField()
+    mac         = StringField(max_length=255)
+    rssi        = IntField()
+    dbm         = IntField()
+    sequence    = IntField()
+    timestamp   = IntField()
+
+    meta = {
+        "db_alias" : "nm4bd",
+    }
+
 class tmpcol(Document):
     _id = DictField()
     # nodelist = ListField(DictField())
