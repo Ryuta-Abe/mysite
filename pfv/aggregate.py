@@ -84,28 +84,26 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   #################################################################
   if RT_flag:
     col_name = rttmp
+    cond = {"$limit":100000}
   else:
-    col_name = test  
+    col_name = test
+    cond = {"$match": {"dt_end0": {"$gte":startdt_int14, "$lt":enddt_int14} } }
 
   ag = col_name._get_collection().aggregate([
                                           # {"$limit":1000},
-                                          {"$match":
-                                                  {"dt_end0":
-                                                            {"$gte":startdt_int14, "$lt":enddt_int14}
-                                                  }
-                                          },
-                                          {"$group":
-                                            {"_id":
-                                              {"mac":"$mac", 
-                                               "get_time_no":"$dt_end0",
+                                            cond,
+                                            {"$group":
+                                              {"_id":
+                                                {"mac":"$mac", 
+                                                 "get_time_no":"$dt_end0",
+                                                },
+                                               "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
                                               },
-                                             "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
                                             },
-                                          },
-                                          {"$out": "tmpcol"},
-                                        ],
-                                      allowDiskUse=True,
-                                      )
+                                            {"$out": "tmpcol"},
+                                          ],
+                                        allowDiskUse=True,
+                                        )
 
   # pcwltimeコレクション作成
   from datetime import datetime

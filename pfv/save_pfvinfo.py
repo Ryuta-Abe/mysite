@@ -194,7 +194,7 @@ def make_pfvinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
@@ -248,6 +248,7 @@ def make_pfvinfo(dataset,db_name,all_flag):
 				# print("st_ed_info = "+str(st_ed_info))
 
 				# pfv情報の登録
+				# print("interval : "+str(interval))
 				for j in range(0,num):
 					if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場合は以下をスキップ
 						tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[j]["datetime"]},"floor":data["floor"]})
@@ -282,7 +283,7 @@ def make_pfvmacinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
@@ -368,9 +369,10 @@ def make_stayinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
+		# print("interval : "+str(interval))
 		for i in range(0,num):
 
 			# 滞留端末情報の一時データ取り出し
@@ -385,7 +387,7 @@ def make_stayinfo(dataset,db_name,all_flag):
 		# print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
 		if ((progress % 1000) == 0) or (progress == len(dataset)):
 			print("stayinfo登録状況 "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
-			print(data["start_time"])
+			# print(data["start_time"])
 		progress += 1
 		# db_name.create_index([("datetime", ASCENDING)])
 
@@ -396,7 +398,8 @@ def make_staymacinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = round(interval / 10) # 40秒間隔の場合, num = 4
+		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
+		# print("interval : "+str(interval))
 		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
 		for i in range(0,num):
