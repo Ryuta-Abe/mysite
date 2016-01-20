@@ -64,6 +64,7 @@
   <a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
   <a href="javascript:void(0)" id="category_3" onclick="show('3');" class="btn btn-default btn-sm"></a>
+  <a id="btn_realtime" onclick="realtime()" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
@@ -232,6 +233,7 @@
       d3.select("#time_interval_text").text("間の人流データを表示");
       d3.select("#difference_language").text("English");
     };
+    d3.select("#btn_realtime").text("RealTime");
     Sample_form.textbox_mac.value = "{{ mac }}";
 
     // マップ画像の挿入
@@ -1081,19 +1083,19 @@
     var flag_Auto = false;
     var flag_Auto2 = false;
     var Timer;
-    function Auto_Animation(){
-      if (flag_Auto) {
-        flag_Auto = !flag_Auto;
-        d3.select("#btn_Auto").style("color","black");
-        clearInterval(Timer);
-        describe_datetime();   
-      } else {
-        flag_Auto = !flag_Auto;
-        Auto_Ajax();
-        d3.select("#btn_Auto").style("color","blue");
-        Timer = setInterval(Auto_Ajax,1000);
-      };
-    }
+    // function Auto_Animation(){
+    //   if (flag_Auto) {
+    //     flag_Auto = !flag_Auto;
+    //     d3.select("#btn_Auto").style("color","black");
+    //     clearInterval(Timer);
+    //     describe_datetime();   
+    //   } else {
+    //     flag_Auto = !flag_Auto;
+    //     Auto_Ajax();
+    //     d3.select("#btn_Auto").style("color","blue");
+    //     Timer = setInterval(Auto_Ajax,1000);
+    //   };
+    // }
     function Auto_Ajax(){
       slide_DT(-1);
     }
@@ -1113,7 +1115,9 @@
       if (flag_Auto2) {
         flag_Auto2 = !flag_Auto2;
         d3.select("#btn_Auto2").style("color","black");
-        clearInterval(Timer);
+        if (!flag_realtime) {
+          clearInterval(Timer);
+        };
         animate_circle.remove();
         document.Sample_form.selectbox_timerange.selectedIndex = tmp_timerange_order;
         // stayed_circle.remove();
@@ -1126,9 +1130,11 @@
         make_animate_circle();
         document.Sample_form.selectbox_timerange.selectedIndex = 0; // ボールアニメーション中はtimerange=10固定
         tmp_timerange_order = timerange_list_id[String(timerange)];
-        Auto_Ajax();
         d3.select("#btn_Auto2").style("color","blue");
-        Timer = setInterval(Auto_Ajax,1000);
+        if (!flag_realtime) {
+          Auto_Ajax();
+          Timer = setInterval(Auto_Ajax,1000);
+        };
       };
     }
     function make_animate_circle(){
@@ -1142,23 +1148,28 @@
       })
     }
     function move_animate_circle(){
+      if (flag_realtime) {
+        var ball_animation_time = 10000; // リアルタイムビューの場合10秒かけてアニメーション
+      } else {
+        var ball_animation_time = 1000; // そうでなければ1秒かけてアニメーション
+      };
 
       animate_circle
       .each(function(d){ // 円のそれぞれに対して以下を実行
         var ball = d3.select(this);
         if (d.route.length == 0) { // ボールのデータがない場合
-          ball = ball.transition().duration(200)
+          ball = ball.transition().duration(ball_animation_time*0.2)
           .attr("r",0)
         } else { // ボールのデータが有る場合
           ball = ball.attr({
             "cx": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_x"],
             "cy": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_y"],
           })
-          .transition().duration(200)
+          .transition().duration(ball_animation_time*0.2)
           .attr("r",18)
           if (d.route[0][0].length == 2) { // ボールが動く場合
             for (var i = 0; i < d.route[0].length; i++) { // 各ルートに対して
-              ball = ball.transition().duration(800/d.route[0].length)
+              ball = ball.transition().duration(ball_animation_time*0.8/d.route[0].length)
               .attr({
                 "cx": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_x"],
                 "cy": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_y"],
@@ -1167,6 +1178,34 @@
           }
         };
       })
+    }
+
+   // RealTimeビュー実行
+   var flag_realtime = false;
+   function realtime(){
+    if (flag_realtime) {
+      flag_realtime = !flag_realtime;
+      d3.select("#btn_realtime").style("color","black");
+      clearInterval(RT_Timer);
+      Load_Form();
+      if (flag_Auto2) {
+        Timer = setInterval(Auto_Ajax,1000);
+      };
+      describe_datetime();   
+    } else {
+      if (flag_Auto2) {
+        clearInterval(Timer);
+      };
+      flag_realtime = !flag_realtime;
+      RT_Auto_Ajax();
+      d3.select("#btn_realtime").style("color","blue");
+      RT_Timer = setInterval(RT_Auto_Ajax,10000);
+    };
+   }
+   function RT_Auto_Ajax(){
+      datetime = new Date();
+      datetime.setSeconds(datetime.getSeconds() - 30); // 現在時刻の30秒前
+      Load_JSON(datetime);
     }
   </script>
   {% endblock content %}
