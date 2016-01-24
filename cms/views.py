@@ -42,7 +42,7 @@ def data_list(request, limit=100, date_time=d):
   date_time = datetime_to_12digits(date_time)
 
   # データベースから取り出し
-  t = Sensor2.objects(datetime__lte="2015-06-29 12:40").order_by("-datetime").limit(100)
+  t = Sensor2.objects().order_by("-datetime").limit(100)
 
   return render_to_response('cms/data_list.html',  # 使用するテンプレート
                               {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]

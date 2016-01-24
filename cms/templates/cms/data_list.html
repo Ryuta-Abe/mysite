@@ -21,6 +21,7 @@ table {
       <select name="textbox_year">
             <option id="year2014" value="2014"/>2014</option>
             <option id="year2015" value="2015"/>2015</option>
+            <option id="year2016" value="2016"/>2016</option>
       </select>
       年
       <select name="textbox_month">
@@ -157,7 +158,7 @@ table {
       if (limit == ""){
         limit = 25;
       }
-      document.location = "http://localhost:8000/cms/data_list/limit=" + limit;
+      document.location = "http://160.16.74.119:8000/cms/data_list/limit=" + limit;
     }
     function reload_datetime(){
       var limit = Sample_form.textbox_limit.value;
@@ -169,7 +170,7 @@ table {
       var day = Sample_form.textbox_day.value;
       var hour = Sample_form.textbox_hour.value;
       var minute = Sample_form.textbox_minute.value;
-      document.location = "http://localhost:8000/cms/data_list/limit=" + limit 
+      document.location = "http://160.16.74.119:8000/cms/data_list/limit=" + limit 
       + "/datetime=" + year + month + day + hour + minute;
     }
 
