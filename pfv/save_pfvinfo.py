@@ -195,7 +195,7 @@ def make_pfvinfo(dataset,db_name,all_flag):
 	for data in dataset:
 		interval = round(data["interval"])
 		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
-		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
+		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
 													{"floor" : data["floor"]},
@@ -284,7 +284,7 @@ def make_pfvmacinfo(dataset,db_name,all_flag):
 	for data in dataset:
 		interval = round(data["interval"])
 		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
-		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
+		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
 													{"floor" : data["floor"]},
@@ -370,7 +370,7 @@ def make_stayinfo(dataset,db_name,all_flag):
 	for data in dataset:
 		interval = round(data["interval"])
 		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
-		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
+		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
 		# print("interval : "+str(interval))
 		for i in range(0,num):
@@ -400,7 +400,7 @@ def make_staymacinfo(dataset,db_name,all_flag):
 		interval = round(data["interval"])
 		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
 		# print("interval : "+str(interval))
-		tlist = db.pcwltime.find({"datetime":{"$gte":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
+		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
 		for i in range(0,num):
 			
