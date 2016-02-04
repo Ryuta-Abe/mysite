@@ -9,6 +9,7 @@ import datetime
 import locale
 from datetime import datetime, timedelta
 import time
+import requests
 
 from cms.convert_device_id import *
 from cms.convert_datetime import *
