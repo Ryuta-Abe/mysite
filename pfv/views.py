@@ -111,10 +111,14 @@ def pfv_map(request):
           pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
       pfvinfo = pfvinfo[-1]["plist"]
     else :
-      pfvinfo += db.pfvinfo.find({"floor":floor}).limit(1)
-      pfvinfo = pfvinfo[0]["plist"]
-      for j in range(0,len(pfvinfo)):
-        pfvinfo[j]["size"] = 0
+      # 空のpfvinfo生成
+      for i in range(0,len(pcwlnode)):
+        for j in range(0,len(pcwlnode)):
+          st = pcwlnode[i]["pcwl_id"] # 出発点
+          ed = pcwlnode[j]["pcwl_id"] # 到着点
+          # iとjが隣接ならば人流0人でpfvinfoに加える
+          if ed in pcwlnode[i]["next_id"]:
+            pfvinfo.append({"direction":[st,ed],"size":0})
 
     # 滞留端末情報の取り出し
     stayinfo = []
