@@ -17,7 +17,7 @@ table {
       <text id="id2">Number of data：</text>
       <input type="text" name="textbox_limit" size="5", value="{{ limit }}">
       <input type="button" value="reload" onclick="reload()" class="btn btn-default btn-sm">
-      　datatime：
+      　datetime：
       <select name="textbox_year">
             <option id="year2014" value="2014"/>2014</option>
             <option id="year2015" value="2015"/>2015</option>
@@ -116,6 +116,9 @@ table {
       </select>
       minute
       <input type="button" value="reload" onclick="reload_datetime()" class="btn btn-default btn-sm">
+      　　
+      <input type="text" name="textbox_auto_reload" size="3", value="{{ auto_reload }}">sec
+      <a id="btn_auto_reload" onclick="auto_reload()" class="btn btn-default btn-sm"></a>
     </form>
    	<table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
 
@@ -155,10 +158,11 @@ table {
 
     function reload(){
       var limit = Sample_form.textbox_limit.value;
+      var auto_reload_value = parseInt(Sample_form.textbox_auto_reload.value);
       if (limit == ""){
         limit = 25;
       }
-      document.location = "http://160.16.74.119:8000/cms/data_list/limit=" + limit;
+      document.location = "{% url 'cms:data_list' %}"+"?limit=" + limit +"&auto_reload=" + auto_reload_value;
     }
     function reload_datetime(){
       var limit = Sample_form.textbox_limit.value;
@@ -170,8 +174,33 @@ table {
       var day = Sample_form.textbox_day.value;
       var hour = Sample_form.textbox_hour.value;
       var minute = Sample_form.textbox_minute.value;
-      document.location = "http://160.16.74.119:8000/cms/data_list/limit=" + limit 
-      + "/datetime=" + year + month + day + hour + minute;
+      document.location = "{% url 'cms:data_list' %}"+"?limit=" + limit 
+      + "&datetime=" + year + month + day + hour + minute;
+    }
+
+    d3.select("#btn_auto_reload").text("AutoReload");
+    var flag_auto_reload = false;
+    if (parseInt({{ auto_reload }}) > 0) {
+      d3.select("#btn_auto_reload").style("color","blue");
+      flag_auto_reload = true;
+      Timer = setInterval(reload,parseInt({{ auto_reload }})*1000);
+    };
+    function auto_reload(){
+      if (flag_auto_reload) {
+        d3.select("#btn_auto_reload").style("color","black");
+        flag_auto_reload = false;
+        clearInterval(Timer);
+      } else {
+        var auto_reload_value = parseInt(Sample_form.textbox_auto_reload.value);
+        if (auto_reload_value > 0) {
+          d3.select("#btn_auto_reload").style("color","blue");
+          flag_auto_reload = true;
+          Timer = setInterval(reload,auto_reload_value*1000);
+        } else {
+          var alert = 'Your input is wrong.';
+          window.confirm(alert);
+        };
+      };
     }
 
     //d3.select("body").append("p").text("{{ minute }}");

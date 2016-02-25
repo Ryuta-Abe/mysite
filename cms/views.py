@@ -14,7 +14,7 @@ import datetime
 import locale
 
 from cms.convert_device_id    import convert_device_id
-from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift_time, dt_from_iso_to_str, dt_insert_partition_to_min, dt_from_iso_to_jap
+from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift_time, dt_from_iso_to_str, dt_insert_partition_to_min, dt_from_iso_to_jap,dt_from_14digits_to_iso
 from cms.convert_sensor_data    import convert_sensor_data
 
 from cms.write_to_mongo import write_to_initial_db, write_to_sensordb
@@ -35,18 +35,45 @@ d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[
 # 3.該当ディレクトリで　python -m http.server 8080 を入力。
 # 4.ブラウザで http://localhost:8080/ にアクセス
 
+client = MongoClient()
+db = client.sensordb
+db.sensor2.create_index([("datetime", ASCENDING)])
+
 # データリスト画面 http://localhost:8000/cms/data_list/
 def data_list(request, limit=100, date_time=d):
- 
-  # 日付をstr12桁に合わせる --> 2014-11-20 19:40
-  date_time = datetime_to_12digits(date_time)
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', 'now')
+  limit = int(request.GET.get('limit', 100))
+  auto_reload = int(request.GET.get('auto_reload', 0))
+
+  if date_time == 'now':
+    lt = datetime.datetime.today()
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
 
   # データベースから取り出し
-  t = Sensor2.objects().order_by("-datetime").limit(100)
+  t = []
+  t += db.sensor2.find({"datetime":{"$lte":lt}}).sort("datetime", ASCENDING).limit(limit)
 
   return render_to_response('cms/data_list.html',  # 使用するテンプレート
-                              {'t': t, 'limit':limit, 'year':date_time[0:4],'month':date_time[5:7]
-                              ,'day':date_time[8:10],'hour':date_time[11:13],'minute':date_time[14:16]} )
+                              {'t': t, 'limit':limit, 'year':lt.year,'month':lt.month,'day':lt.day
+                              ,'hour':lt.hour,'minute':lt.minute,'auto_reload':auto_reload} )
+
+# # データリスト画面用json
+# def data_list_json(request):
+
+#   # urlからクエリの取り出し
+#   date_time = request.GET.get('datetime', '20150603122130')
+#   timerange = int(request.GET.get('timerange', 10))
+
+#   lt = dt_from_14digits_to_iso(date_time)
+#   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+#   dataset = []
+#   dataset += db.sensor2.find({"datetime":{"$gt":gt, "$lte":lt}})
+
+#   return render_json_response(request, dataset) # dataをJSONとして出力
 
 # データリスト画面 http://localhost:8000/cms/data_list2/
 def data_list2(request, limit=100, date_time=d):

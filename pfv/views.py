@@ -22,6 +22,7 @@ from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 dt = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[-2:]+("0"+str(int(d.minute/5)*5))[-2:] # 201411201940
+rt = datetime.datetime.today()
 
 client = MongoClient()
 db = client.nm4bd
