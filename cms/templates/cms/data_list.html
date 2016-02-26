@@ -207,10 +207,10 @@ table {
     
     // 更新前の選択状態を記憶
     d3.select("#year"+"{{ year }}").attr("selected",true);
-    d3.select("#month"+"{{ month }}").attr("selected",true);
-    d3.select("#day"+"{{ day }}").attr("selected",true);
-    d3.select("#hour"+"{{ hour }}").attr("selected",true);
-    d3.select("#minute"+"{{ minute }}").attr("selected",true);
+    d3.select("#month"+("0"+"{{ month }}").slice(-2)).attr("selected",true);
+    d3.select("#day"+("0"+"{{ day }}").slice(-2)).attr("selected",true);
+    d3.select("#hour"+("0"+"{{ hour }}").slice(-2)).attr("selected",true);
+    d3.select("#minute"+("0"+"{{ minute }}").slice(-2)).attr("selected",true);
     </script>
 {% endblock content %}
 
