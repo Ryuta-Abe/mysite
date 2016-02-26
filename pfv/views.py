@@ -57,7 +57,7 @@ def data_list(request, limit=100, date_time=d):
                               {'t': dataset, 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
                                'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]} )
 
-def analyze_direction(request,mac="",date_time=d, limit=100):
+def analyze_direction(request,mac=":",date_time=d, limit=100):
   from datetime import datetime
   dt = int(date_time + "00")
 

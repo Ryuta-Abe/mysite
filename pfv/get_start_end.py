@@ -234,12 +234,13 @@ def get_start_end_mod(all_flag):
                 # flow
                 # print(pastd[0])
                 if (data["nodelist"][num]["pcwl_id"] != pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
-                  if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 4):
+                  # if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 4):
+                  if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 99999999):
                     interval = (tmp_enddt - tmp_startdt).seconds
                     d_total = get_min_distance(data["nodelist"][num]["floor"], pastd[0]["pastlist"][0]["start_node"]["pcwl_id"], data["nodelist"][num]["pcwl_id"])
                     if d_total < interval*22:
                       # data_lists append
-                      # print(tmp_startdt, tmp_enddt)
+                      print(tmp_startdt, tmp_enddt)
                       data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastd[0]["pastlist"][0]["start_node"], data_lists))
                       # pastlist update
                       update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
@@ -255,6 +256,7 @@ def get_start_end_mod(all_flag):
                 # stay
                 elif (data["nodelist"][num]["pcwl_id"] == pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
                   # data_lists_stay append
+                  print(tmp_startdt, tmp_enddt)
                   data_lists_stay.append(append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, data["nodelist"][num], data_lists_stay))
                   # pastlist update
                   update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
@@ -383,6 +385,10 @@ def update_nodecnt_dict(node_cnt, data, nodecnt_dict):
     tmp_num   = data["nodelist"][num]['pcwl_id']
     tmp_floor = data["nodelist"][num]['floor']
     nodecnt_dict[tmp_floor].update({str(tmp_num) : nodecnt_dict[tmp_floor][str(tmp_num)]+1})
+    if nodecnt_dict[tmp_floor][str(tmp_num)] > 6:
+      print("---------! nodecnt_dict > 6 error !---------")
+      # print("data:"+str(data))
+      pass
 
 def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists):
   if tmp_enddt < tmp_startdt:
