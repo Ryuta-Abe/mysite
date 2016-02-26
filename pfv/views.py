@@ -22,6 +22,7 @@ from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 dt = datetime.datetime.today() # 2014-11-20 19:41:51.011593
 d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[-2:]+("0"+str(int(d.minute/5)*5))[-2:] # 201411201940
+rt = datetime.datetime.today()
 
 client = MongoClient()
 db = client.nm4bd
@@ -110,10 +111,14 @@ def pfv_map(request):
           pfvinfo[i]["plist"][j]["size"] += pfvinfo[i-1]["plist"][j]["size"]
       pfvinfo = pfvinfo[-1]["plist"]
     else :
-      pfvinfo += db.pfvinfo.find({"floor":floor}).limit(1)
-      pfvinfo = pfvinfo[0]["plist"]
-      for j in range(0,len(pfvinfo)):
-        pfvinfo[j]["size"] = 0
+      # 空のpfvinfo生成
+      for i in range(0,len(pcwlnode)):
+        for j in range(0,len(pcwlnode)):
+          st = pcwlnode[i]["pcwl_id"] # 出発点
+          ed = pcwlnode[j]["pcwl_id"] # 到着点
+          # iとjが隣接ならば人流0人でpfvinfoに加える
+          if ed in pcwlnode[i]["next_id"]:
+            pfvinfo.append({"direction":[st,ed],"size":0})
 
     # 滞留端末情報の取り出し
     stayinfo = []

@@ -241,6 +241,8 @@
       var file_name = "6F_west2.jpg";
     } else if ("{{ floor }}" == "W2-7F"){
       var file_name = "7F_west2.jpg";
+    } else if ("{{ floor }}" == "kaiyo"){
+      var file_name = "kaiyo.png";
     };
     d3.select("#map_image").attr("xlink:href","http://160.16.74.119/~abe/images/"+file_name);
 
@@ -615,7 +617,7 @@
       }
     }
     // // Floor関係の描画
-    var floor_list = ["W2-6F","W2-7F"];
+    var floor_list = ["W2-6F","W2-7F","kaiyo"];
     for (var i = 0; i < floor_list.length; i++) {
       add_floor_list(floor_list[i]);
     };
@@ -1204,7 +1206,7 @@
    }
    function RT_Auto_Ajax(){
       datetime = new Date();
-      datetime.setSeconds(datetime.getSeconds() - 35); // 現在時刻の35秒前
+      datetime.setSeconds(datetime.getSeconds() - 10); // 現在時刻の10秒前
       Load_JSON(datetime);
     }
   </script>

@@ -90,7 +90,7 @@ _pcwlnode_id = [0]*99
 for i in range(0,len(_pcwlnode)):
 	_pcwlnode_id[_pcwlnode[i]["pcwl_id"]] = i
 
-floor_list = ["W2-6F","W2-7F"]
+floor_list = ["W2-6F","W2-7F","kaiyo"]
 for floor_str in floor_list:
 	_pcwlnode = []
 	_pcwlnode += pcwlnode.objects(floor = floor_str)

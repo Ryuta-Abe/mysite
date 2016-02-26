@@ -82,4 +82,16 @@ save_pcwlnode(25,400,180,[8,9],"W2-7F")
 save_pcwlnode(26,300,275,[9,12],"W2-7F")
 save_pcwlnode(27,480,275,[8,16],"W2-7F")
 
+# kaiyo nodes
+save_pcwlnode(1,100,150,[2,9,10],"kaiyo")
+save_pcwlnode(2,300,150,[1,3,8,9,10],"kaiyo")
+save_pcwlnode(3,550,150,[2,4,8,9],"kaiyo")
+save_pcwlnode(4,900,150,[3,5],"kaiyo")
+save_pcwlnode(5,900,300,[4,6],"kaiyo")
+save_pcwlnode(6,900,500,[5,7],"kaiyo")
+save_pcwlnode(7,600,500,[6,8],"kaiyo")
+save_pcwlnode(8,550,300,[2,3,7,9],"kaiyo")
+save_pcwlnode(9,300,300,[1,2,3,8,10],"kaiyo")
+save_pcwlnode(10,100,300,[1,2,9],"kaiyo")
+
 print("エラー無しやな")

@@ -6,6 +6,7 @@ W2_6F_node = [1236,1237,1238,1239,1240,1241,1242,     1244,1245,
 W2_7F_node = [1262,1263,1264,1265,1266,1267,1268,1269,1270,1271,
              1272,1273,1274,1275,1276,1277,1278,1279,1280,
              1282,1283,1284,1285,1286,     1298,1299]
+kaiyo_node = [9001,9002,9003,9004,9005,9006,9007,9008,9009,9010]
 
 
 def convert_nodeid(n_id):
@@ -120,6 +121,32 @@ def convert_nodeid(n_id):
       n_id = 27
     else:
       n_id = 9999
+
+  elif (n_id in kaiyo_node):
+    floor = "kaiyo"
+    if (n_id == 9001):
+      n_id = 1
+    elif(n_id == 9002):
+      n_id = 2
+    elif(n_id == 9003):
+      n_id = 3
+    elif(n_id == 9004):
+      n_id = 4
+    elif(n_id == 9005):
+      n_id = 5
+    elif(n_id == 9006):
+      n_id = 6
+    elif(n_id == 9007):
+      n_id = 7
+    elif(n_id == 9008):
+      n_id = 8
+    elif(n_id == 9009):
+      n_id = 9
+    elif(n_id == 9010):
+      n_id = 10
+    else:
+      n_id = 9999
+
   else:
     floor = "Unknown"
     n_id  = 9999
