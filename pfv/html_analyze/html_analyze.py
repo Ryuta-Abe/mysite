@@ -83,8 +83,8 @@ data_list = []
 
 # 6Fのデータ収集
 pcwliplist = []
-search_floor = ["W2-6F","W2-7F"]
-# search_floor = ["kaiyo"]
+# search_floor = ["W2-6F","W2-7F"]
+search_floor = ["kaiyo"]
 for floor in search_floor:
 	pcwliplist += db.pcwliplist.find({"floor":floor})
 
