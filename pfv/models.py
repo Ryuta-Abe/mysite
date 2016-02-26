@@ -168,8 +168,8 @@ class rttmp(Document):
     mac         = StringField(max_length=255)
     rssi        = IntField()
     dbm         = IntField()
-    sequence    = IntField()
-    timestamp   = IntField()
+    # sequence    = IntField()
+    # timestamp   = IntField()
 
     meta = {
         "db_alias" : "nm4bd",

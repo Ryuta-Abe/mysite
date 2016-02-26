@@ -85,6 +85,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   if RT_flag:
     col_name = rttmp
     cond = {"$limit":100000}
+    # print("rttmp_count:"+str(db.col_name.count()))
   else:
     col_name = test
     cond = {"$match": {"dt_end0": {"$gte":startdt_int14, "$lt":enddt_int14} } }
@@ -104,7 +105,8 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
                                           ],
                                         allowDiskUse=True,
                                         )
-
+  db.rttmp.remove()
+  print("tmpcol_count:"+str(db.tmpcol.count()))
   # pcwltimeコレクション作成
   from datetime import datetime
   ag = tmpcol._get_collection().aggregate([
