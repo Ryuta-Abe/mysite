@@ -56,9 +56,10 @@ def save_rttmp(ip,node_id,user,pswd):
 			if dbsave_flag:
 				if "--- END RESULT ---" in line:
 					break
-				mac = line[0:17]
-				rssi = int(line[18:20])
-				time_stamp = int(line[-11:])
+				line_split = line.split()
+				mac = line_split[0]
+				rssi = int(line_split[1])
+				time_stamp = int(line_split[3])
 				if first:
 					db.tscache.insert({"th":time_stamp,"node_id":node_id})
 					first = False
