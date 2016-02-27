@@ -62,7 +62,7 @@ db.pcwlroute.create_index([("query", ASCENDING)])
 
 # ここまでコメントアウト
 
-floor_list = ["W2-6F","W2-7F"]
+floor_list = ["W2-6F","W2-7F","kaiyo"]
 pfvinfo_dict  = {}
 stayinfo_dict = {}
 

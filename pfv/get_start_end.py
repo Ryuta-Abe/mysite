@@ -23,7 +23,7 @@ db.tmpcol.create_index([("get_time_no", DESCENDING), ("mac", ASCENDING)])
 # CONST
 MIN_NODE_NUM = 1
 MAX_NODE_NUM = 27
-FLOOR_LIST   = ["W2-6F","W2-7F"]
+FLOOR_LIST   = ["W2-6F","W2-7F","kaiyo"]
 # time_range = timedelta(minutes=1) # 過去の参照時間幅設定
 time_range = timedelta(seconds=60) # 過去の参照時間幅設定
 TH_RSSI = -80

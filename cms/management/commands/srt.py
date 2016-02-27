@@ -22,19 +22,20 @@ db = client.sensordb
 
 limit = '50' # 親機1台につき取得するデータの件数
 datetime = '"201412091900"' # 取得時間帯
+box_list = ["06","07","08","09","0A","0B","0C","0D","0E","0F"]
 
 class Command(BaseCommand):
   # args = '<target_id target_id ...>'
   help = u'RealTime process'
 
   def handle(self, *args, **options):
-    for num in "6789": # 親機ループ
+    for num in box_list: # 親機ループ
 
       r = requests.get('http://api1.ginga-box.com:8080/ginga/sol?mode=getdata&v={box_id:"9CBD9D01000'+num+'", limit:'+limit+'}')
       t = r.json()
 
       # 最新データ取り出し
-      latest_data = Sensor2.objects(box_id="9CBD9D01000"+num+"").order_by("-datetime").limit(1)
+      latest_data = Sensor2.objects(box_id="9CBD9D0100"+num+"").order_by("-datetime").limit(1)
 
       if(latest_data.count() == 0):
         latest_datetime = str("2014-11-10 00:00:00.000")
