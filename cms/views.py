@@ -37,7 +37,7 @@ d = str(d.year)+("0"+str(d.month))[-2:]+("0"+str(d.day))[-2:]+("0"+str(d.hour))[
 
 client = MongoClient()
 db = client.sensordb
-db.sensor2.create_index([("datetime", ASCENDING)])
+db.sensor2.create_index([("datetime", DESCENDING)])
 
 # データリスト画面 http://localhost:8000/cms/data_list/
 def data_list(request, limit=100, date_time=d):
@@ -54,7 +54,7 @@ def data_list(request, limit=100, date_time=d):
 
   # データベースから取り出し
   t = []
-  t += db.sensor2.find({"datetime":{"$lte":lt}}).sort("datetime", ASCENDING).limit(limit)
+  t += db.sensor2.find({"datetime":{"$lte":lt}}).sort("datetime", DESCENDING).limit(limit)
 
   return render_to_response('cms/data_list.html',  # 使用するテンプレート
                               {'t': t, 'limit':limit, 'year':lt.year,'month':lt.month,'day':lt.day
