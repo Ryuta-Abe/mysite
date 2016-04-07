@@ -70,5 +70,8 @@ urlpatterns = patterns('',
 
     # csv関係
     url(r'^csv_list/$', views.csv_list, name='csv_list'),
+
+    # SDtest
+    url(r'^sdtest/$', views.sdtest, name='sdtest'),   
   
 )

@@ -709,3 +709,23 @@ def csv_list(request):
 
   return render_to_response('cms/csv_list.html',  # 使用するテンプレート
                               {'data': data})
+
+def sdtest(request):
+
+  # # urlからクエリの取り出し
+  # date_time = request.GET.get('datetime', 'now')
+  # limit = int(request.GET.get('limit', 100))
+  # auto_reload = int(request.GET.get('auto_reload', 0))
+
+  # if date_time == 'now':
+  #   lt = datetime.datetime.today()
+  # else :
+  #   lt = dt_from_14digits_to_iso(date_time)
+
+  # # データベースから取り出し
+  # t = []
+  # t += db.sensor2.find({"datetime":{"$lte":lt}}).sort("datetime", DESCENDING).limit(limit)
+
+  return render_to_response('cms/sdtest.html',  # 使用するテンプレート
+                              {} 
+                            )
