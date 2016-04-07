@@ -95,6 +95,7 @@ for pcwlip in pcwliplist:
 
 if len(data_list) > 1:
 	db.rttmp.insert(data_list)
+	db.rttmp2.insert(data_list)
 
 ed = time.time()
 print(ed-st)

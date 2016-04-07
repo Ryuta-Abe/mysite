@@ -108,7 +108,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   db.rttmp.remove()
   print("tmpcol_count:"+str(db.tmpcol.count()))
   # pcwltimeコレクション作成
-  from datetime import datetime
+  from datetime import datetime, timedelta
   ag = tmpcol._get_collection().aggregate([
                                             {"$group":
                                               {"_id":
@@ -130,7 +130,18 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
     del(jdata['_id'])
     count = db.pcwltime.find({"datetime":jdata['datetime']}).count()
     if (count == 0):
+      pasttime = db.pcwltime.find().sort("datetime",-1).limit(1)
+      if (pasttime.count() != 0):
+        pasttime = pasttime[0]
+        while (10 < (jdata['datetime'] - pasttime["datetime"]).seconds <= 60):
+          pasttime["datetime"] = pasttime["datetime"] + timedelta(seconds = 10)
+          timedata = pcwltime(
+                              datetime = pasttime['datetime'],
+                             )
+          timedata.save()
+
       timedata = pcwltime(
                           datetime = jdata['datetime'],
                          )
       timedata.save()
+

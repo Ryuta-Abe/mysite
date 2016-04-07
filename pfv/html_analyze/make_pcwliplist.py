@@ -66,7 +66,7 @@ db.pcwliplist.insert({"ip":"10.0.12.37","node_id":1299,"floor":"W2-7F"}) # 27
 # kaiyo
 db.pcwliplist.insert({"ip":"10.0.12.135","node_id":9001,"floor":"kaiyo"}) # 1
 db.pcwliplist.insert({"ip":"10.0.12.91","node_id":9002,"floor":"kaiyo"}) # 2
-db.pcwliplist.insert({"ip":"10.0.12.139","node_id":9003,"floor":"kaiyo"}) # 3
+# db.pcwliplist.insert({"ip":"10.0.12.139","node_id":9003,"floor":"kaiyo"}) # 3
 db.pcwliplist.insert({"ip":"10.0.12.133","node_id":9004,"floor":"kaiyo"}) # 4
 db.pcwliplist.insert({"ip":"10.0.12.229","node_id":9005,"floor":"kaiyo"}) # 5
 db.pcwliplist.insert({"ip":"10.0.12.131","node_id":9006,"floor":"kaiyo"}) # 6
@@ -74,5 +74,6 @@ db.pcwliplist.insert({"ip":"10.0.12.239","node_id":9007,"floor":"kaiyo"}) # 7
 db.pcwliplist.insert({"ip":"10.0.12.201","node_id":9008,"floor":"kaiyo"}) # 8
 db.pcwliplist.insert({"ip":"10.0.12.141","node_id":9009,"floor":"kaiyo"}) # 9
 db.pcwliplist.insert({"ip":"10.0.12.125","node_id":9010,"floor":"kaiyo"}) # 10
+db.pcwliplist.insert({"ip":"10.0.12.97","node_id":9011,"floor":"kaiyo"}) # 11
 
 print("ip,node_id情報登録完了")

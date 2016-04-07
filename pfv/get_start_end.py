@@ -130,7 +130,8 @@ def get_start_end_mod(all_flag):
                     # 経路情報の取り出し
                     d_total = get_min_distance(tmp_node_id["floor"], tmp_node_id["pcwl_id"], data["nodelist"][num]["pcwl_id"])
                     # 妥当な移動距離かチェック
-                    if d_total < interval*22:
+                    # if d_total < interval*22:
+                    if d_total < interval*37:
                       append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists)
                       tmp_node_id = data["nodelist"][num]
                       tmp_startdt = data['id']['get_time_no']
