@@ -72,7 +72,7 @@
       var second_text = "秒";
     };
 
-    var year_list = [2014,2015];
+    var year_list = [2014,2015,2016,2017,2018];
 
     document.write('<select name="textbox_year">');
     for (var i = 0; i < year_list.length; i++) {
@@ -114,6 +114,7 @@
     document.write('</span>');
 
   </script>
+    <text id="count_header"></text>
       <!-- br>
       <text id="id2">表示日数：</text>
       <a id="one_day" onclick="one_day()" class="btn btn-default btn-sm">1日</a>
@@ -158,9 +159,17 @@
 
     //  センサーデータセット
     var pfvgraph_info = [];
+    var count = 0;
+    var size_sum = 0;
+    var size_ave;
     {% for s in pfvgraph_info %}
     pfvgraph_info.push({size:{{ s.size }},datetime:"{{ s.datetime }}"});
+    size_sum += {{s.size}};
+    count += 1;
     {% endfor %}
+    size_ave = size_sum / count;
+    size_ave = Math.round(size_ave*100)/100
+    d3.select("#count_header").text("count:"+String(count)+"件 --- average:"+String(size_ave)+"人/件");
 
     // // 一日分のデータを表示
     // function one_day(){
