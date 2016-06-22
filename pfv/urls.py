@@ -33,4 +33,6 @@ urlpatterns = patterns('',
     # url(r'^analyze/limit=(?P<limit>\d+)/$', views.analyze_direction, name='analyze_direction'),
     url(r'^analyze/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.analyze_direction, name='analyze_direction'),
 
+    url(r'^count_result/$', views.count_result, name='count_result'),
+
 )

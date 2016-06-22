@@ -84,7 +84,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   #################################################################
   if RT_flag:
     col_name = rttmp
-    cond = {"$limit":100000}
+    cond = {"$limit":1000000}
     # print("rttmp_count:"+str(db.col_name.count()))
   else:
     col_name = test

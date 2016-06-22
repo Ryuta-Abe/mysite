@@ -310,7 +310,7 @@ def pfv_graph(request):
   floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得
+  gt = lt - datetime.timedelta(hours = 2) # 1時間前までのデータを取得
 
   st = int(direction[0:2])
   ed = int(direction[2:4])
@@ -358,7 +358,7 @@ def stay_graph(request):
   floor = request.GET.get('floor', 'W2-6F')
 
   lt = dt_from_14digits_to_iso(date_time)
-  gt = lt - datetime.timedelta(hours = 1) # 1時間前までのデータを取得
+  gt = lt - datetime.timedelta(hours = 2) # 1時間前までのデータを取得
 
   # mac検索条件
   if mac != "":
@@ -630,3 +630,151 @@ def pfv_heatmap_json(request):
 
   info = {"coordinate_size":coordinate_size}
   return render_json_response(request, info) # dataをJSONとして出力
+
+
+def count_result(request):
+  dt = str(20160307160000)
+  mac = ""
+  floor = "kaiyo"
+
+  # データベースから取り出し
+  nodeset = []
+  nodedir_set = []
+  all_count_dict = {}
+  all_staycount_dict = {}
+  nodelist = db.pcwlnode.find({"floor":"kaiyo"}).sort("pcwl_id", ASCENDING)
+  for data in nodelist:
+    st_id = data["pcwl_id"]
+    for ed_id in data["next_id"]:
+      st_id = ("0"+str(st_id))[-2:]
+      ed_id = ("0"+str(ed_id))[-2:]
+      direction_id = st_id + ed_id
+      nodedir_set.append(direction_id)
+      all_count_dict.update({direction_id:0})
+    nodeset.append(st_id)
+    all_staycount_dict.update({int(data["pcwl_id"]):0})
+  
+  # mac検索条件
+  if mac != "":
+    mac_query = [] # 検索するmacのリスト
+    mac_num = round(len(mac)/18) # 検索するmac数
+    for i in range(0,mac_num):
+      mac_query.append(mac[0+i*18:17+i*18]).lower()
+
+  ############
+  # dataset = []
+  # t = db.test.find({"get_time_no":{"$lte":dt}}).sort("get_time_no", DESCENDING).limit(int(limit))
+  # for data in t:
+  #   data["node_id"] = convert_nodeid(data["node_id"])["node_id"]
+  #   dataset.append(data)
+
+  # # urlからクエリの取り出し
+  # lt = dt_from_14digits_to_iso(date_time)
+  # gt = lt - datetime.timedelta(hours = 2) # 1時間前までのデータを取得
+
+  # st = int(direction[0:2])
+  # ed = int(direction[2:4])
+  ############
+
+  dataset = []
+  sdataset = []
+  lt = dt_from_14digits_to_iso(dt)
+  interval = datetime.timedelta(minutes = 10)
+  all_countlist = []
+  all_staycountlist = []
+  time_cnt = 0
+
+  while (datetime.datetime(2016, 3, 7, 13, 00, 00) < lt):
+    gt = lt - interval
+
+    # # pfv情報の取り出しとグラフデータ化
+    pfvinfo_list = []
+    stayinfo_list = []
+    if mac == "": # すべてのmacの取り出し
+      pfvinfo_list += db.pfvinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+      stayinfo_list += db.stayinfo.find({"datetime":{"$gt":gt, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+    else : # 特定のmacを抽出
+      pfvinfo_list += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+      stayinfo_list += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+
+    # print(pfvinfo_list)
+    num = 0
+    count_list = []
+    cnt = 0
+    if len(pfvinfo_list) >= 1:
+      for direction in nodedir_set:
+        st = int(direction[0:2])
+        ed = int(direction[2:4])
+        count_info = []
+
+        for i in range(0,len(pfvinfo_list[0]["plist"])):
+          if (pfvinfo_list[0]["plist"][i]["direction"][0] == st) and (pfvinfo_list[0]["plist"][i]["direction"][1] == ed):
+            num = i
+        for pfvinfo in pfvinfo_list:
+          count_info.append({"datetime":pfvinfo["datetime"],"size":pfvinfo["plist"][num]["size"]})
+
+        total_size = 0
+        cnt = 0
+        for data in count_info:
+          total_size += data["size"]
+          cnt += 1
+        if cnt == 0:
+          ave = 0
+        else:  
+          ave = round(100*total_size/cnt)/100
+        count_list.append(ave)
+        total_ave = all_count_dict[direction] + ave
+        all_count_dict.update({direction:total_ave})
+        # count_list.append({"total":round(total_size), "count":cnt, "ave":ave})
+    dataset.append({"datetime":gt, "count_list":count_list})
+
+    s_num = 0
+    staycount_list = []
+    cnt = 0
+    if len(stayinfo_list) >= 1:
+      for node in nodeset:
+        node = int(node)
+        staycount_info = []
+        for i in range(0,len(stayinfo_list[0]["plist"])):
+          if stayinfo_list[0]["plist"][i]["pcwl_id"] == node:
+            s_num = i
+        for stayinfo in stayinfo_list:
+          staycount_info.append({"datetime":stayinfo["datetime"],"size":stayinfo["plist"][s_num]["size"]})
+
+        print("s_num="+str(s_num))
+        total_size = 0
+        cnt = 0
+        for data in staycount_info:
+          total_size += data["size"]
+          cnt += 1
+        if cnt == 0:
+          ave = 0
+        else:  
+          ave = round(100*total_size/cnt)/100
+        staycount_list.append(ave)
+        total_ave = all_staycount_dict[node] + ave
+        all_staycount_dict.update({node:total_ave})
+        # count_list.append({"total":round(total_size), "count":cnt, "ave":ave})
+    sdataset.append({"datetime":gt, "staycount_list":staycount_list})
+
+    print(lt)
+    lt = gt
+    time_cnt += 1
+
+  for direction in nodedir_set:
+    tmp = round(100*all_count_dict[direction]/time_cnt)/100 
+    all_countlist.append(tmp)
+  dataset.append({"datetime":datetime.datetime(2016,3,7,0,0,0), "count_list":all_countlist})
+
+  for node in nodeset:
+    tmp = round(100*all_staycount_dict[int(node)]/time_cnt)/100 
+    all_staycountlist.append(tmp)
+  sdataset.append({"datetime":datetime.datetime(2016,3,7,0,0,0), "staycount_list":all_staycountlist})
+
+  return render_to_response('pfv/count_result.html',  # 使用するテンプレート
+                              {'t': dataset, 'nodedir_set':nodedir_set, 'sdataset':sdataset,
+                               'nodeset':nodeset,
+                              # 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
+                              #  'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]
+                               } 
+                               )
