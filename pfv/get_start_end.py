@@ -60,7 +60,9 @@ def get_start_end_mod(all_flag):
   nodecnt_dict = init_nodecnt_dict()
 
   # data取り出し
-  datas = db.tmpcol.find().sort("_id.get_time_no",1)
+  # datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+  datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+  # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
   # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
 
@@ -78,6 +80,8 @@ def get_start_end_mod(all_flag):
       data['id'] = data['_id']
       del(data['_id'])
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
+      # print("--------------------------------------------")
+      # print("-*- mac : "+str(data["id"]["mac"])+" gtn : "+ str(data['id']['get_time_no']))
       
       for list_data in data['nodelist']:
         list_data['floor']   = convert_nodeid(list_data['node_id'])['floor']
@@ -86,6 +90,7 @@ def get_start_end_mod(all_flag):
         del(list_data["node_id"])
         del(list_data["dbm"])
       data['nodelist'] = sorted(data['nodelist'], key=lambda x:x["rssi"], reverse=True)
+      # print(data['nodelist'][:3])
       
       # RSSI上位3つまで参照
       node_cnt = min(len(data["nodelist"]), 3)
@@ -204,8 +209,10 @@ def get_start_end_mod(all_flag):
             # tmp_startdt = pastd[0]["pastlist"][0]["dt"]
             # nodecnt_dict update
             # print("before:pastlist:"+str(pastd[0]['pastlist']))
+            # print(pastd[0]["nodecnt_dict"]["W2-6F"]["11"])
             make_nodecnt_dict(pastd[0]["pastlist"], data, pastd[0]["nodecnt_dict"])
-            update_nodecnt_dict(node_cnt, data, pastd[0]["nodecnt_dict"])
+            # print("  nodecnt_dict : "+str(pastd[0]["nodecnt_dict"]["kaiyo"]))
+            # print(pastd[0]["nodecnt_dict"]["W2-6F"]["11"])
             # print("get_time_no:" + str(data["id"]["get_time_no"]))
             # print("after:pastlist:"+str(pastd[0]['pastlist']))
             # for pd in pastd[0]['pastlist']:
@@ -214,16 +221,20 @@ def get_start_end_mod(all_flag):
             # print("dt:"+str(data['id']['get_time_no']))
 
             pastd[0]['pastlist'] = sorted(pastd[0]['pastlist'], key=lambda x:x["dt"], reverse=True)
-            if (pastd[0]["pastlist"] != []):
-              tmp_int = (data['id']['get_time_no']-pastd[0]['pastlist'][0]["dt"]).seconds
-              # print("dt:"+str(data['id']['get_time_no'])+"  pastdt:"+str(pastd[0]['pastlist'][0]["dt"])+"  interval:"+str(tmp_int))
-              if (tmp_int > 60):
-                print("---------- interval > 60 error -----------")
-                pass
-            else:
-              pass
+            # if (pastd[0]["pastlist"] != []):
+            #   # tmp_int = (data['id']['get_time_no']-pastd[0]['pastlist'][0]["dt"]).seconds
+            #   # # print("dt:"+str(data['id']['get_time_no'])+"  pastdt:"+str(pastd[0]['pastlist'][0]["dt"])+"  interval:"+str(tmp_int))
+            #   # if (tmp_int > 60):
+            #   #   print("---------- interval > 60 error -----------")
+            #   pass
+            # else:
+            #   pass
               # print("dt:"+str(data['id']['get_time_no'])+"  pastlist:"+str(pastd[0]["pastlist"]))
             # print("-------------")
+
+          update_nodecnt_dict(node_cnt, data, pastd[0]["nodecnt_dict"])
+          # print("  nodecnt_dict : "+str(pastd[0]["nodecnt_dict"]["kaiyo"]))
+          # print("-- pastlist:"+str(pastd[0]["pastlist"]))
 
           if (pastd[0]["pastlist"] != []):
             pastd[0]['pastlist'] = sorted(pastd[0]['pastlist'], key=lambda x:x["dt"], reverse=True)
@@ -236,12 +247,12 @@ def get_start_end_mod(all_flag):
                 # print(pastd[0])
                 if (data["nodelist"][num]["pcwl_id"] != pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
                   # if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 4):
-                  if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 99999999):
+                  if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 5):
                     interval = (tmp_enddt - tmp_startdt).seconds
                     d_total = get_min_distance(data["nodelist"][num]["floor"], pastd[0]["pastlist"][0]["start_node"]["pcwl_id"], data["nodelist"][num]["pcwl_id"])
                     if d_total < interval*22:
                       # data_lists append
-                      print(tmp_startdt, tmp_enddt)
+                      # print(tmp_startdt, tmp_enddt)
                       data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastd[0]["pastlist"][0]["start_node"], data_lists))
                       # pastlist update
                       update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
@@ -256,13 +267,18 @@ def get_start_end_mod(all_flag):
 
                 # stay
                 elif (data["nodelist"][num]["pcwl_id"] == pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
-                  # data_lists_stay append
-                  print(tmp_startdt, tmp_enddt)
-                  data_lists_stay.append(append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, data["nodelist"][num], data_lists_stay))
-                  # pastlist update
-                  update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
-                  save_pastd(pastd[0], tmp_enddt)
-                  break
+                  if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= 5):
+                    # data_lists_stay append
+                    # print(tmp_startdt, tmp_enddt)
+                    data_lists_stay.append(append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, data["nodelist"][num], data_lists_stay))
+                    # pastlist update
+                    update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
+                    save_pastd(pastd[0], tmp_enddt)
+                    break
+                  else:
+                    update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
+                    save_pastd(pastd[0], tmp_enddt)
+                    break
                 # other floor
                 else:
                   # pastlist update
@@ -273,21 +289,23 @@ def get_start_end_mod(all_flag):
               # RSSI小
               else:
                 # pastdataそのままsave
+                update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                 save_pastd(pastd[0], tmp_enddt)
                 break
 
           # pastlist == []
           else:
+            # update_nodecnt_dict(node_cnt, data, pastd[0]["nodecnt_dict"])
             for num in range(0, node_cnt):
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
                 # nodecnt_dict update
                 # make_nodecnt_dict(pastd[0]["pastlist"], data, pastd[0]["nodecnt_dict"])
-                update_nodecnt_dict(node_cnt, data, pastd[0]["nodecnt_dict"])
                 # pastlist update
                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                 save_pastd(pastd[0], tmp_enddt)
                 break
 
+      # print(pastd)
       count_all += 1
 
     data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
@@ -369,6 +387,7 @@ def make_nodecnt_dict(node_history, data, nodecnt_dict):
         tmp_num   = history["node"][h_num]["pcwl_id"]
         tmp_floor = history["node"][h_num]["floor"]
         nodecnt_dict[tmp_floor].update({str(tmp_num) : nodecnt_dict[tmp_floor][str(tmp_num)]-1})
+        # print("--- -1 moved ---  "+str(history["node"][h_num]))
         if nodecnt_dict[tmp_floor][str(tmp_num)] == -1:
           print("---------! nodecnt_dict -1 error !---------")
           pass
@@ -379,6 +398,7 @@ def make_nodecnt_dict(node_history, data, nodecnt_dict):
     # print("loop_cnt"+str(loop_cnt))
   if remove_list != []:
     for l_num in reversed(remove_list):
+      # print("removed : "+str(node_history[l_num]))
       del node_history[l_num]
 
 def update_nodecnt_dict(node_cnt, data, nodecnt_dict):
@@ -386,9 +406,9 @@ def update_nodecnt_dict(node_cnt, data, nodecnt_dict):
     tmp_num   = data["nodelist"][num]['pcwl_id']
     tmp_floor = data["nodelist"][num]['floor']
     nodecnt_dict[tmp_floor].update({str(tmp_num) : nodecnt_dict[tmp_floor][str(tmp_num)]+1})
-    if nodecnt_dict[tmp_floor][str(tmp_num)] > 6:
-      print("---------! nodecnt_dict > 6 error !---------")
-      # print("data:"+str(data))
+    # print("--- +1 moved ---")
+    if nodecnt_dict[tmp_floor][str(tmp_num)] > 7:
+      print("---------! nodecnt_dict > 7 error !---------")
       pass
 
 def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists):
