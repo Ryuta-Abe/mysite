@@ -96,6 +96,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
                                             {"$group":
                                               {"_id":
                                                 {"mac":"$mac", 
+                                                # dt05
                                                  "get_time_no":"$dt_end0",
                                                 },
                                                "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
@@ -125,6 +126,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   tmp_time = 0 #一つ前の時刻
   jdatas = db.tmppcwltime.find().sort("_id")
 
+  # dt05
   for jdata in jdatas:
     jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
     del(jdata['_id'])
@@ -134,6 +136,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
       if (pasttime.count() != 0):
         pasttime = pasttime[0]
         while (10 < (jdata['datetime'] - pasttime["datetime"]).seconds <= 60):
+          # dt05
           pasttime["datetime"] = pasttime["datetime"] + timedelta(seconds = 10)
           timedata = pcwltime(
                               datetime = pasttime['datetime'],

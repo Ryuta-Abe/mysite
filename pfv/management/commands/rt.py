@@ -26,6 +26,7 @@ class Command(BaseCommand):
   	datas = db.rttmp.find()
   	for data in datas:
   		data["get_time_no"] = int(data["get_time_no"])
+      # dt05
   		data["dt_end0"]     = int(str(data["get_time_no"])[0:13] + "0")
   		db.rttmp.save(data)
 
