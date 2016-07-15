@@ -2,6 +2,7 @@
 from django.db import models
 from mongoengine import *
 
+DB_ALIAS = {"db_alias" : "nm4bd",}
 #データリスト用
 class pr_req(Document):
     _id         = StringField(max_length=255)
@@ -13,9 +14,7 @@ class pr_req(Document):
     sequence    = IntField()
     timestamp   = IntField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
 
 # PCWLのノード情報
 class pcwlnode(Document):
@@ -25,10 +24,7 @@ class pcwlnode(Document):
     next_id = ListField(IntField())
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "pcwl_id" : 2,
     # "pos_x" : 990,
@@ -42,10 +38,7 @@ class pfvinfo(Document):
     datetime = DateTimeField()
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "datetime" : ISODate("2015-06-03T13:04:06Z"),
     # "floor" : "W2-6F",
@@ -57,18 +50,14 @@ class pfvinfoexperiment(Document):
     datetime = DateTimeField()
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
 
 class pfvinfoexperiment2(Document):
     plist = ListField(DictField())
     datetime = DateTimeField()
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
 
 # 人流情報(mac情報付き)
 class pfvmacinfo(Document):
@@ -77,10 +66,7 @@ class pfvmacinfo(Document):
     route = ListField(ListField(IntField))
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "datetime" : ISODate("2015-06-03T13:04:06Z"),
     # "floor" : "W2-6F",
@@ -94,10 +80,7 @@ class stayinfo(Document):
     datetime = DateTimeField()
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "datetime" : ISODate("2015-09-25T18:11:37Z"),
     # "floor" : "W2-6F",
@@ -110,10 +93,7 @@ class staymacinfo(Document):
     datetime = DateTimeField()
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "datetime" : ISODate("2015-09-25T18:11:37Z"),
     # "floor" : "W2-6F",
@@ -126,10 +106,7 @@ class bookmark(Document):
     url = StringField(max_length=255)
     frequency = IntField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "name" : "6月3日人流データ",
     # "url" : "?datetime=20150603122120&timerange=60&experiment=0&language=jp",
@@ -143,9 +120,23 @@ class rtraw(Document):
     rssi        = IntField()
     dbm        = IntField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
+
+class raw100(Document):
+    ap_ip       = StringField(max_length=255)
+    get_time_no = IntField()                   ### 仮の名前 要調整
+    mac         = StringField(max_length=255)
+    dbm         = IntField()
+    seq         = IntField()
+
+    meta = DB_ALIAS
+    # サンプル
+    # {"ap_ip":"10.0.2.74",
+    #  "get_time_no":ISODate(2016-01-02 12:34:56),
+    #  "mac":"01:23:45:67:89:ab",
+    #  "dbm"-50:,
+    #  "seq":1234}
+
 
 class test(Document):
     _id          = StringField(max_length=255)
@@ -157,9 +148,7 @@ class test(Document):
     sequence    = IntField()
     timestamp   = IntField()
 
-    meta = {
-    	"db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
 
 class rttmp(Document):
     _id          = StringField(max_length=255)
@@ -168,28 +157,16 @@ class rttmp(Document):
     mac         = StringField(max_length=255)
     rssi        = IntField()
     dbm         = IntField()
-    # sequence    = IntField()
-    # timestamp   = IntField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
 
 class tmpcol(Document):
     _id = DictField()
-    # nodelist = ListField(DictField())
-    # mac         = StringField(max_length=255)
-    # rssi        = IntField()
-    # get_time_no = IntField()
-    # node_id     = IntField()
     mac         = StringField()
     get_time_no = IntField()
     nodelist    = ListField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "_id" : { "get_time_no" : NumberLong("20150603060002"), "mac" : "00:15:af:e4:e1:ac" },
     # "nodelist" : [ { "node_id" : 1237, "dbm" : -89 } ]
@@ -201,10 +178,7 @@ class pastdata(Document):
     nodecnt_dict= DictField() 
     pastlist    = ListField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "mac" : "xx:xx:xx:xx:xx:xx",
     # "update_dt":datetime.datetime(2015,12,3,12,35,30),
@@ -227,10 +201,7 @@ class pcwlroute(Document):
     dlist = ListField(ListField(DictField()))
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "query" : [ 14, 24 ],
     # "floor" : "W2-6F",
@@ -240,10 +211,7 @@ class pcwltime(Document):
     _id = StringField()
     datetime = DateTimeField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
-
+    meta = DB_ALIAS
     # サンプル
     # "datetime" : ISODate("2015-06-03T14:23:39Z")
 
@@ -253,6 +221,4 @@ class heatmapinfo(Document):
     coordinate_size = ListField(DictField())
     floor = StringField()
 
-    meta = {
-        "db_alias" : "nm4bd",
-    }
+    meta = DB_ALIAS
