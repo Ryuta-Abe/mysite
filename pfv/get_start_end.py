@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, tmpcol, pcwlroute, pastdata
+from pfv.models import pr_req, test, tmpcol, pcwlroute, pastdata, pfvinfo, pfvmacinfo, stayinfo, staymacinfo
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvmacinfo, make_stayinfo, make_staymacinfo
 from pfv.make_pcwltime import make_pcwltime
 from pfv.convert_nodeid import *
@@ -25,8 +25,12 @@ MIN_NODE_NUM = 1
 MAX_NODE_NUM = 27
 FLOOR_LIST   = ["W2-6F","W2-7F","kaiyo"]
 # time_range = timedelta(minutes=1) # 過去の参照時間幅設定
-time_range = timedelta(seconds=60) # 過去の参照時間幅設定
-TH_RSSI = -80
+int_time_range = 60
+time_range = timedelta(seconds=int_time_range) # 過去の参照時間幅設定
+# dt05
+# min_interval = 5
+min_interval = 10
+TH_RSSI    = -80
 repeat_cnt = 5
 
 def get_start_end(request):
@@ -47,6 +51,17 @@ def get_start_end_rt(request):
 
 def get_start_end_mod(all_flag):
   from datetime import datetime, timedelta
+
+  ### DEBUG用DB初期化 ##############
+  DEBUG = True
+  if (DEBUG):
+    db.pastdata.drop()
+    db.pfvinfo.drop()
+    db.pfvmacinfo.drop()
+    db.stayinfo.drop()
+    db.staymacinfo.drop()
+  #################################
+
   # 初期設定
   count     = 0
   count_all = 0
@@ -62,7 +77,7 @@ def get_start_end_mod(all_flag):
 
   # data取り出し
   # datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
-  datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+  datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
   # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
@@ -81,7 +96,6 @@ def get_start_end_mod(all_flag):
       data['id'] = data['_id']
       del(data['_id'])
       data['id']['get_time_no'] = datetime.strptime(str(data['id']['get_time_no']), '%Y%m%d%H%M%S')
-      # print("--------------------------------------------")
       
       for list_data in data['nodelist']:
         list_data['floor']   = convert_nodeid(list_data['node_id'])['floor']
@@ -224,7 +238,9 @@ def get_start_end_mod(all_flag):
                   if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= repeat_cnt):
                     interval = (tmp_enddt - tmp_startdt).seconds
                     d_total = get_min_distance(data["nodelist"][num]["floor"], pastd[0]["pastlist"][0]["start_node"]["pcwl_id"], data["nodelist"][num]["pcwl_id"])
-                    if d_total < interval*22:
+
+                    # TODO:floor毎にintervalへの倍率変更
+                    if d_total < interval*33:
                       # data_lists append
                       data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastd[0]["pastlist"][0]["start_node"], data_lists))
                       # pastlist update
@@ -275,7 +291,6 @@ def get_start_end_mod(all_flag):
                 save_pastd(pastd[0], tmp_enddt)
                 break
 
-      # print(pastd)
       count_all += 1
 
     data_lists = sorted(data_lists, key=lambda x:x["start_time"], reverse=True)
@@ -283,9 +298,6 @@ def get_start_end_mod(all_flag):
 
     # import time
     # start = time.time()
-    # print("data_lists:"+str(data_lists))
-    # print("data_lists_stay:"+str(data_lists_stay))
-
     make_pfvinfo(data_lists,db.pfvinfo,all_flag)
     make_stayinfo(data_lists_stay,db.stayinfo,all_flag)
     make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag)
@@ -294,9 +306,7 @@ def get_start_end_mod(all_flag):
     # print("time:"+str(end-start))
 
     return(data_lists[:2000], count, count_all)
-  # return render_to_response('pfv/get_start_end.html',  # 使用するテンプレート
-  #                            {"datas":data_lists[:2000], "count":count, "count_all":count_all} 
-  #                          ) 
+
   else:
     return([],0, 0)
 
@@ -323,7 +333,6 @@ def get_min_distance(floor, node1, node2):
   route_info += db.pcwlroute.find({"$and":[ {"floor" : floor}, {"query" : node1}, {"query" : node2} ]})
   # 最小距離算出
   for info in route_info:
-    # for part in route:
     for route in info["dlist"]:
       tmp_d_total = 0
       for part in route:
@@ -345,7 +354,6 @@ def init_nodecnt_dict():
   return nodecnt_dict
 
 def make_nodecnt_dict(node_history, data, nodecnt_dict):
-  # print("len(node_history):"+str(len(node_history)))
   remove_list = []
   loop_cnt = 0
   for history in node_history:
@@ -369,14 +377,14 @@ def update_nodecnt_dict(node_cnt, data, nodecnt_dict):
     tmp_num   = data["nodelist"][num]['pcwl_id']
     tmp_floor = data["nodelist"][num]['floor']
     nodecnt_dict[tmp_floor].update({str(tmp_num) : nodecnt_dict[tmp_floor][str(tmp_num)]+1})
-    if nodecnt_dict[tmp_floor][str(tmp_num)] > 7:
+    if nodecnt_dict[tmp_floor][str(tmp_num)] > int_time_range/min_interval + 1:
       print("---------! nodecnt_dict > 7 error !---------")
       pass
 
 def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists):
   if tmp_enddt < tmp_startdt:
     print("---------! ed > st error !---------")
-  if (tmp_enddt - tmp_startdt).seconds >= 61:
+  if (tmp_enddt - tmp_startdt).seconds > int_time_range:
     print("---------! flow ed-st>60 error !---------")
   se_data =  {"mac":data["id"]["mac"],
               "start_time":tmp_startdt,
@@ -391,7 +399,7 @@ def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists
 def append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists_stay):
   if tmp_enddt < tmp_startdt:
     print("---------! ed > st error !---------")
-  if (tmp_enddt - tmp_startdt).seconds >= 61:
+  if (tmp_enddt - tmp_startdt).seconds > int_time_range:
     print("---------! stay ed-st>60 error !---------")
   se_data =  {"mac":data["id"]["mac"],
               "start_time":tmp_startdt,

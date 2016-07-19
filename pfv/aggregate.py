@@ -16,6 +16,8 @@ import locale
 client = MongoClient()
 db = client.nm4bd
 
+min_interval = 10
+
 # aggredateのみ
 def aggregate_data(request):
   import time
@@ -127,17 +129,19 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   jdatas = db.tmppcwltime.find().sort("_id")
 
   # dt05
+  # min_interval = 5
   for jdata in jdatas:
     jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
     del(jdata['_id'])
-    count = db.pcwltime.find({"datetime":jdata['datetime']}).count()
-    if (count == 0):
+    exist = db.pcwltime.find({"datetime":jdata['datetime']}).count()
+    # 重複確認、なければ登録
+    if (exist == 0):
       pasttime = db.pcwltime.find().sort("datetime",-1).limit(1)
       if (pasttime.count() != 0):
         pasttime = pasttime[0]
-        while (10 < (jdata['datetime'] - pasttime["datetime"]).seconds <= 60):
+        while (min_interval < (jdata['datetime'] - pasttime["datetime"]).seconds <= 60):
           # dt05
-          pasttime["datetime"] = pasttime["datetime"] + timedelta(seconds = 10)
+          pasttime["datetime"] = pasttime["datetime"] + timedelta(seconds = min_interval)
           timedata = pcwltime(
                               datetime = pasttime['datetime'],
                              )
