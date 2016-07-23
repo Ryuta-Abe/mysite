@@ -240,7 +240,9 @@ def get_start_end_mod(all_flag):
                     d_total = get_min_distance(data["nodelist"][num]["floor"], pastd[0]["pastlist"][0]["start_node"]["pcwl_id"], data["nodelist"][num]["pcwl_id"])
 
                     # TODO:floor毎にintervalへの倍率変更
-                    if d_total < interval*33:
+                    # TODO:5秒のみ指定速度/10秒以上は今までどおり
+                    velocity = fix_velocity(tmp_floor, interval)
+                    if d_total < interval * velocity:
                       # data_lists append
                       data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastd[0]["pastlist"][0]["start_node"], data_lists))
                       # pastlist update
@@ -423,6 +425,22 @@ def save_pastd(pastd,update_dt):
           }
   db.pastdata.remove({"mac":pastd["mac"]})
   db.pastdata.save(pastd)
+
+def fix_velocity(floor, interval):
+  # 各floor速度対応
+  v_W2_6F = 22
+  v_W2_7F = 22
+  v_kaiyo = 33
+  velocity_dict = {"W2-6F":{"lt10":v_W2_6F*2,"gte10":v_W2_6F},
+                   "W2-7F":{"lt10":v_W2_7F*2,"gte10":v_W2_7F},
+                   "kaiyo":{"lt10":v_kaiyo*2,"gte10":v_kaiyo},
+                  }
+  if interval < 10:
+    velocity = velocity_dict[floor]["lt10"]
+  else:
+    velocity = velocity_dict[floor]["gte10"]
+  return velocity
+
 
 # not using
 # def distance_filter(st_list,ed_list,interval):

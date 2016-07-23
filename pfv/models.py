@@ -2,7 +2,8 @@
 from django.db import models
 from mongoengine import *
 
-DB_ALIAS = {"db_alias" : "nm4bd",}
+DB_ALIAS = {"db_alias" : "nm4bd"}
+
 #データリスト用
 class pr_req(Document):
     _id         = StringField(max_length=255)
@@ -13,6 +14,13 @@ class pr_req(Document):
     dbm         = IntField()
     sequence    = IntField()
     timestamp   = IntField()
+
+    meta = DB_ALIAS
+
+# timeout log
+class timeoutlog(Document):
+    to_AP = ListField()
+    datetime = DateTimeField()
 
     meta = DB_ALIAS
 
@@ -122,6 +130,7 @@ class rtraw(Document):
 
     meta = DB_ALIAS
 
+# 8Fdata by PCWL-0100
 class raw100(Document):
     ap_ip       = StringField(max_length=255)
     get_time_no = IntField()                   ### 仮の名前 要調整

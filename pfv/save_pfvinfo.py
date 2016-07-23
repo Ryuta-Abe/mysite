@@ -115,8 +115,6 @@ def make_empty_pfvinfo(dt,db_name,floor): # 空のpfvinfoを作成
 
 def optimize_routeinfo(st_list,ed_list,route_info): # 向きの最適化と各経路の重みを計算
 	output = []
-	# if st_list == [{'floor': 'kaiyo', 'pcwl_id': 9, 'rssi': -44}]:
-	# 	pass
 	# 経路情報の向きを最適化(st > edの場合にリストとdirectionの中身を逆向きに)
 	# if st_list[0]["pcwl_id"] > ed_list[0]["pcwl_id"]:
 	if st_list[0]["pcwl_id"] != route_info[0][0]["direction"][0]:
@@ -201,17 +199,13 @@ def make_pfvinfo(dataset,db_name,all_flag):
 		if (data["end_node"][0]["pcwl_id"]==2):
 			pass
 
-		print(str(data["start_node"][0]["pcwl_id"])+"->"+str(data["end_node"][0]["pcwl_id"]))
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
 													{"floor" : data["floor"]},
 													{"query" : data["start_node"][0]["pcwl_id"]}, 
 													{"query" : data["end_node"][0]["pcwl_id"]}
 												]})
-		print(route_info)
 		route_info = optimize_routeinfo(data["start_node"],data["end_node"],route_info[0]["dlist"]) # 向きの最適化と各経路の重み付けを行う
-		print(route_info)
-		print("--------------------------------")
 		# print("[出発点,到着点] = "+str([data["start_node"][0]["pcwl_id"], data["end_node"][0]["pcwl_id"]])+" , 間隔 = "+str(interval)+" 秒 floor:"+data["floor"])
 
 		if num >= 1:
