@@ -32,7 +32,7 @@ class Command(BaseCommand):
     # dt05
     datas = db.trtmp.find()
     for data in datas:
-      dt_end = int(data["get_time_no"])[-1:])
+      dt_end = int(str(data["get_time_no"])[-1:])
       if (0 <= dt_end <=4):
         data["dt_end05"] = int(str(data["get_time_no"])[0:13] + "0")
       elif (5 <= dt_end <=9):

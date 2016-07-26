@@ -29,9 +29,9 @@ int_time_range = 60
 time_range = timedelta(seconds=int_time_range) # 過去の参照時間幅設定
 # dt05
 # min_interval = 5
-min_interval = 10
+# min_interval = 10
 TH_RSSI    = -80
-repeat_cnt = 5
+repeat_cnt = 99
 
 def get_start_end(request):
 
@@ -49,11 +49,16 @@ def get_start_end_rt(request):
                              {"datas":datas, "count":count, "count_all":count_all} 
                            ) 
 
-def get_start_end_mod(all_flag):
+def get_start_end_mod(all_flag, tr_flag):
   from datetime import datetime, timedelta
+  # dt05
+  if tr_flag:
+    min_interval = 5
+  else:
+    min_interval = 10
 
   ### DEBUG用DB初期化 ##############
-  DEBUG = True
+  DEBUG = False
   if (DEBUG):
     db.pastdata.drop()
     db.pfvinfo.drop()
@@ -76,8 +81,8 @@ def get_start_end_mod(all_flag):
   nodecnt_dict = init_nodecnt_dict()
 
   # data取り出し
-  # datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
-  datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+  datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+  # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
   # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
   # datas = db.tmpcol.find({"_id.get_time_no":{"$gte":20150925173500,"$lte":20150925182000}}).limit(5000).sort("_id.get_time_no",-1).sort("_id.mac")
@@ -209,7 +214,9 @@ def get_start_end_mod(all_flag):
 
       # Realtime_process
       else:
+        print("RT process")
         if (pastd != []) and (data['id']['get_time_no'] <= pastd[0]["update_dt"]):
+          print("0")
           pass
         else:
           # 無ければ初期nodecnt_dict, 初期pastlistを作成
@@ -225,16 +232,19 @@ def get_start_end_mod(all_flag):
 
             pastd[0]['pastlist'] = sorted(pastd[0]['pastlist'], key=lambda x:x["dt"], reverse=True)
 
-          update_nodecnt_dict(node_cnt, data, pastd[0]["nodecnt_dict"])
+          update_nodecnt_dict(node_cnt, min_interval ,data, pastd[0]["nodecnt_dict"])
           if (pastd[0]["pastlist"] != []):
+            print("1")
             pastd[0]['pastlist'] = sorted(pastd[0]['pastlist'], key=lambda x:x["dt"], reverse=True)
             tmp_startdt = pastd[0]["pastlist"][0]["dt"]
             for num in range(0, node_cnt):
               tmp_num   = str(data["nodelist"][num]['pcwl_id'])
               tmp_floor = data["nodelist"][num]['floor']
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
+                print("2")
                 # flow
                 if (data["nodelist"][num]["pcwl_id"] != pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
+                  print("flow")
                   if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= repeat_cnt):
                     interval = (tmp_enddt - tmp_startdt).seconds
                     d_total = get_min_distance(data["nodelist"][num]["floor"], pastd[0]["pastlist"][0]["start_node"]["pcwl_id"], data["nodelist"][num]["pcwl_id"])
@@ -248,29 +258,38 @@ def get_start_end_mod(all_flag):
                       # pastlist update
                       update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                       save_pastd(pastd[0], tmp_enddt)
+                      print("flow1")
                       break
 
                   else:
+                    print("3")
                     # pastlist update
                     update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                     save_pastd(pastd[0], tmp_enddt)
+                    print("flow2")
                     break
 
                 # stay
                 elif (data["nodelist"][num]["pcwl_id"] == pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
+
+                  print("stay")
+                  
                   if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_num] <= repeat_cnt):
                     # data_lists_stay append
                     data_lists_stay.append(append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, data["nodelist"][num], data_lists_stay))
                     # pastlist update
                     update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                     save_pastd(pastd[0], tmp_enddt)
+                    print("stay1")
                     break
                   else:
                     update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                     save_pastd(pastd[0], tmp_enddt)
+                    print("stay2")
                     break
                 # other floor
                 else:
+                  print("4")
                   # pastlist update
                   update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                   save_pastd(pastd[0], tmp_enddt)
@@ -278,6 +297,7 @@ def get_start_end_mod(all_flag):
 
               # RSSI小
               else:
+                print("5")
                 # pastdataそのままsave
                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                 save_pastd(pastd[0], tmp_enddt)
@@ -285,6 +305,7 @@ def get_start_end_mod(all_flag):
 
           # pastlist == []
           else:
+            print("6")
             for num in range(0, node_cnt):
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
                 # nodecnt_dict update
@@ -300,10 +321,10 @@ def get_start_end_mod(all_flag):
 
     # import time
     # start = time.time()
-    make_pfvinfo(data_lists,db.pfvinfo,all_flag)
-    make_stayinfo(data_lists_stay,db.stayinfo,all_flag)
-    make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag)
-    make_staymacinfo(data_lists_stay,db.staymacinfo,all_flag)
+    make_pfvinfo(data_lists,db.pfvinfo,all_flag,min_interval)
+    make_stayinfo(data_lists_stay,db.stayinfo,all_flag,min_interval)
+    make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag,min_interval)
+    make_staymacinfo(data_lists_stay,db.staymacinfo,all_flag,min_interval)
     # end = time.time()
     # print("time:"+str(end-start))
 
@@ -374,12 +395,12 @@ def make_nodecnt_dict(node_history, data, nodecnt_dict):
     for l_num in reversed(remove_list):
       del node_history[l_num]
 
-def update_nodecnt_dict(node_cnt, data, nodecnt_dict):
+def update_nodecnt_dict(node_cnt, min_interval, data, nodecnt_dict):
   for num in range(0, node_cnt):
     tmp_num   = data["nodelist"][num]['pcwl_id']
     tmp_floor = data["nodelist"][num]['floor']
     nodecnt_dict[tmp_floor].update({str(tmp_num) : nodecnt_dict[tmp_floor][str(tmp_num)]+1})
-    if nodecnt_dict[tmp_floor][str(tmp_num)] > int_time_range/min_interval + 1:
+    if nodecnt_dict[tmp_floor][str(tmp_num)] > int_time_range / min_interval + 1:
       print("---------! nodecnt_dict > 7 error !---------")
       pass
 

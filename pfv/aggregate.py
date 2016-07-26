@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp, timeoutlog, tmptimeoutlog
+from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp, trtmp, timeoutlog, tmptimeoutlog
 from pfv.get_start_end import get_start_end, get_start_end_mod
 from pfv.convert_nodeid import *
 
@@ -48,7 +48,7 @@ def process_all(request):
 
   aggregate_mod(startdt_int14, enddt_int14, all_bool, False, False)
   db.pastdata.remove()
-  get_start_end_mod(False)
+  get_start_end_mod(False,False)
   ed = time.time()
   print(ed - st)
 
@@ -72,7 +72,7 @@ def realtime(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True):
   if DEBUG == True:
     db.pastdata.remove()
 
-  get_start_end_mod(False)
+  get_start_end_mod(False,False)
   ed = time.time()
   print(ed - st)
 
@@ -89,7 +89,7 @@ def RTtracking(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True)
   if DEBUG == True:
     db.pastdata.remove()
 
-  get_start_end_mod(False)
+  get_start_end_mod(False,True)
   ed = time.time()
   print(ed - st)
 
@@ -112,6 +112,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
     if tr_flag:
       col_name = trtmp
       dt_end   = "$dt_end05"
+      min_interval = 5
     else:
       col_name = rttmp
       dt_end   = "$dt_end0"
@@ -139,8 +140,8 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
                                         allowDiskUse=True,
                                         )
 
-  db.rttmp.remove()
-  db.trtmp.remove()
+  # db.rttmp.remove()
+  # db.trtmp.remove()
 
   print("tmpcol_count:"+str(db.tmpcol.count()))
   # pcwltimeコレクション作成
@@ -162,7 +163,6 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
   jdatas = db.tmppcwltime.find().sort("_id")
 
   # dt05
-  # min_interval = 5
   for jdata in jdatas:
     jdata['datetime'] = datetime.strptime(str(jdata['_id']['get_time_no']), '%Y%m%d%H%M%S')
     del(jdata['_id'])

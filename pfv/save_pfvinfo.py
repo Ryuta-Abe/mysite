@@ -186,7 +186,7 @@ def select_one_route(route_info): # 入力：複数の経路、出力：最もad
 			output = route
 	return [output]
 
-def make_pfvinfo(dataset,db_name,all_flag):
+def make_pfvinfo(dataset,db_name,all_flag,min_interval):
 	# 開始時にDBを初期化
 	if all_flag:
 		db_name.remove()
@@ -194,7 +194,7 @@ def make_pfvinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
+		num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		if (data["end_node"][0]["pcwl_id"]==2):
 			pass
@@ -277,7 +277,7 @@ def is_experiment(db_name): # 実験用DBか否かを判定
 		return False
 
 # mac情報付きpfvinfo
-def make_pfvmacinfo(dataset,db_name,all_flag):
+def make_pfvmacinfo(dataset,db_name,all_flag,min_interval):
 	# 開始時にDBを初期化
 	if all_flag:
 		db_name.remove()
@@ -286,7 +286,7 @@ def make_pfvmacinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
+		num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 		route_info = [] # 経路情報の取り出し
 		route_info += db.pcwlroute.find({"$and": [
@@ -364,7 +364,7 @@ def make_empty_stayinfo(dt,floor): # 空のstayinfoを作成
 		plist.append({"pcwl_id":node["pcwl_id"],"size":0,"mac_list":[]})
 	return {'datetime':dt,'plist':plist,'floor':floor}
 
-def make_stayinfo(dataset,db_name,all_flag):
+def make_stayinfo(dataset,db_name,all_flag,min_interval):
 	# stayinfoを初期化
 	if all_flag:
 		db_name.remove()
@@ -372,7 +372,7 @@ def make_stayinfo(dataset,db_name,all_flag):
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
+		num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
 		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
 		# print("interval : "+str(interval))
@@ -394,14 +394,14 @@ def make_stayinfo(dataset,db_name,all_flag):
 		progress += 1
 		# db_name.create_index([("datetime", ASCENDING)])
 
-def make_staymacinfo(dataset,db_name,all_flag):
+def make_staymacinfo(dataset,db_name,all_flag,min_interval):
 	if all_flag:
 		db_name.remove()
 
 	progress = 0
 	for data in dataset:
 		interval = round(data["interval"])
-		num = int(round(interval / 10)) # 40秒間隔の場合, num = 4
+		num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
 		# print("interval : "+str(interval))
 		tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
 
