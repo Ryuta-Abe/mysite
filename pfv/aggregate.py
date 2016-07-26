@@ -3,8 +3,10 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp
+from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp, timeoutlog, tmptimeoutlog
 from pfv.get_start_end import get_start_end, get_start_end_mod
+from pfv.convert_nodeid import *
+
 from mongoengine import *
 from pymongo import *
 
@@ -16,8 +18,6 @@ import locale
 client = MongoClient()
 db = client.nm4bd
 
-min_interval = 10
-
 # aggredateのみ
 def aggregate_data(request):
   import time
@@ -28,7 +28,7 @@ def aggregate_data(request):
   enddt_int14   = 20991231235959
   all_bool      = True
 
-  aggregate_mod(startdt_int14, enddt_int14, all_bool, False)
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, False, False)
   ed = time.time()
   print(ed - st)
 
@@ -46,7 +46,7 @@ def process_all(request):
   enddt_int14   = 20991231235959
   all_bool      = True
 
-  aggregate_mod(startdt_int14, enddt_int14, all_bool, False)
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, False, False)
   db.pastdata.remove()
   get_start_end_mod(False)
   ed = time.time()
@@ -68,7 +68,7 @@ def realtime(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True):
   # enddt_int14   = 20991231235959
   all_bool      = DEBUG
 
-  aggregate_mod(startdt_int14, enddt_int14, all_bool, True)
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, True, False)
   if DEBUG == True:
     db.pastdata.remove()
 
@@ -76,7 +76,28 @@ def realtime(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True):
   ed = time.time()
   print(ed - st)
 
-def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
+def RTtracking(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True):
+  import time
+  st = time.time()
+  print("RTtracking process")
+  # startdt_int14 = 20150603000000
+  # startdt_int14 = 20151203123500
+  # enddt_int14   = 20991231235959
+  all_bool      = DEBUG
+
+  aggregate_mod(startdt_int14, enddt_int14, all_bool, True, True)
+  if DEBUG == True:
+    db.pastdata.remove()
+
+  get_start_end_mod(False)
+  ed = time.time()
+  print(ed - st)
+
+
+# dt05
+min_interval = 10
+
+def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
   ### testコレクションにstr型のget_time_noが入ってしまった場合にコメントアウト ###
   # datas = db.test.find()
   # for data in datas:
@@ -84,13 +105,21 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
   #   data["dt_end0"]     = int(str(data["get_time_no"])[0:13] + "0")
   #   db.test.save(data)
   #################################################################
+
+  # TODO:tracking用分岐作成
   if RT_flag:
-    col_name = rttmp
     cond = {"$limit":1000000}
+    if tr_flag:
+      col_name = trtmp
+      dt_end   = "$dt_end05"
+    else:
+      col_name = rttmp
+      dt_end   = "$dt_end0"
     # print("rttmp_count:"+str(db.col_name.count()))
   else:
     col_name = test
     cond = {"$match": {"dt_end0": {"$gte":startdt_int14, "$lt":enddt_int14} } }
+    dt_end = "$dt_end0"
 
   ag = col_name._get_collection().aggregate([
                                           # {"$limit":1000},
@@ -99,7 +128,8 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
                                               {"_id":
                                                 {"mac":"$mac", 
                                                 # dt05
-                                                 "get_time_no":"$dt_end0",
+                                                 "get_time_no":dt_end,
+                                                 # "get_time_no":"$dt_end05",
                                                 },
                                                "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
                                               },
@@ -108,7 +138,10 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
                                           ],
                                         allowDiskUse=True,
                                         )
+
   db.rttmp.remove()
+  db.trtmp.remove()
+
   print("tmpcol_count:"+str(db.tmpcol.count()))
   # pcwltimeコレクション作成
   from datetime import datetime, timedelta
@@ -152,3 +185,9 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag):
                          )
       timedata.save()
 
+
+  # # timeoutlog
+  # jdatas = db.tmptimeoutlog.find()
+  # for jdata in jdatas:
+  #   "pcwl_id":convert_nodeid(tmp_node_id['node_id'])["node_id"],
+  #   "floor":convert_nodeid(tmp_node_id['node_id'])["floor"],

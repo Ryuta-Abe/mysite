@@ -17,10 +17,23 @@ class pr_req(Document):
 
     meta = DB_ALIAS
 
+# timeout log tmpcol
+class tmptimeoutlog(Document):
+    node_id  = ListField()
+    # floor    = StringField()
+    datetime = DateTimeField()
+    ip       = StringField()
+    TO_type  = StringField()
+
+    meta = DB_ALIAS
+
 # timeout log
 class timeoutlog(Document):
-    to_AP = ListField()
+    pcwl_id  = ListField()
+    floor    = StringField()
     datetime = DateTimeField()
+    # ip       = StringField()
+    TO_type  = StringField()
 
     meta = DB_ALIAS
 
@@ -160,6 +173,16 @@ class test(Document):
     meta = DB_ALIAS
 
 class rttmp(Document):
+    _id          = StringField(max_length=255)
+    node_id     = IntField()
+    get_time_no = IntField()
+    mac         = StringField(max_length=255)
+    rssi        = IntField()
+    dbm         = IntField()
+
+    meta = DB_ALIAS
+
+class trtmp(Document):
     _id          = StringField(max_length=255)
     node_id     = IntField()
     get_time_no = IntField()
