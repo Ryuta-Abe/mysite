@@ -653,7 +653,7 @@ def count_result(request):
       all_count_dict.update({direction_id:0})
     nodeset.append(st_id)
     all_staycount_dict.update({int(data["pcwl_id"]):0})
-  
+
   # mac検索条件
   if mac != "":
     mac_query = [] # 検索するmacのリスト
@@ -720,7 +720,7 @@ def count_result(request):
           cnt += 1
         if cnt == 0:
           ave = 0
-        else:  
+        else:
           ave = round(100*total_size/cnt)/100
         count_list.append(ave)
         total_ave = all_count_dict[direction] + ave
@@ -749,7 +749,7 @@ def count_result(request):
           cnt += 1
         if cnt == 0:
           ave = 0
-        else:  
+        else:
           ave = round(100*total_size/cnt)/100
         staycount_list.append(ave)
         total_ave = all_staycount_dict[node] + ave
@@ -762,12 +762,12 @@ def count_result(request):
     time_cnt += 1
 
   for direction in nodedir_set:
-    tmp = round(100*all_count_dict[direction]/time_cnt)/100 
+    tmp = round(100*all_count_dict[direction]/time_cnt)/100
     all_countlist.append(tmp)
   dataset.append({"datetime":datetime.datetime(2016,3,7,0,0,0), "count_list":all_countlist})
 
   for node in nodeset:
-    tmp = round(100*all_staycount_dict[int(node)]/time_cnt)/100 
+    tmp = round(100*all_staycount_dict[int(node)]/time_cnt)/100
     all_staycountlist.append(tmp)
   sdataset.append({"datetime":datetime.datetime(2016,3,7,0,0,0), "staycount_list":all_staycountlist})
 
@@ -776,5 +776,117 @@ def count_result(request):
                                'nodeset':nodeset,
                               # 'limit':limit, 'year':date_time[0:4],'month':date_time[4:6],
                               #  'day':date_time[6:8],'hour':date_time[8:10],'minute':date_time[10:12]
-                               } 
+                               }
                                )
+
+
+
+def tag_track_map(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', 'now')
+  timerange = int(request.GET.get('timerange', 5))
+  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:16')
+  language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-6F')
+
+  if date_time == 'now':
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find({"floor":floor})
+
+  # ブックマーク情報の取り出し
+  bookmarks = []
+  bookmarks += db.bookmark.find()
+
+  # mac検索条件
+  mac_query = [] # 検索するmacのリスト
+  mac_num = round(len(mac)/18) # 検索するmac数
+  for i in range(0,mac_num):
+    mac_query.append(mac[0+i*18:17+i*18].lower())
+
+  # macの色づけ
+  color_list = ["blue","red","green","orange","pink"]
+  pfvinfo = []
+  for i in range(0,len(mac_query)):
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
+
+  # pfv情報の取り出し
+  tmp_pfvinfo = []
+  tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # 滞留端末情報の取り出し
+  tmp_stayinfo = []
+  tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # pfvinfoにroute情報をひも付け
+  for t_data in tmp_pfvinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append(t_data["route"])
+  for t_data in tmp_stayinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append([[t_data["pcwl_id"]]])
+
+  return render_to_response('pfv/tag_track_map.html',  # 使用するテンプレート
+                              {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
+                               'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
+                               'year':lt.year,'month':lt.month,'day':lt.day,
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second}
+                              )
+
+def tag_track_map_json(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', 'now')
+  timerange = int(request.GET.get('timerange', 5))
+  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:16')
+  language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-6F')
+
+  if date_time == 'now':
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  # mac検索条件
+  mac_query = [] # 検索するmacのリスト
+  mac_num = round(len(mac)/18) # 検索するmac数
+  for i in range(0,mac_num):
+    mac_query.append(mac[0+i*18:17+i*18].lower())
+
+  # macの色づけ
+  color_list = ["blue","red","green","orange","pink"]
+  pfvinfo = []
+  for i in range(0,len(mac_query)):
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
+
+  # pfv情報の取り出し
+  tmp_pfvinfo = []
+  tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # 滞留端末情報の取り出し
+  tmp_stayinfo = []
+  tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # pfvinfoにroute情報をひも付け
+  for t_data in tmp_pfvinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append(t_data["route"])
+  for t_data in tmp_stayinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append([[t_data["pcwl_id"]]])
+
+  # 送信するデータセット
+  dataset = {"pfvinfo":pfvinfo}
+
+  return render_json_response(request, dataset) # dataをJSONとして出力

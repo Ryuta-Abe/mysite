@@ -140,8 +140,8 @@
     document.write('</select>');
 
     document.write('<select name="textbox_second">');
-    for (var i = 0; i < 6; i++) {
-      document.write('<option id="second'+("0"+(i*10)).slice(-2)+'" value="'+("0"+(i*10)).slice(-2)+'"/>'+(i*10)+' '+second_text+'</option>');
+    for (var i = 0; i < 12; i++) {
+      document.write('<option id="second'+("0"+(i*5)).slice(-2)+'" value="'+("0"+(i*5)).slice(-2)+'"/>'+(i*5)+' '+second_text+'</option>');
     };
     document.write('</select>');
 
@@ -151,7 +151,7 @@
     document.write('<span>');
 
     document.write('<select name="textbox_interval">');
-    var interval_list = [10,20,30,60,120,300,600,1200,1800,3600,7200,10800,21600,43200]
+    var interval_list = [5,10,20,30,60,120,300,600,1200,1800,3600,7200,10800,21600,43200]
     make_selectbox(interval_list);
     document.write('</select>');
 
@@ -164,7 +164,7 @@
     document.write('<span>');
 
     document.write('<select name="selectbox_timerange">');
-    timerange_list = [10,20,30,60,120,300,600]
+    timerange_list = [5,10,20,30,60,120,300,600]
     timerange_list_id = make_selectbox(timerange_list);
     document.write('</select>');
 
@@ -926,7 +926,13 @@
         "fill": function(d){return d.color;},
       })
       .text(function(d) {
-              return d.mac;
+              if (d.mac == "00:11:81:10:01:1c") {
+                return "もみだれや";
+              }　else if (d.mac == "00:11:81:10:01:19") {
+                return "あじや";
+              }　else if (d.mac == "00:11:81:10:01:16") {
+                return "さいこんたん"
+              }
       });
 
     }
@@ -944,11 +950,11 @@
     }
     // 別のフロアへジャンプ
     function jump_floor(floor_name){
-      document.location = "{% url 'pfv:pfv_map' %}"+ make_url_query() + "&floor=" + floor_name;
+      document.location = "{% url 'pfv:tag_track_map' %}"+ make_url_query() + "&floor=" + floor_name;
     }
     // すべてのmacを表示したページにジャンプ
     function jump_pfv_map(){
-      window.open("{% url 'pfv:pfv_map' %}"+ make_url_query()+"&mac=","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
+      window.open("{% url 'pfv:tag_track_map' %}"+ make_url_query()+"&mac=","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
     }
     // 言語切替
     function change_language(){
@@ -957,14 +963,14 @@
       } else {
         var language = "en";
       }
-      document.location = "{% url 'pfv:pfv_map' %}"+ make_url_query() + "&language=" + language;
+      document.location = "{% url 'pfv:tag_track_map' %}"+ make_url_query() + "&language=" + language;
     }
 
     // セレクトボックスの値をdatetimeに合わせる
     function set_selectbox(){
       var year = datetime.getFullYear() - 2014;
       var minute = datetime.getMinutes();
-      var second = datetime.getSeconds()/10;
+      var second = datetime.getSeconds()/5;
       document.Sample_form.textbox_year.selectedIndex = year;
       document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
       document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
@@ -1012,7 +1018,7 @@
     function Load_JSON(datetime){
       $.ajax({
         type: 'GET',
-        url: "{% url 'pfv:pfv_map_json' %}"+make_url_query(),
+        url: "{% url 'pfv:tag_track_map_json' %}"+make_url_query(),
         dataType: 'json',
         success: function(json){
           describe_datetime();
@@ -1151,7 +1157,7 @@
     }
     function move_animate_circle(){
       if (flag_realtime) {
-        var ball_animation_time = 10000; // リアルタイムビューの場合10秒かけてアニメーション
+        var ball_animation_time = 5000; // リアルタイムビューの場合5秒かけてアニメーション
       } else {
         var ball_animation_time = 1000; // そうでなければ1秒かけてアニメーション
       };
@@ -1201,13 +1207,14 @@
       flag_realtime = !flag_realtime;
       RT_Auto_Ajax();
       d3.select("#btn_realtime").style("color","blue");
-      RT_Timer = setInterval(RT_Auto_Ajax,10000);
+      RT_Timer = setInterval(RT_Auto_Ajax,5000);
     };
    }
    function RT_Auto_Ajax(){
       datetime = new Date();
-      datetime.setSeconds(datetime.getSeconds() - 10); // 現在時刻の10秒前
+      datetime.setSeconds(datetime.getSeconds() - 5); // 現在時刻の5秒前
       Load_JSON(datetime);
+      set_selectbox();
     }
   </script>
   {% endblock content %}

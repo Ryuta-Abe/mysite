@@ -10,6 +10,8 @@ urlpatterns = patterns('',
     url(r'^stay_graph/$', views.stay_graph, name='stay_graph'),   # stayグラフ
     url(r'^pfv_heatmap/$', views.pfv_heatmap, name='pfv_heatmap'), #heatmap
     url(r'^pfv_heatmap_json/$', views.pfv_heatmap_json, name='pfv_heatmap_json'), #heatmap用json
+    url(r'^tag_track_map/$', views.tag_track_map, name='tag_track_map'), #tag_track用マップ
+    url(r'^tag_track_map_json/$', views.tag_track_map_json, name='tag_track_map_json'), #tag_track用マップJSON
 
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
 
