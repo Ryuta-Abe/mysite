@@ -906,7 +906,11 @@
       .append("g")
       .attr({
         transform: function(d,i) {
-          return "translate(" + (i*180 + padding) + "," + 30 + ")";
+          if (d.color == "blue" || d.color == "red" || d.color == "green"){
+            return "translate(" + (i*180 + padding) + "," + 30 + ")";
+          } else {
+            return "translate(" + (i*180 + padding - 540) + "," + 80 + ")";
+          }
         },
       })
       // 円の描画

@@ -811,7 +811,7 @@ def tag_track_map(request):
     mac_query.append(mac[0+i*18:17+i*18].lower())
 
   # macの色づけ
-  color_list = ["blue","red","green","orange","pink"]
+  color_list = ["blue","red","green","orange","pink","aqua"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
     pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
