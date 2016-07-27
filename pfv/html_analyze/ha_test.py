@@ -44,7 +44,7 @@ def save_rttmp(ip,node_id,user,pswd):
 	html = []
 	try:
 		# urlopenのdata引数を指定するとHTTP/POSTを送信できる
-		with urllib.request.urlopen(url=LOGIN_URL, data=b'cmd=/usr/sbin/station_list%20-i%20ath0', timeout=1.0) as page:
+		with urllib.request.urlopen(url=LOGIN_URL, data=b'cmd=/usr/sbin/station_list%20-i%20ath0', timeout=0.5) as page:
 		    #print (node_id)
 		    #print (page.readlines())
 		    for line in page.readlines():
@@ -127,7 +127,7 @@ st = time.time()
 data_list = {}
 #トラッキング用のMACアドレスリスト（値は暫定）
 # tag_list = ["b0:65:bd:61:1f:f5","bc:6c:21:4d:fc:72","c","d"]
-tag_list = ["00:11:81:10:01:1c","00:11:81:10:01:19","00:11:81:10:01:17","b0:65:bd:61:1f:f5","bc:6c:21:4d:fc:72"]
+tag_list = ["00:11:81:10:01:1c","00:11:81:10:01:19","00:11:81:10:01:17","00:11:81:10:01:1a","00:11:81:10:01:23","00:11:81:10:01:1b"]
 # data_list = []
 # 6Fのデータ収集
 pcwliplist = []

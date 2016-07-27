@@ -786,7 +786,7 @@ def tag_track_map(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:16,b0:65:bd:61:1f:f5,bc:6c:21:4d:fc:72')
+  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
 
@@ -846,7 +846,7 @@ def tag_track_map_json(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:16,b0:65:bd:61:1f:f5,bc:6c:21:4d:fc:72')
+  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
 
