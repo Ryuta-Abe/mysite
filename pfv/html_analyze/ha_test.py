@@ -82,8 +82,10 @@ def save_rttmp(ip,node_id,user,pswd):
 			if "Station Count:" in line:
 				dbsave_flag = True
 	except urllib.error.URLError:
+		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip,"TO_type":"Normal timeout"})
 		print("Timeout "+ip)
 	except socket.timeout:
+		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip,"TO_type":"Socket timeout"})
 		print("Socket Timeout "+ip)
 	return data_list[node_id]
 
