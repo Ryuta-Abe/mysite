@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 
-from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp, trtmp, timeoutlog, tmptimeoutlog
+from pfv.models import pr_req, test, pcwltime, tmpcol, pastdata, rttmp, trtmp, timeoutlog
 from pfv.get_start_end import get_start_end, get_start_end_mod
 from pfv.convert_nodeid import *
 
@@ -184,10 +184,3 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
                           datetime = jdata['datetime'],
                          )
       timedata.save()
-
-
-  # # timeoutlog
-  # jdatas = db.tmptimeoutlog.find()
-  # for jdata in jdatas:
-  #   "pcwl_id":convert_nodeid(tmp_node_id['node_id'])["node_id"],
-  #   "floor":convert_nodeid(tmp_node_id['node_id'])["floor"],

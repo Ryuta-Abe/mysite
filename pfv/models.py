@@ -18,9 +18,9 @@ class pr_req(Document):
     meta = DB_ALIAS
 
 # timeout log tmpcol
-class tmptimeoutlog(Document):
-    node_id  = ListField()
-    # floor    = StringField()
+class tmptolog(Document):
+    pcwl_id  = ListField()
+    floor    = StringField()
     datetime = DateTimeField()
     ip       = StringField()
     TO_type  = StringField()
@@ -52,6 +52,16 @@ class pcwlnode(Document):
     # "pos_y" : 130,
     # "next_id" : [ 1, 3 ]
     # "floor" : "W2-6F",
+
+# PCWL iplist
+class pcwliplist(Document):
+    ip = StringField()
+    node_id = IntField()
+    pcwl_id = IntField()
+    floor = StringField()
+
+    meta = DB_ALIAS
+
 
 # 人流情報
 class pfvinfo(Document):
