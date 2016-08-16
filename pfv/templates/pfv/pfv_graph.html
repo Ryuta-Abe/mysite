@@ -38,104 +38,83 @@
 {% block content %}
     <h3 id="header" class="page-header"></h3>
     <form name="Sample_form" action="Sample.html">
-      取得日時：
-      <select name="textbox_year">
-            <option id="year2014" value="2014"/>2014</option>
-            <option id="year2015" value="2015"/>2015</option>
-      </select>
-      年
-      <select name="textbox_month">
-            <option id="month01" value="01"/>1</option>
-            <option id="month02" value="02"/>2</option>
-            <option id="month03" value="03"/>3</option>
-            <option id="month04" value="04"/>4</option>
-            <option id="month05" value="05"/>5</option>
-            <option id="month06" value="06"/>6</option>
-            <option id="month07" value="07"/>7</option>
-            <option id="month08" value="08"/>8</option>
-            <option id="month09" value="09"/>9</option>
-            <option id="month10" value="10"/>10</option>
-            <option id="month11" value="11"/>11</option>
-            <option id="month12" value="12"/>12</option>
-      </select>
-      月
-      <select name="textbox_day">
-            <option id="day01" value="01"/>1</option>
-            <option id="day02" value="02"/>2</option>
-            <option id="day03" value="03"/>3</option>
-            <option id="day04" value="04"/>4</option>
-            <option id="day05" value="05"/>5</option>
-            <option id="day06" value="06"/>6</option>
-            <option id="day07" value="07"/>7</option>
-            <option id="day08" value="08"/>8</option>
-            <option id="day09" value="09"/>9</option>
-            <option id="day10" value="10"/>10</option>
-            <option id="day11" value="11"/>11</option>
-            <option id="day12" value="12"/>12</option>
-            <option id="day13" value="13"/>13</option>
-            <option id="day14" value="14"/>14</option>
-            <option id="day15" value="15"/>15</option>
-            <option id="day16" value="16"/>16</option>
-            <option id="day17" value="17"/>17</option>
-            <option id="day18" value="18"/>18</option>
-            <option id="day19" value="19"/>19</option>
-            <option id="day20" value="20"/>20</option>
-            <option id="day21" value="21"/>21</option>
-            <option id="day22" value="22"/>22</option>
-            <option id="day23" value="23"/>23</option>
-            <option id="day24" value="24"/>24</option>
-            <option id="day25" value="25"/>25</option>
-            <option id="day26" value="26"/>26</option>
-            <option id="day27" value="27"/>27</option>
-            <option id="day28" value="28"/>28</option>
-            <option id="day29" value="29"/>29</option>
-            <option id="day30" value="30"/>30</option>
-            <option id="day31" value="31"/>31</option>
-      </select>
-      日
-      <select name="textbox_hour">
-            <option id="hour00" value="00"/>0</option>
-            <option id="hour01" value="01"/>1</option>
-            <option id="hour02" value="02"/>2</option>
-            <option id="hour03" value="03"/>3</option>
-            <option id="hour04" value="04"/>4</option>
-            <option id="hour05" value="05"/>5</option>
-            <option id="hour06" value="06"/>6</option>
-            <option id="hour07" value="07"/>7</option>
-            <option id="hour08" value="08"/>8</option>
-            <option id="hour09" value="09"/>9</option>
-            <option id="hour10" value="10"/>10</option>
-            <option id="hour11" value="11"/>11</option>
-            <option id="hour12" value="12"/>12</option>
-            <option id="hour13" value="13"/>13</option>
-            <option id="hour14" value="14"/>14</option>
-            <option id="hour15" value="15"/>15</option>
-            <option id="hour16" value="16"/>16</option>
-            <option id="hour17" value="17"/>17</option>
-            <option id="hour18" value="18"/>18</option>
-            <option id="hour19" value="19"/>19</option>
-            <option id="hour20" value="20"/>20</option>
-            <option id="hour21" value="21"/>21</option>
-            <option id="hour22" value="22"/>22</option>
-            <option id="hour23" value="23"/>23</option>
-      </select>
-      時
-      <select name="textbox_minute">
-            <option id="minute00" value="00"/>0</option>
-            <option id="minute05" value="05"/>5</option>
-            <option id="minute10" value="10"/>10</option>
-            <option id="minute15" value="15"/>15</option>
-            <option id="minute20" value="20"/>20</option>
-            <option id="minute25" value="25"/>25</option>
-            <option id="minute30" value="30"/>30</option>
-            <option id="minute35" value="35"/>35</option>
-            <option id="minute40" value="40"/>40</option>
-            <option id="minute45" value="45"/>45</option>
-            <option id="minute50" value="50"/>50</option>
-            <option id="minute55" value="55"/>55</option>
-      </select>
-      分
-      <input type="button" value="更新" onclick="reload_datetime()" class="btn btn-default btn-sm">
+    <text id="datetime_header"></text>
+    <script type="text/javascript">
+    function make_selectbox(list){
+      for (var i = 0; i < list.length; i++) {
+        if (list[i] < 60) {
+          document.write('<option value="sec'+("0"+list[i]).slice(-2)+'"/>'+list[i]+' '+second_text+'</option>');
+        } else if (list[i] < 3600) {
+          document.write('<option value="min'+("0"+(list[i]/60)).slice(-2)+'"/>'+(list[i]/60)+' '+minute_text+'</option>');
+        } else if (list[i] < 43200) {
+          document.write('<option value="hou'+("0"+(list[i]/3600)).slice(-2)+'"/>'+(list[i]/3600)+' '+hour_text2+'</option>');
+        } else if (list[i] < 302400) {
+          document.write('<option value="day'+("0"+(list[i]/43200)).slice(-2)+'"/>'+(list[i]/43200)+' '+day_text+'</option>');
+        };
+      };
+    }
+
+    if ("{{ language }}" == "en") {
+      var year_text = "year";
+      var month_text = "month";
+      var day_text = "date";
+      var hour_text = "hour";
+      var hour_text2 = "hour";
+      var minute_text = "minute";
+      var second_text = "second";
+    } else {
+      var year_text = "年";
+      var month_text = "月";
+      var day_text = "日";
+      var hour_text = "時";
+      var hour_text2 = "時間";
+      var minute_text = "分";
+      var second_text = "秒";
+    };
+
+    var year_list = [2014,2015,2016,2017,2018];
+
+    document.write('<select name="textbox_year">');
+    for (var i = 0; i < year_list.length; i++) {
+      document.write('<option id="year'+year_list[i]+'" value="'+year_list[i]+'"/>'+year_list[i]+' '+year_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_month">');
+    for (var i = 0; i < 12; i++) {
+      document.write('<option id="month'+("0"+(i+1)).slice(-2)+'" value="'+("0"+(i+1)).slice(-2)+'"/>'+(i+1)+' '+month_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_day">');
+    for (var i = 0; i < 31; i++) {
+      document.write('<option id="day'+("0"+(i+1)).slice(-2)+'" value="'+("0"+(i+1)).slice(-2)+'"/>'+(i+1)+' '+day_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_hour">');
+    for (var i = 0; i < 24; i++) {
+      document.write('<option id="hour'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+hour_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_minute">');
+    for (var i = 0; i < 60; i++) {
+      document.write('<option id="minute'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+minute_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_second">');
+    for (var i = 0; i < 6; i++) {
+      document.write('<option id="second'+("0"+(i*10)).slice(-2)+'" value="'+("0"+(i*10)).slice(-2)+'"/>'+(i*10)+' '+second_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<a type="button" id="btn_reload" onclick="reload_datetime()" class="btn btn-default btn-sm"></a>');
+    document.write('</span>');
+
+  </script>
+    <text id="count_header"></text>
       <!-- br>
       <text id="id2">表示日数：</text>
       <a id="one_day" onclick="one_day()" class="btn btn-default btn-sm">1日</a>
@@ -148,13 +127,49 @@
     </form>
     <svg id="svg1" width="1024" height="560">
     <div id="tooltip_div"></div>
+    <br>
+    <Div Align="right"><a id="difference_language" onclick="change_language()"></a></Div>
+    <br>
+    
     <script type="text/javascript">
+
+    // ヘッダーやその他文字の表示
+    if ("{{ language }}" == "en") {
+      d3.select("#header").text("Change of People Flow "+"{{ start_node }}"+" → "+"{{ end_node }}");
+      d3.select("#datetime_header").text("datetime : ");
+      d3.select("#btn_reload").text("Reload");
+      d3.select("#difference_language").text("日本語");
+    }　else {
+      if ({{ experiment }} == 1) {
+        var header = d3.select("#header").text("人流変化グラフ(実験用) "+"{{ start_node }}"+" → "+"{{ end_node }}"+" ");
+      } else {
+        var header = d3.select("#header").text("人流変化グラフ "+"{{ start_node }}"+" → "+"{{ end_node }}"+" ");
+      };
+      d3.select("#datetime_header").text("取得日時：");
+      d3.select("#btn_reload").text("更新");
+      d3.select("#difference_language").text("English");
+    };
+    if ("{{ mac }}" != "") {
+      header.append("text").style({
+        "font-size":"14px",
+        "color":"gray",
+      })
+      .text(" Query : "+"{{ mac }}");
+    };
 
     //  センサーデータセット
     var pfvgraph_info = [];
+    var count = 0;
+    var size_sum = 0;
+    var size_ave;
     {% for s in pfvgraph_info %}
     pfvgraph_info.push({size:{{ s.size }},datetime:"{{ s.datetime }}"});
+    size_sum += {{s.size}};
+    count += 1;
     {% endfor %}
+    size_ave = size_sum / count;
+    size_ave = Math.round(size_ave*100)/100
+    d3.select("#count_header").text("count:"+String(count)+"件 --- average:"+String(size_ave)+"人/件");
 
     // // 一日分のデータを表示
     // function one_day(){
@@ -352,9 +367,6 @@
     }
     xyScale_Set();
 
-    // ヘッダーの入力
-    d3.select("#header").text("人流変化グラフ "+"{{ start_node }}"+" → "+"{{ end_node }}");
-
     // マウスオーバーすると出てくる説明文(div要素)
     var div = d3.select("#tooltip_div")
     .attr("class","tooltip")
@@ -436,7 +448,11 @@
         .style("height", "35px")
         .style("left", (d3.event.pageX + 20) + "px")
         .style("top", (d3.event.pageY + 20) + "px")
-        .text(d.size.toFixed(1) + " 人　" + d.datetime.slice(5))
+        if ("{{ language }}" == "en") {
+          div.text(d.size.toFixed(1) + " at " + String(parseDate(d.datetime)).slice(4,24))
+        } else {
+          div.text(d.size.toFixed(1) + " 人　" + d.datetime.slice(5))
+        };
       })
       // マウスがバーから離れたら説明文をけす
       .on( "mouseout", function(d){
@@ -514,6 +530,7 @@
          .call(yAxis);
     }
 
+    // 取得時間更新
     function reload_datetime(){
 
       var year = Sample_form.textbox_year.value;
@@ -521,11 +538,31 @@
       var day = Sample_form.textbox_day.value;
       var hour = Sample_form.textbox_hour.value;
       var minute = Sample_form.textbox_minute.value;
-      var second = "00";
+      var second = Sample_form.textbox_second.value;
 
       var direction = ("0"+"{{ start_node }}").slice(-2)+("0"+"{{ end_node }}").slice(-2)
 
-      document.location = "{% url 'pfv:pfv_graph' %}"+"datetime=" + year + month + day + hour + minute + second + "/direction=" + direction;
+      document.location = "{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction + "&experiment=" + {{ experiment }} + "&language=" + "{{ language }}";
+    }
+    // 言語切替
+    function change_language(){
+
+      var year = datetime.getFullYear();
+      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+      var day = ("0"+datetime.getDate()).slice(-2);
+      var hour = ("0"+datetime.getHours()).slice(-2);
+      var minute = ("0"+datetime.getMinutes()).slice(-2);
+      var second = ("0"+datetime.getSeconds()).slice(-2);
+
+      var direction = ("0"+"{{ start_node }}").slice(-2)+("0"+"{{ end_node }}").slice(-2)
+
+      if ("{{ language }}" == "en") {
+        var language = "jp";
+      } else {
+        var language = "en";
+      }
+
+      document.location = "{% url 'pfv:pfv_graph' %}"+"?datetime=" + year + month + day + hour + minute + second + "&direction=" + direction + "&experiment=" + {{ experiment }} + "&language=" + language;
     }
     
     // // 更新前の選択状態を記憶
@@ -538,12 +575,14 @@
     // セレクトボックスの値をdatetimeに合わせる
     function set_selectbox(){
       var year = datetime.getFullYear() - 2014;
-      var minute = datetime.getMinutes()/5;
+      var minute = datetime.getMinutes();
+      var second = datetime.getSeconds()/10;
       document.Sample_form.textbox_year.selectedIndex = year;
       document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
       document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
       document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
       document.Sample_form.textbox_minute.selectedIndex = minute;
+      document.Sample_form.textbox_second.selectedIndex = second;
     }
 
     // datatimeをゼロ埋め
@@ -563,7 +602,8 @@
     var day = parseInt({{ day }});
     var hour = parseInt({{ hour }});
     var minute = parseInt({{ minute }});
-    var datetime = new Date(year,month,day,hour,minute);
+    var second = parseInt({{ second }});
+    var datetime = new Date(year,month,day,hour,minute,second);
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
 

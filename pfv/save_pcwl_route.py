@@ -9,6 +9,7 @@ connect('nm4bd')
 class pcwlroute(Document):
     query = ListField(IntField())
     dlist = ListField(ListField(DictField()))
+    floor = StringField()
 
     # meta = {
     #     "db_alias" : "nm4bd",
@@ -18,10 +19,11 @@ class pcwlroute(Document):
 pcwlroute.objects.all().delete()
 
 # 位置情報保存
-def save_pcwlroute(q,d):
+def save_pcwlroute(q,d,f):
 	_pcwlroute = pcwlroute(
 		query = q,
-		dlist = d
+		dlist = d,
+		floor = f,
 		)
 	_pcwlroute.save()
 
@@ -32,6 +34,7 @@ class pcwlnode(Document):
     pos_x = IntField()
     pos_y = IntField()
     next_id = ListField(IntField())
+    floor = StringField()
 
 # PCWLノード情報取り出し
 _pcwlnode = []
@@ -78,22 +81,38 @@ def distance_filtering(all_route_list):
 				dlist.append(tmp_list)
 	return dlist
 
-# ノード同士の全組み合わせで経路情報を記録
+# PCWLノード情報取り出し
+_pcwlnode = []
+_pcwlnode += pcwlnode.objects()
+
+# pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+_pcwlnode_id = [0]*99
 for i in range(0,len(_pcwlnode)):
-	for j in range(i+1,len(_pcwlnode)):
-		st = _pcwlnode[i]["pcwl_id"] # 出発点
-		ed = _pcwlnode[j]["pcwl_id"] # 到着点
-		# iとjが隣接ならばそれを登録
-		if ed in _pcwlnode[i]["next_id"]:
-			dis = math.sqrt(pow(_pcwlnode[i]["pos_x"]-_pcwlnode[j]["pos_x"],2)+pow(_pcwlnode[i]["pos_y"]-_pcwlnode[j]["pos_y"],2))
-			save_pcwlroute([st,ed],[[{'direction':[st,ed],'distance':dis}]])
-		# iとjが隣接ではない場合
-		else :
-			all_route_list = []
-			route_list = [st]
-			route_search(route_list,ed)
-			dlist = distance_filtering(all_route_list)
-			save_pcwlroute([st,ed],dlist)
+	_pcwlnode_id[_pcwlnode[i]["pcwl_id"]] = i
+
+floor_list = ["W2-6F","W2-7F","kaiyo"]
+for floor_str in floor_list:
+	_pcwlnode = []
+	_pcwlnode += pcwlnode.objects(floor = floor_str)
+	_pcwlnode_id = [0]*99
+	for i in range(0,len(_pcwlnode)):
+		_pcwlnode_id[_pcwlnode[i]["pcwl_id"]] = i
+	# ノード同士の全組み合わせで経路情報を記録
+	for i in range(0,len(_pcwlnode)):
+		for j in range(i+1,len(_pcwlnode)):
+			st = _pcwlnode[i]["pcwl_id"] # 出発点
+			ed = _pcwlnode[j]["pcwl_id"] # 到着点
+			# iとjが隣接ならばそれを登録
+			if ed in _pcwlnode[i]["next_id"]:
+				dis = math.sqrt(pow(_pcwlnode[i]["pos_x"]-_pcwlnode[j]["pos_x"],2)+pow(_pcwlnode[i]["pos_y"]-_pcwlnode[j]["pos_y"],2))
+				save_pcwlroute([st,ed],[[{'direction':[st,ed],'distance':dis}]],floor_str)
+			# iとjが隣接ではない場合
+			else :
+				all_route_list = []
+				route_list = [st]
+				route_search(route_list,ed)
+				dlist = distance_filtering(all_route_list)
+				save_pcwlroute([st,ed],dlist,floor_str)
 
 # 経路情報取り出しテスト
 A = []

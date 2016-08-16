@@ -12,11 +12,8 @@ table {
 {% endblock %}
 
 {% block content %}
-    <h3> 分析終了 </h3>
+    <h3 class="page-header">データ一覧</h3>
     <form name="Sample_form" action="Sample.html">
-      <text id="macaddr">MAC：</text>
-      <input type="text" name="textbox_mac" size="17", value="{{ mac }}">
-      <!-- <input type="button" value="更新" onclick="reload_mac()" class="btn btn-default btn-sm"> -->
       <text id="id2">表示件数：</text>
       <input type="text" name="textbox_limit" size="5", value="{{ limit }}">
       <input type="button" value="更新" onclick="reload()" class="btn btn-default btn-sm">
@@ -121,56 +118,60 @@ table {
       分
       <input type="button" value="更新" onclick="reload_datetime()" class="btn btn-default btn-sm">
     </form>
+    <!-- flow -->
     <table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
-    <thead>
-      <tr>
-        <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
-        <th class="table-filterable">mac</th>
-        <th class="table-filterable">get_time_no</th>
-<!--         <th>nodelist_nodeid</th>
-        <th>nodelist_dbm</th> -->
-        <th>floor</th>
-        <th>node1</th>
-        <th>floor</th>
-        <th>node2</th>
-        <th>floor</th>
-        <th>node3</th>
-      </tr>
-    </thead>
-    {% for s in ag %}
-      <tbody>
+
+      <thead>    
         <tr>
-          <td align="center">{{s.id.mac}}</td>
-          <td align="center">{{s.id.get_time_no}}</td>
-          <td align="center">{{s.nodelist.0.floor}}</td>
-          <td align="right">{{s.nodelist.0.node_id}}({{s.nodelist.0.dbm}}dB)　　　　　　　　</td>
-          <td align="center">{{s.nodelist.1.floor}}</td>
-          <td align="right">{{s.nodelist.1.node_id}}({{s.nodelist.1.dbm}}dB)　　　　　　　　</td>
-          <td align="center">{{s.nodelist.2.floor}}</td>
-          <td align="right">{{s.nodelist.2.node_id}}({{s.nodelist.2.dbm}}dB)　　　　　　　　</td>
+          <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+          <th>　datetime　</th>
+          {% for s in nodedir_set %}
+          <th>　{{s}}　</th>
+          {% endfor %}
         </tr>
+      </thead>
+      <tbody>
+        {% for data in t %}
+        <tr>
+            <td align="center">{{ data.datetime.time }}</td>
+            {% for s in data.count_list %}
+              <td align="center">{{ s }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
       </tbody>
-    {% endfor %}
+    </table>
+
+    <!-- stay -->
+    <table class="table table-striped table-bordered table-autofilter sortable-theme-bootstrap" data-sortable>
+      <thead>    
+        <tr>
+          <!--フィルタ部分のフォント調節：bootstrap.min.css [select, font-size:??px]-->
+          <th>　datetime　</th>
+          {% for s in nodeset %}
+          <th>　{{s}}　</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for data in sdataset %}
+        <tr>
+            <td align="center">{{ data.datetime.time }}</td>
+            {% for s in data.staycount_list %}
+              <td align="center">{{ s }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
     <script type="text/javascript">
 
-    // function reload_mac(){
-    //   var mac = Sample_form.textbox_mac.value;
-    //   if (mac == ""){
-    //     mac = "0";
-    //   }
-    //   document.location = "http://localhost:8000/pfv/analyze/mac=" + mac;
-    // }
     function reload(){
-      var mac   = Sample_form.textbox_mac.value;
       var limit = Sample_form.textbox_limit.value;
       if (limit == ""){
         limit = 25;
-      };
-      if (mac == "") {
-        mac = ":";
-      };
-      document.location = "http://localhost:8000/pfv/analyze/mac=" + mac + "/limit=" + limit;
+      }
+      document.location = "http://localhost:8000/pfv/data_list/limit=" + limit;
     }
     function reload_datetime(){
       var limit = Sample_form.textbox_limit.value;
@@ -182,7 +183,7 @@ table {
       var day = Sample_form.textbox_day.value;
       var hour = Sample_form.textbox_hour.value;
       var minute = Sample_form.textbox_minute.value;
-      document.location = "http://localhost:8000/pfv/analyze/limit=" + limit 
+      document.location = "http://localhost:8000/pfv/data_list/limit=" + limit 
       + "/datetime=" + year + month + day + hour + minute;
     }
 
