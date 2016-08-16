@@ -81,7 +81,8 @@ def get_start_end_mod(all_flag, tr_flag):
   nodecnt_dict = init_nodecnt_dict()
 
   # data取り出し
-  datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+  mac_query = "00:11:81:10:01:17"
+  datas = db.tmpcol.find({"_id.mac":mac_query}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
   # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
@@ -214,7 +215,7 @@ def get_start_end_mod(all_flag, tr_flag):
 
       # Realtime_process
       else:
-        print("RT process")
+        print("--- RT process ---")
         if (pastd != []) and (data['id']['get_time_no'] <= pastd[0]["update_dt"]):
           print("0")
           pass
@@ -253,6 +254,19 @@ def get_start_end_mod(all_flag, tr_flag):
                     # TODO:5秒のみ指定速度/10秒以上は今までどおり
                     velocity = fix_velocity(tmp_floor, interval)
                     if d_total < interval * velocity:
+                      # 行き来をstayに
+                      len_pastlist = len(pastd[0]['pastlist'])
+                      if (len_pastlist >= 2):
+                        past_st_id = pastd[0]['pastlist'][1]["start_node"]["pcwl_id"]
+                        # past_ed_id = pastd[0]['pastlist'][0]["start_node"]["pcwl_id"]
+                        if (past_st_id == data["nodelist"][num]["pcwl_id"]):
+                          # data_lists_stay append
+                          data_lists_stay.append(append_data_lists_stay_alt(num, data, tmp_startdt, tmp_enddt, pastd[0]['pastlist'][0]["start_node"], data_lists_stay))
+                          # pastlist update
+                          update_pastlist_alt(pastd[0], tmp_enddt, num, data["nodelist"], pastd[0]['pastlist'][0]["start_node"])
+                          save_pastd(pastd[0], tmp_enddt)
+                          break
+
                       # data_lists append
                       data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastd[0]["pastlist"][0]["start_node"], data_lists))
                       # pastlist update
@@ -434,8 +448,28 @@ def append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_
               }
   return se_data
 
+# 行き来した場合stayに
+def append_data_lists_stay_alt(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists_stay):
+  if tmp_enddt < tmp_startdt:
+    print("---------! ed > st error !---------")
+  if (tmp_enddt - tmp_startdt).seconds > int_time_range:
+    print("---------! stay ed-st>60 error !---------")
+  se_data =  {"mac":data["id"]["mac"],
+              "start_time":tmp_startdt,
+              "end_time"  :tmp_enddt,
+              "interval"  :(tmp_enddt - tmp_startdt).seconds,
+              "start_node":tmp_node_id["pcwl_id"],
+              "end_node"  :tmp_node_id["pcwl_id"],
+              "floor"     :tmp_node_id["floor"],
+              }
+  return se_data
+
 def update_pastlist(pastd, get_time_no, num, nodelist):
   past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist} 
+  pastd["pastlist"].append(past_dict)
+
+def update_pastlist_alt(pastd, get_time_no, num, nodelist, start_node):
+  past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist} 
   pastd["pastlist"].append(past_dict)
 
 def save_pastd(pastd,update_dt):
