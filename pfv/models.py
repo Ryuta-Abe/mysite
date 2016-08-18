@@ -37,6 +37,17 @@ class timeoutlog(Document):
 
     meta = DB_ALIAS
 
+# hourly timeout log
+class hourlytolog(Document):
+    pcwl_id  = ListField()
+    floor    = StringField()
+    datetime = DateTimeField()
+    count_sum = IntField()
+    # ip       = StringField()
+    TO_type  = StringField()
+
+    meta = DB_ALIAS
+
 # PCWLのノード情報
 class pcwlnode(Document):
     pcwl_id = IntField()

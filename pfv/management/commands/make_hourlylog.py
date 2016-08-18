@@ -11,6 +11,7 @@ client = MongoClient()
 db = client.nm4bd
 
 ##### hourlytolog 作成手順 #####
+# 0.logを作る日時をiso_st,edに指定
 # 1.key一覧取得
 #   mongo nm4bd --quiet --eval "for (key in db.hourlytolog.findOne()) print(key)" > fields.txt
 # 2.フィールド一覧ソート
@@ -24,8 +25,8 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
   	# hourly aggregate
 	  db.hourlytolog.remove({})
-	  iso_st = dt_from_14digits_to_iso("20160723120000")
-	  iso_ed = dt_from_14digits_to_iso("20160807000000")
+	  iso_st = dt_from_14digits_to_iso("20160817180000")
+	  iso_ed = dt_from_14digits_to_iso("20160818190000")
 	  print(iso_st)
 	  print(iso_ed)
 	  gte = iso_st
@@ -35,6 +36,11 @@ class Command(BaseCommand):
 	  for ip_data in ip_list:
 	  	# ip_data = {"floor":ip_data["floor"], "pcwl_id":ip_data["pcwl_id"]}
 	  	ip_data["log_key"] = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
+
+	  datas = db.timeoutlog.find()
+	  for data in datas:
+	  	data["datetime"] = dt_from_14digits_to_iso(str(data["datetime"]))
+	  	db.timeoutlog.save(data)
 
 	  # while (lt <= iso_ed):
 	  # 	for ip_data in ip_list:

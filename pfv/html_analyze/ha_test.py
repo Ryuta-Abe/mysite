@@ -25,6 +25,12 @@ def dt_from_iso_to_numlong(dt):
 	dt = str(dt.year)+("0"+str(dt.month))[-2:]+("0"+str(dt.day))[-2:]+("0"+str(dt.hour))[-2:]+("0"+str(dt.minute))[-2:]+("00"+str(dt.second))[-2:]
 	return int(dt)
 
+def dt_from_14digits_to_iso(dt):
+	from datetime import datetime
+	dt = str(dt[0:4])+"-"+str("0"+dt[4:6])[-2:]+"-"+str("0"+dt[6:8])[-2:]+" "+str("00"+dt[8:10])[-2:]+":"+str("00"+dt[10:12])[-2:]+":"+str("00"+dt[12:14])[-2:]
+	dt = datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+	return dt
+
 # node_id番のPCWLにコマンドを投げてhtml解析後DB登録
 def save_rttmp(ip,node_id,user,pswd):
 	data_list[node_id] = []
@@ -82,10 +88,12 @@ def save_rttmp(ip,node_id,user,pswd):
 			if "Station Count:" in line:
 				dbsave_flag = True
 	except urllib.error.URLError:
-		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip,"TO_type":"Normal timeout"})
+		log_dt = dt_from_14digits_to_iso(str(now))
+		db.timeoutlog.insert({"datetime":log_dt, "timeout_ip":ip,"TO_type":"Normal timeout"})
 		print("Timeout "+ip)
 	except socket.timeout:
-		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip,"TO_type":"Socket timeout"})
+		log_dt = dt_from_14digits_to_iso(str(now))
+		db.timeoutlog.insert({"datetime":log_dt, "timeout_ip":ip,"TO_type":"Socket timeout"})
 		print("Socket Timeout "+ip)
 	return data_list[node_id]
 

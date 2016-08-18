@@ -27,9 +27,6 @@ FLOOR_LIST   = ["W2-6F","W2-7F","kaiyo"]
 # time_range = timedelta(minutes=1) # 過去の参照時間幅設定
 int_time_range = 60
 time_range = timedelta(seconds=int_time_range) # 過去の参照時間幅設定
-# dt05
-# min_interval = 5
-# min_interval = 10
 TH_RSSI    = -80
 repeat_cnt = 99
 
