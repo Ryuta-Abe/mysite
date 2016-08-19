@@ -811,7 +811,7 @@ def tag_track_map(request):
     mac_query.append(mac[0+i*18:17+i*18].lower())
 
   # macの色づけ
-  color_list = ["blue","red","green","orange","pink","aqua"]
+  color_list = ["blue","red","green","aqua","pink","lime"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
     pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
@@ -856,6 +856,11 @@ def tag_track_map_json(request):
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find({"floor":floor})
+  for i in pcwlnode:
+    del i["_id"]
   # mac検索条件
   mac_query = [] # 検索するmacのリスト
   mac_num = round(len(mac)/18) # 検索するmac数
@@ -863,7 +868,7 @@ def tag_track_map_json(request):
     mac_query.append(mac[0+i*18:17+i*18].lower())
 
   # macの色づけ
-  color_list = ["blue","red","green","orange","pink"]
+  color_list = ["blue","red","green","aqua","pink","lime"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
     pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
@@ -887,6 +892,7 @@ def tag_track_map_json(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   # 送信するデータセット
-  dataset = {"pfvinfo":pfvinfo}
+  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode}
+  # dataset = {"pfvinfo":pfvinfo}
 
   return render_json_response(request, dataset) # dataをJSONとして出力

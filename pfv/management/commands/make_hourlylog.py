@@ -37,10 +37,10 @@ class Command(BaseCommand):
 	  	# ip_data = {"floor":ip_data["floor"], "pcwl_id":ip_data["pcwl_id"]}
 	  	ip_data["log_key"] = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
 
-	  datas = db.timeoutlog.find()
-	  for data in datas:
-	  	data["datetime"] = dt_from_14digits_to_iso(str(data["datetime"]))
-	  	db.timeoutlog.save(data)
+	  # datas = db.timeoutlog.find()
+	  # for data in datas:
+	  # 	data["datetime"] = dt_from_14digits_to_iso(str(data["datetime"]))
+	  # 	db.timeoutlog.save(data)
 
 	  # while (lt <= iso_ed):
 	  # 	for ip_data in ip_list:
