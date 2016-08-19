@@ -44,3 +44,9 @@ def bookmark_edit(request):
   elif delete == 2:
     db.bookmark.remove()
     return render_json_response(request,{'response':'Bookmarks deleted'})
+
+  #tagtrack用のbookmark関連
+  elif add == 2:
+    url = "?datetime="+date_time+"&timerange="+str(timerange)+"&language="+language+"&mac="+mac+"&floor="+floor
+    db.bookmark.insert({'url':date_time,'name':name,'frequency':0})
+    return render_json_response(request,{'url':date_time,'name':name,'frequency':0})

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ floor }}{% endblock title %}
+{% block title %}tag tracking map{% endblock title %}
 
 {% block extrahead %}
 <style>
@@ -53,23 +53,58 @@
          display: inline-block;
          _display: inline;
       }
+
+  p.tabs
+  {
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+  }
+  p.tabs a
+  {
+    display: block;
+    width: 22.3em;
+    float: left;
+    margin: 0px 1px 0px 0px;
+    padding: 8px;
+    text-align: center;
+    border-radius: 12px 12px 0px 0px;
+    background-color: blue;
+    color: white;
+  }
+  p.tabs a.tab1
+  {
+    background-color: blue;
+    color: white;
+  }
+  p.tabs a.tab2
+  {
+    background-color: red;
+    color: white;
+  }
+  p.tabs a.tab3
+  {
+    background-color: green;
+    color: white;
+  }
+  p.tabs a:hover
+  {
+    color: black;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <h3 id="header" class="page-header"></h3>
 <form name="Sample_form" action="Sample.html">
-  <a id="btn_staycircle" onclick="staycircle_opacity()" class="btn btn-default btn-sm"></a>
-  <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
-  <a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>
+  <!--<a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>-->
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
-  <a href="javascript:void(0)" id="category_3" onclick="show('3');" class="btn btn-default btn-sm"></a>
   <a id="btn_realtime" onclick="realtime()" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
-  　(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)
-  <div id="layer_1" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
+  <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
   <span id="selected_datetime">
   <script type="text/javascript">
     function make_selectbox(list){
@@ -182,16 +217,20 @@
   <div id="filter_list" class="logbox2">
     <text id="macfilter_text"></text><br>
     <input type="text" name="textbox_mac" size="80">
-    <input type="button" id="btn_macfilter" onclick="mac_filtering()" class="btn btn-default btn-sm">
-    <input type="button" id="btn_macreset" onclick="mac_reset()" class="btn btn-default btn-sm"><br>
-    <text id="macfilter_log"></text>
   </div>
   </div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
+<div class="tabbox">
+  <p class="tabs">
+    <a onclick="jump_floor('W2-6F')" class="tab1">W2-6F</a>
+    <a onclick="jump_floor('W2-7F')" class="tab2">W2-7F</a>
+    <a onclick="jump_floor('kaiyo')" class="tab3">kaiyo</a>
+  </p>
+</div>
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
- <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
+  <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
 </svg>
 <div id="tooltip_div"></div>
 <svg id="svg2" width="1000" height="100"></svg>
@@ -203,13 +242,7 @@
 
     // ヘッダーやその他文字の表示
     if ("{{ language }}" == "en") {
-      d3.select("#header").text("{{ floor }} People Flow Map");
-      d3.select("#btn_staycircle").text("StayMAC");
-      d3.select("#btn_coordinate").text("coordinate");
-      d3.select("#category_3").text("Filter");
-      d3.select("#macfilter_text").text("MAC Filter :");
-      d3.select("#btn_macfilter").attr("value","Filtering");
-      d3.select("#btn_macreset").style("color","red").attr("value","Reset Filter");
+      d3.select("#header").text("{{floor}}People Flow Map");
       d3.select("#datetime_header").text("datetime : ");
       d3.select("#category_1").text("adjust");
       d3.select("#btn_reload").text("Reload");
@@ -218,13 +251,7 @@
       d3.select("#time_interval_text").text(":Data referenced from this time ago.");
       d3.select("#difference_language").text("日本語");
     } else {
-      d3.select("#header").text("{{ floor }} 人流マップ");
-      d3.select("#btn_staycircle").text("滞留");
-      d3.select("#btn_coordinate").text("座標");
-      d3.select("#category_3").text("フィルタ");
-      d3.select("#macfilter_text").text("MACフィルタリング：");
-      d3.select("#btn_macfilter").attr("value","フィルタ適用");
-      d3.select("#btn_macreset").style("color","red").attr("value","フィルタ無効化");
+      d3.select("#header").text("{{floor}}人流マップ");
       d3.select("#datetime_header").text("取得日時：");
       d3.select("#category_1").text("時間調整");
       d3.select("#btn_reload").text("更新");
@@ -266,14 +293,6 @@
       pcwlnode_id[pcwlnode[i].pcwl_id] = i;
     };
 
-    // // pfvinfoにノード間距離情報追加
-    // for (var i = 0; i < pfvinfo.length; i++) {
-    //   var c1 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[0]]];
-    //   var c2 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[1]]];
-    //   var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
-    //   pfvinfo[i].totalLength = totalLength;
-    // };
-
     // 取得時間を表示
     var year = parseInt({{ year }});
     var month = parseInt({{ month }})-1;
@@ -286,12 +305,6 @@
 
     // セレクトボックスの値をtimerangeに合わせる
     document.Sample_form.selectbox_timerange.selectedIndex = timerange_list_id["{{ timerange }}"];
-
-    // d3.select("body").append("p").text("stayinfo.length = "+stayinfo.length);
-    // d3.select("body").append("p").text("pcwlnode[0].pcwl_id = "+pcwlnode[0].pcwl_id);
-    // d3.select("body").append("p").text("pfvinfo[0][mac_list] = "+pfvinfo[0][mac_list]);
-    // d3.select("body").append("p").text("pfvinfoの長さ = "+pfvinfo.length);
-    // d3.select("body").append("p").text("pfvinfo[0].totalLength = "+pfvinfo[0].totalLength);
 
     // 時間抽出
     var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
@@ -317,38 +330,7 @@
         return "translate(" + d.pos_x + "," + d.pos_y + ")";
       },
     })
-    // // マウスがバーに重なったら説明文を出す
-    // .on( "mouseover", function(d){
-    //     div.transition().duration(300)
-    //     .style("opacity",1)
-    //     .style("background","purple")
-    //     .style("height", "35px")
-    //     .style("width", "150px")
-    //     .style("left", (d3.event.pageX + 20) + "px")
-    //     .style("top", (d3.event.pageY + 20) + "px")
-    //     if ("{{ language }}" == "en") {
-    //       div.text("Stay MAC:"+d.size);
-    //     } else {
-    //       div.text("滞留端末数:"+d.size);
-    //     };
-    // })
-    // // マウスがバーから離れたら説明文をけす
-    // .on( "mouseout", function(d){
-    //   div.transition().duration(300)
-    //   .style("opacity",0)
-    // })
-    // // クリック時の動作
-    // .on( "click", function(d){
-    //   jump_staygraph(d.pcwl_id);
-    // });
-    // // 滞留端末数によって色が変わる円の描画
-    // g.append("circle")
-    // .attr({
-    //   "id": "staycircle",
-    //   "r": 20,
-    //   "fill": function(d){return thermography(d.size);},
-    // })
-    // .style("opacity",0)
+
     // 円の描画
     g.append("circle")
     .attr({
@@ -404,27 +386,11 @@
       var stay_palet_g = stay_palet.append("g").attr("id","g_staycircle")
 
       // path要素を作成
-      svg1.append("g").attr("id","g_arrow").style("opacity",1);
+      svg1.append("g").attr("id","g_arrow").style("opacity",0.8);
       path = svg1.select("#g_arrow").selectAll("g.arrow")
       .data(pfvinfo)
       .enter()
       .append("g")
-      // マウスがバーに重なったら説明文を出す
-      .on( "mouseover", function(d){
-          div.transition().duration(300)
-          .style("opacity",1)
-          .style("background",d.color)
-          .style("width", "150px")
-          .style("height", "35px")
-          .style("left", (d3.event.pageX + 20) + "px")
-          .style("top", (d3.event.pageY + 20) + "px")
-          .text(d.mac);
-      })
-      // マウスがバーから離れたら説明文をけす
-      .on( "mouseout", function(d){
-        div.transition().duration(300)
-        .style("opacity",0)
-      })
       .each(function(d,i){
         for (var j = 0; j < d.route.length; j++) { // 各時刻に対して
           for (var k = 0; k < d.route[j].length; k++) { // 各ルートに対して
@@ -455,7 +421,7 @@
               })
               .style("opacity",0)
               .transition().duration(animation_time)
-              .style("opacity",1)
+              .style("opacity",0.8)
             } else if (d.route[j][k].length == 1) { // 滞留円を記述
 
               stay_palet_g.append("circle")
@@ -466,102 +432,12 @@
                 "fill": d.color,
               })
               .style("opacity",0.5)
-              // マウスがバーに重なったら説明文を出す
-              .on( "mouseover", function(){
-                  div.transition().duration(300)
-                  .style("opacity",1)
-                  .style("background",d.color)
-                  .style("width", "150px")
-                  .style("height", "35px")
-                  .style("left", (d3.event.pageX + 20) + "px")
-                  .style("top", (d3.event.pageY + 20) + "px")
-                  .text(d.mac);
-              })
-              // マウスがバーから離れたら説明文をけす
-              .on( "mouseout", function(){
-                div.transition().duration(300)
-                .style("opacity",0)
-              })
             };
           };
         }
       })
     }
     make_stable_view();
-
-    // // stayinfoに基づいた円を作成
-    // function make_staycircle(){
-    //   stay_palet.append("g").attr("id","g_staycircle")
-    //     .selectAll("g.staycircle")
-    //     .data(stayinfo)
-    //     .enter()
-    //     .append("circle")
-    //     // .style("opacity",0)
-    //     .attr({
-    //       "cx": function(d){return pcwlnode[pcwlnode_id[d.pcwl_id]]["pos_x"];},
-    //       "cy": function(d){return pcwlnode[pcwlnode_id[d.pcwl_id]]["pos_y"];},
-    //       "r": 20,
-    //       "fill": function(d){return d.color;},
-    //     })
-    //     // .transition().duration(animation_time)
-    //     .style("opacity",0.5)
-    // }
-    // // make_staycircle();
-
-    // マップの座標(目盛り)と温度・照度を追加
-    var coordinate_width = 50; // 座標間の幅
-    var coordinate = [];
-    for (var i = 0; i*coordinate_width < 1024; i++) {
-     for (var j = 0; j*coordinate_width < 560; j++) {
-      var x = i*coordinate_width;
-      var y = j*coordinate_width;
-      coordinate.push({x:x, y:y});
-     }
-   }
-
-   // 滞留端末数視覚化円の透明度をトグルで切り替える
-    var flag_staycircle = false;
-    function staycircle_opacity(){
-        if (flag_staycircle) {
-          d3.select("#btn_staycircle").style("color","black");
-          svg1.selectAll("#staycircle")
-              .transition()
-              .duration(1000)
-              .style("opacity",0);
-        } else {
-          d3.select("#btn_staycircle").style("color","blue");
-          svg1.selectAll("#staycircle")
-              .transition()
-              .duration(1000)
-              .style("opacity",function(d){
-                if (d.size == 0) {
-                  return 0;
-                } else {
-                  return 0.5;
-                };
-              });
-          };
-      flag_staycircle = !flag_staycircle;
-    }
-
-    // 座標目盛りの透明度をトグルで切り替える
-    var flag_opacity = false;
-    function coordinate_opacity(){
-        if (flag_opacity) {
-          d3.select("#btn_coordinate").style("color","black");
-          svg1.select("#g_coordinate")
-              .transition()
-              .duration(1000)
-              .style("opacity",0);
-        } else {
-          d3.select("#btn_coordinate").style("color","blue");
-          svg1.select("#g_coordinate")
-              .transition()
-              .duration(1000)
-              .style("opacity",1);
-          };
-      flag_opacity = !flag_opacity;
-    }
 
     // 折りたたみ表示
     function show(inputData) {
@@ -681,10 +557,11 @@
     book.append("p").text("_"); // 間隔調整
 
     function add_bookmark_list(json){ // 1つのブックマークを表に書き足す
-      var book = d3.select("#bookmark_list").append("p").attr("id",json["name"]);
+      var book = d3.select("#bookmark_list").append("p").attr("id","name"+json["name"]);
       book.append("a")
       .text(json["name"]+" ")
-      .attr("href",json["url"]);
+      .attr("onclick","move_bookmark('"+json["url"]+"')");
+      //.attr("href",json["url"]);
       if ("{{ language }}" == "en") {
         book.append("a")
         .text("delete")
@@ -707,7 +584,7 @@
     function add_new_bookmark(){ // テキストボックスを読み取り新規ブックマークの作成
       var name = Sample_form.textbox_new_bookmark_name.value;
       if (name != "") {
-        var send_url = make_url_query() + "&add=1&name=" + name;
+        var send_url = make_url_query() + "&add=2&name=" + name;
         $.ajax({
           type: 'GET',
           url: "{% url 'pfv:bookmark_edit' %}"+send_url,
@@ -724,6 +601,25 @@
         });
       };
     }
+    function move_bookmark(url){
+      var mac = Sample_form.textbox_mac.value;
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      }
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:tag_track_map_json' %}"+ "?datetime=" + url + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor,
+        dataType: 'json',
+        success: function(json){
+          set_book_selectbox(url);
+          Load_Form();
+        }
+      });
+    }
     function delete_bookmark(name){ // 1つのブックマークを削除する
       if ("{{ language }}" == "en") {
         var alert = 'delete '+name;
@@ -736,7 +632,7 @@
           url: "{% url 'pfv:bookmark_edit' %}"+"?delete=1&name="+name,
           dataType: 'json',
           success: function(json){
-            d3.select("#bookmark_list").select("#"+name).remove();
+            d3.select("#bookmark_list").select("#name"+name).remove();
             d3.select("#bookmark_list").selectAll("#space").remove();
             bookmarks.splice(0, 1);
             if (bookmarks.length < 4) {
@@ -772,111 +668,6 @@
       }
     }
 
-    // フィルタ関係の描画
-    var flag_macfilter = false;
-    var macfilter_log = d3.select("#macfilter_log").style({
-      "color":"gray",
-      "font-size":"11px",
-    })
-    if ("{{ language }}" == "en") {
-      macfilter_log.text("When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24'");
-    } else {
-      macfilter_log.text("複数のMACで抽出したい場合はMAC間に「 , 」を挟んで入力。例：「20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24」");
-    };
-    function mac_filtering(){
-      flag_macfilter = true;
-      var mac = Sample_form.textbox_mac.value;
-      if ((mac.length % 18) == 17) { // 特定のmacを抽出
-        Load_JSON(datetime);
-        if ("{{ language }}" == "en") {
-          macfilter_log.text("Filtered with query : "+mac);
-        } else {
-          macfilter_log.text("クエリ「"+mac+"」で抽出しました。");
-        };
-        make_color_reference();
-      } else if (mac.length == 0){ // すべてのmacを表示
-        if ("{{ language }}" == "en") {
-          macfilter_log.text("All MACs are displayed.");
-        } else {
-          macfilter_log.text("別ウインドウで全てのMACを表示しました。");
-        };
-        jump_pfv_map();
-        flag_macfilter = false;
-      } else { // 不正なクエリのため検索しない
-        if ("{{ language }}" == "en") {
-          macfilter_log.text("Your input is wrong. When you want to filter plural MACs, please input ',' into MAC to MAC. Example : '20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24'");
-        } else {
-          macfilter_log.text("クエリ入力に誤りがあります。複数のMACで抽出したい場合はMAC間に「 , 」を挟んで入力。例：「20:68:9d:2e:6b:e6,00:24:d6:6e:e3:24」");
-        };
-        flag_macfilter = false;
-      };
-    }
-    function mac_reset(){
-      if ("{{ language }}" == "en") {
-        macfilter_log.text("All MACs are displayed.");
-      } else {
-        macfilter_log.text("別ウインドウで全てのMACを表示しました。");
-      };
-      jump_pfv_map();
-    }
-
-    // 座標目盛り(円)の生成
-    svg1.append("g").attr("id","g_coordinate").style("opacity",0);
-    svg1.select("#g_coordinate").selectAll("g.coordinate")
-    .data(coordinate)
-    .enter()
-    .append("circle")
-    .attr({
-      "cx": function(d) { return d.x;},
-      "cy": function(d) { return d.y;},
-      "r": 3,
-      "fill": "purple",
-    })
-    // マウスがバーに重なったら説明文を出す
-    .on( "mouseover", function(d){
-      if (flag_opacity){ // 座標可視状態なら説明を出す
-        div.transition().duration(300)
-        .style("opacity",1)
-        .style("background","purple")
-        .style("width", "150px" )
-        .style("height", "35px")
-        .style("left", (d3.event.pageX + 20) + "px")
-        .style("top", (d3.event.pageY + 20) + "px")
-        .text("x = " + d.x + " , y = " + d.y)
-      }
-    })
-    // マウスがバーから離れたら説明文をけす
-    .on( "mouseout", function(d){
-      div.transition().duration(300)
-      .style("opacity",0)
-    });
-
-    // マウスオーバーすると出てくる説明文(div要素)
-    var div = d3.select("#tooltip_div")
-    .attr("class","tooltip")
-    .style("width", "80px" )
-    .style("height", "35px")
-    .style("opacity",0)
-
-    // 気温に対応した色を返す(サーモグラフィ風)
-    function thermography(tu){
-      threshold_H = 8.0; // この温度以上は赤色
-      threshold_L = 1.0; // この温度以下は青色
-      if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
-        return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
-      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
-        return  "rgb(" + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 0 + ")"; // 黄～赤
-      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 2.0 / 4.0 ) ) {
-        return  "rgb(" + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ", " + 0 + ")"; // 緑～黄
-      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 1.0 / 4.0 ) ) {
-        return  "rgb(" + 0 + ", " + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ")"; // 水～緑
-      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 0.0 / 4.0 ) ) {
-        return  "rgb(" + 0 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ")"; // 青～水
-      }else {
-        return  "rgb(" + 0 + ", " + 0 + ", " + 255 + ")"; // 青
-      }
-    }
-
     // 人数参考バーの表示
     // 幅（Width）と高さ（ height）
     var w = 1000;
@@ -888,15 +679,6 @@
     function make_color_reference(){
       // 開始時に前の画面を消去
       svg2.select("#g_color_reference").remove();
-
-      // // 参照画面用のデータを作成
-      // color_reference = [];
-      // for (var i = 0; i < pfvinfo.length; i++) {
-      //   color_reference.push({"mac":pfvinfo[i]["mac"],"color":pfvinfo[i]["color"]});
-      // };
-      // for (var i = 0; i < stayinfo.length; i++) {
-      //   color_reference.push({"mac":stayinfo[i]["mac"],"color":stayinfo[i]["color"]});
-      // };
 
       // 参照画面を描画
       var g_color_reference = svg2.append("g").attr("id","g_color_reference")
@@ -936,32 +718,20 @@
                 return "あじや";
               }　else if (d.mac == "00:11:81:10:01:17") {
                 return "さいこんたん";
-              } else {
+              } else if (d.mac == "00:11:81:10:01:1a") {
+                return "もみだれや予備";
+              } else if (d.mac == "00:11:81:10:01:23") {
+                return "あじや予備";
+              } else if (d.mac == "00:11:81:10:01:1b") {
+                return "さいこんたん予備";
+              } /*else {
                 return d.mac;
-              }
+              }*/
       });
 
     }
     make_color_reference();
 
-    // 矢印クリック時の動作
-    function jump_pfvgraph(dir){
-      var direction = ("0"+dir[0]).slice(-2)+("0"+dir[1]).slice(-2)
-      window.open("{% url 'pfv:pfv_graph' %}"+ make_url_query() + "&direction=" + direction,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
-    }
-    // PCWLクリック時の動作
-    function jump_staygraph(pcwl_id){
-      var node = ("0"+pcwl_id).slice(-2);
-      window.open("{% url 'pfv:stay_graph' %}"+ make_url_query() + "&node=" + node,"_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
-    }
-    // 別のフロアへジャンプ
-    function jump_floor(floor_name){
-      document.location = "{% url 'pfv:tag_track_map' %}"+ make_url_query() + "&floor=" + floor_name;
-    }
-    // すべてのmacを表示したページにジャンプ
-    function jump_pfv_map(){
-      window.open("{% url 'pfv:tag_track_map' %}"+ make_url_query()+"&mac=","_blank","toolbar=yes,titlebar=yes,status=yes,scrollbars=yes,resizable=yes,menubar=yes,location=yes");
-    }
     // 言語切替
     function change_language(){
       if ("{{ language }}" == "en") {
@@ -993,6 +763,30 @@
       }
     }
     describe_datetime();
+
+    // セレクトボックスの値をbookmarkの時刻に合わせる
+    function set_book_selectbox(book_time){
+      var year = book_time.slice(0,4) - 2014;
+      var month = book_time.slice(4,6) - 1;
+      var day = book_time.slice(6,8) - 1;
+      var hour = book_time.slice(8,10);
+      var minute = book_time.slice(10,12);
+      var second = book_time.slice(12,14)/5;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = month;
+      document.Sample_form.textbox_day.selectedIndex = day;
+      document.Sample_form.textbox_hour.selectedIndex = hour;
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+      document.Sample_form.textbox_second.selectedIndex = second;
+    }
+
+    function describe_book_time(book_time){
+      if ("{{ language }}" == "en") {
+        d3.select("#got_datetime").text(book_time.slice(0,14));
+      } else {
+        d3.select("#got_datetime").text(book_time.slice(0,4)+"年"+book_time.slice(4,6)+"月"+book_time.slice(6,8)+"日"+" "+book_time.slice(8,10)+":"+book_time.slice(10,12)+":"+book_time.slice(12,14));
+      }
+    }
 
     // datetime,language,floor,mac,timerangeのurlクエリを出力する
     function make_url_query(){
@@ -1032,6 +826,23 @@
         }
       });
     }
+    function Load_JSON2(datetime){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:tag_track_map_json' %}"+make_url_query(),
+        dataType: 'json',
+        success: function(json){
+          if ("{{ language }}" == "en") {
+            d3.select("#header").text(floor+"People Flow Map");
+          } else{
+            d3.select("#header").text(floor+"人流マップ");
+          }
+          describe_datetime();
+          Reload_pcwlnode(json);
+          Reload_pfvinfo(json);
+        }
+      });
+    }
 
     // セレクトボックスの日付のJSONをajaxで読み込む
     function Load_Form(){
@@ -1048,6 +859,52 @@
       datetime.setMinutes(parseInt(minute));
       datetime.setSeconds(parseInt(second));
       Load_JSON(datetime);
+    }
+
+    function Load_Form2(){
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+      datetime.setYear(parseInt(year));
+      datetime.setMonth(parseInt(month)-1);
+      datetime.setDate(parseInt(day));
+      datetime.setHours(parseInt(hour));
+      datetime.setMinutes(parseInt(minute));
+      datetime.setSeconds(parseInt(second));
+      Load_JSON2(datetime);
+    }
+
+    // 別のフロアへジャンプ
+    function jump_floor(floor_name){
+      //document.location = "{% url 'pfv:tag_track_map' %}"+ make_url_query() + "&floor=" + floor_name;
+      // g.length = 0;
+      // for (var i = 0; i < pfvinfo.length; i ++){
+      //   d3.select("#arrowhead"+i).remove();
+      // }
+      // d3.select("#svg1").select("defs").remove();
+      //パターン１
+      // for (var i = 0; i < pcwlnode.length; i ++) {
+      //   d3.select("#g_pcwl_"+pcwlnode[i]["pcwl_id"]).remove();
+      // }
+      //パターン２
+      d3.select("#svg1").selectAll("g").remove();
+      //階層を変更
+      floor = floor_name;
+      pcwlnode.length = 0;
+      // マップ画像の挿入
+      if (floor == "W2-6F") {
+        var file_name = "6F_west2.jpg";
+      } else if (floor == "W2-7F"){
+        var file_name = "7F_west2.jpg";
+      } else if (floor == "kaiyo"){
+        var file_name = "kaiyo.png";
+      };
+      d3.select("#map_image").attr("xlink:href","http://160.16.74.119/~abe/images/"+file_name);
+      //データの更新
+      Load_Form2();
     }
 
     // xx秒戻るor進む
@@ -1070,46 +927,76 @@
       set_selectbox();
     }
 
+    function Reload_pcwlnode(json){
+      // g.remove();
+      //g.length = 0;
+      //d3.select("#g_").remove();
+      // //pcwlnodeの更新
+      for (var i = 0; i < json["pcwlnode"].length; i++){
+        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"]});
+      }
+      // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+      pcwlnode_id.length = 0;
+      for (var i = 0; i < pcwlnode.length; i++) {
+        pcwlnode_id[pcwlnode[i].pcwl_id] = i;
+      };
+      // pcwlnodeのマッピング
+      var g = svg1.selectAll("g.pcwlnode")
+      .data(pcwlnode)
+      .enter()
+      .append("g")
+      .attr({
+        "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+        transform: function(d) {
+          return "translate(" + d.pos_x + "," + d.pos_y + ")";
+        },
+      })
+      // 円の描画
+      g.append("circle")
+      .attr({
+        "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+        "r": 0.1,
+        "fill": "purple",
+      })
+      .transition().duration(1000)
+      .attr("r", 13);
+      // テキストの描画
+      g.append("text")
+      .attr({
+        "id": function(d){return "pcwl_text"+d.pcwl_id;},
+        "text-anchor": "middle",
+        "dy": ".35em",
+        "fill": "white",
+      })
+      .text(function(d) {
+              return d.pcwl_id;
+      });
+      // {% for s in pcwlnode %}
+      // pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
+      // {% endfor %}
+    }
+
     function Reload_pfvinfo(json){
       // pfvinfoの更新
-      if (flag_macfilter) { // フィルタ対象が変わった場合
-        pfvinfo = json["pfvinfo"];
-      } else { // フィルタ対象は変わらずrouteのみ更新する場合
-        for (var i = 0; i < json["pfvinfo"].length; i++) {
+      for (var i = 0; i < json["pfvinfo"].length; i++) {
           pfvinfo[i]["route"] = json["pfvinfo"][i]["route"]
         };
-      };
+
       // 画面の更新
       if (flag_Auto2) {
         move_animate_circle();
       } else {
         d3.select("#g_arrow").remove();
         d3.select("#g_staycircle").remove();
+        d3.select("#svg1").select("defs").remove();
         make_stable_view();
-        if (flag_macfilter) {
-          make_color_reference();
-          flag_macfilter = false;
-        };
       };
     }
 
     d3.select("#Auto_Animation").style("color","black");
-    var flag_Auto = false;
     var flag_Auto2 = false;
     var Timer;
-    // function Auto_Animation(){
-    //   if (flag_Auto) {
-    //     flag_Auto = !flag_Auto;
-    //     d3.select("#btn_Auto").style("color","black");
-    //     clearInterval(Timer);
-    //     describe_datetime();
-    //   } else {
-    //     flag_Auto = !flag_Auto;
-    //     Auto_Ajax();
-    //     d3.select("#btn_Auto").style("color","blue");
-    //     Timer = setInterval(Auto_Ajax,1000);
-    //   };
-    // }
+
     function Auto_Ajax(){
       slide_DT(-1);
     }
@@ -1135,6 +1022,7 @@
         animate_circle.remove();
         document.Sample_form.selectbox_timerange.selectedIndex = tmp_timerange_order;
         // stayed_circle.remove();
+        d3.select("#svg1").select("defs").remove();
         make_stable_view();
         describe_datetime();
       } else {
@@ -1160,6 +1048,7 @@
         "r": 0,
         "fill":function(d){return d.color;},
       })
+      .style("opacity", 0.8)
     }
     function move_animate_circle(){
       if (flag_realtime) {
