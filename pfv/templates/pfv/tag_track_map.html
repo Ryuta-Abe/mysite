@@ -53,20 +53,58 @@
          display: inline-block;
          _display: inline;
       }
+
+  p.tabs
+  {
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+  }
+  p.tabs a
+  {
+    display: block;
+    width: 22.3em;
+    float: left;
+    margin: 0px 1px 0px 0px;
+    padding: 8px;
+    text-align: center;
+    border-radius: 12px 12px 0px 0px;
+    background-color: blue;
+    color: white;
+  }
+  p.tabs a.tab1
+  {
+    background-color: blue;
+    color: white;
+  }
+  p.tabs a.tab2
+  {
+    background-color: red;
+    color: white;
+  }
+  p.tabs a.tab3
+  {
+    background-color: green;
+    color: white;
+  }
+  p.tabs a:hover
+  {
+    color: black;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <h3 id="header" class="page-header"></h3>
 <form name="Sample_form" action="Sample.html">
-  <a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>
+  <!--<a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>-->
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
   <a id="btn_realtime" onclick="realtime()" class="btn btn-default btn-sm"></a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
-  　(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)
-  <div id="layer_1" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
+  <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
   <span id="selected_datetime">
   <script type="text/javascript">
     function make_selectbox(list){
@@ -183,9 +221,16 @@
   </div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
+<div class="tabbox">
+  <p class="tabs">
+    <a onclick="jump_floor('W2-6F')" class="tab1">W2-6F</a>
+    <a onclick="jump_floor('W2-7F')" class="tab2">W2-7F</a>
+    <a onclick="jump_floor('kaiyo')" class="tab3">kaiyo</a>
+  </p>
+</div>
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
- <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
+  <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
 </svg>
 <div id="tooltip_div"></div>
 <svg id="svg2" width="1000" height="100"></svg>
@@ -673,9 +718,15 @@
                 return "あじや";
               }　else if (d.mac == "00:11:81:10:01:17") {
                 return "さいこんたん";
-              } else {
+              } else if (d.mac == "00:11:81:10:01:1a") {
+                return "もみだれや予備";
+              } else if (d.mac == "00:11:81:10:01:23") {
+                return "あじや予備";
+              } else if (d.mac == "00:11:81:10:01:1b") {
+                return "さいこんたん予備";
+              } /*else {
                 return d.mac;
-              }
+              }*/
       });
 
     }
