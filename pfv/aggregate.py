@@ -112,7 +112,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
     if tr_flag:
       col_name = trtmp
       dt_end   = "$dt_end05"
-      min_interval = 5
+      min_interval = 10
     else:
       col_name = rttmp
       dt_end   = "$dt_end0"
@@ -143,7 +143,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
   # db.rttmp.remove()
   # db.trtmp.remove()
 
-  print("tmpcol_count:"+str(db.tmpcol.count()))
+  # print("tmpcol_count:"+str(db.tmpcol.count()))
   # pcwltimeコレクション作成
   from datetime import datetime, timedelta
   ag = tmpcol._get_collection().aggregate([
