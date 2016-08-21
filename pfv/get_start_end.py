@@ -51,7 +51,7 @@ def get_start_end_mod(all_flag, tr_flag):
   from datetime import datetime, timedelta
   # dt05
   if tr_flag:
-    min_interval = 10
+    min_interval = 5
   else:
     min_interval = 10
 

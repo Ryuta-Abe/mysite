@@ -112,7 +112,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
     if tr_flag:
       col_name = trtmp
       dt_end   = "$dt_end05"
-      min_interval = 10
+      min_interval = 5
     else:
       col_name = rttmp
       dt_end   = "$dt_end0"
