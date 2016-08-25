@@ -974,9 +974,21 @@
       Load_JSON2(datetime);
     }
 
+    //別のフロアにジャンプする際の判定用フラグ
+      var flag_jud_anime = false;
+      var flag_jud_real = false;
+
     // 別のフロアへジャンプ
     function jump_floor(floor_name){
 
+      if(flag_Auto2){
+        flag_jud_anime = !flag_jud_anime;
+        Auto_Animation2();
+      };
+      if (flag_realtime) {
+        flag_jud_real = !flag_jud_real;
+        realtime();
+      };
       d3.select("#svg1").selectAll("g").remove();
       //変更前のfloorのタブを待機状態に変更
       var before_floor_ID = document.getElementById(floor);
@@ -1065,6 +1077,14 @@
       .text(function(d) {
               return d.pcwl_id;
       });
+      if(flag_jud_anime){
+        Auto_Animation2();
+        flag_jud_anime = !flag_jud_anime;
+      };
+      if (flag_jud_real) {
+        realtime();
+        flag_jud_real = !flag_jud_real;
+      };
       // {% for s in pcwlnode %}
       // pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
       // {% endfor %}
@@ -1136,7 +1156,9 @@
       // flagによりアニメーション実行or停止
       if (flag_Auto2) {
         flag_Auto2 = !flag_Auto2;
-        d3.select("#btn_Auto2").style("color","black");
+        if(!flag_jud_anime){
+          d3.select("#btn_Auto2").style("color","black");
+        };
         if (!flag_realtime) {
           clearInterval(Timer);
         };
@@ -1209,7 +1231,9 @@
    function realtime(){
     if (flag_realtime) {
       flag_realtime = !flag_realtime;
-      d3.select("#btn_realtime").style("color","black");
+      if(!flag_jud_real){
+        d3.select("#btn_realtime").style("color","black");
+      };
       clearInterval(RT_Timer);
       Load_Form();
       if (flag_Auto2) {
