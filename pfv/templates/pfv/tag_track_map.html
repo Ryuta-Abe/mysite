@@ -36,18 +36,19 @@
       {
          border: solid 1px #808080;
          width: 350px;
-         height: 115px;
+         height: 120px;
          padding: 0.5em;
          overflow: auto;
          display: inline-block;
          _display: inline;
+         background-color: white;
       }
 
   *.logbox2
       {
          border: solid 1px #808080;
          width: 700px;
-         height: 115px;
+         height: 120px;
          padding: 0.5em;
          overflow: auto;
          display: inline-block;
@@ -58,7 +59,7 @@
   {
     margin: 0px;
     padding: 0px;
-    position: absolute;
+    /*position: absolute;*/
   }
   p.tabs a
   {
@@ -69,6 +70,7 @@
     padding: 8px;
     text-align: center;
     border-radius: 12px 12px 0px 0px;
+    cursor: pointer;
   }
   p.tabs a.select_tab
   {
@@ -86,11 +88,73 @@
   {
     color: yellow;
   }
+
+  select {
+    cursor: pointer;
+    padding: 0.3em 0em;
+    /*color: white;*/
+    border: 1px solid black;
+    border-radius: 8px;
+    /*background: black;*/
+    font-weight: bold;
+  }
+
+  .btn{
+    /*color: white;
+    border: 1px solid black;*/
+    border-radius: 8px;
+    /*background: blue;*/
+    font-weight: bold;
+    /*font-size: 15px;*/
+    /*font-family: sans-serif;*/
+  }
+  .page-header{
+    font-weight: bold;
+    font-size: 25px;
+  }
+  .container{
+    width: 1360px;
+    /*background-color: aliceblue;*/
+  }
+  #svg1{
+    float: left;
+    background-color: white;
+    border: 3px solid black;
+  }
+  #svg2{
+    float: right;
+    position: relative;
+    background-color: white;
+    border: 3px solid black;
+  }
+  body{
+    background-color: aliceblue;
+  }
+
+  #tag_list p{
+    /*position: relative;*/
+    float: right;
+    display: block;
+    /*width: 22.3em;*/
+    /*float: left;*/
+    margin: 0px 0px 0px 0px;
+    /*padding: 8px;*/
+    text-align: center;
+    /*border-radius: 0px 0px 0px 0px;*/
+    background-color: black;
+    color: white;
+    width: 300px;
+    height: 30px;
+    font-size: 25px;
+  }
+  #bookmark_list p a, #bookmark_add p a{
+    cursor: pointer;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<h3 id="header" class="page-header"></h3>
+<h1 id="header" class="page-header"></h1>
 <form name="Sample_form" action="Sample.html">
   <!--<a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>-->
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
@@ -222,10 +286,13 @@
   <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
 </svg>
 <div id="tooltip_div"></div>
-<svg id="svg2" width="1000" height="100"></svg>
-<br>
-<Div Align="right"><a id="difference_language" onclick="change_language()"></a></Div>
-<br>
+<div id="tag_list">
+    <p>タグ一覧</p>
+</div>
+<svg id="svg2" width="300" height="530"></svg>
+<!-- <br> -->
+<!-- <Div Align="right"><a id="difference_language" onclick="change_language()"></a></Div> -->
+<!-- <br> -->
 
 <script type="text/javascript">
 
@@ -692,11 +759,12 @@
     .append("g")
     .attr({
       transform: function(d,i) {
-        if (d.color == "blue" || d.color == "red" || d.color == "green"){
-          return "translate(" + (i*320 + padding) + "," + 30 + ")";
-        } else {
-          return "translate(" + (i*320 + padding - 960) + "," + 80 + ")";
-        }
+        return "translate(" + 30 + "," + (i*85 + padding + 20) + ")";
+        // if (d.color == "blue" || d.color == "red" || d.color == "green"){
+        //   return "translate(" + (i*320 + padding) + "," + 30 + ")";
+        // } else {
+        //   return "translate(" + (i*320 + padding - 960) + "," + 80 + ")";
+        // }
       },
     })
 
@@ -717,8 +785,10 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "4.85em",
+        "dx": "4.35em",
         "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
         "fill": function(d){return d.color;},
       })
       .text(function(d) {
@@ -745,6 +815,8 @@
         "text-anchor": "middle",
         "dx": "10.85em",
         "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
         "fill": function(d){return d.color;},
       })
       .text(function(d) {
@@ -1036,6 +1108,8 @@
         "text-anchor": "middle",
         "dx": "10.85em",
         "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
         "fill": function(d){return d.color;},
       })
       .text(function(d) {
