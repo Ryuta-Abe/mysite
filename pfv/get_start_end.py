@@ -79,7 +79,7 @@ def get_start_end_mod(all_flag, tr_flag):
   nodecnt_dict = init_nodecnt_dict()
 
   # data取り出し
-  mac_query = "00:11:81:10:01:17"
+  mac_query = ""
   datas = db.tmpcol.find({"_id.mac":mac_query}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
