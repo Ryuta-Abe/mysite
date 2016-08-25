@@ -142,7 +142,7 @@ class staymacinfo(Document):
     # "mac" : "54:9f:13:10:a3:b4"
     # "plist" : [ { "pcwl_id" : 1, "size" : 0 }, { "pcwl_id" : 2, "size" : 1 },...]
 
-# ブックマーク情報
+# ブックマーク情報(pfv_map用)
 class bookmark(Document):
     name = StringField(max_length=255)
     url = StringField(max_length=255)
@@ -153,6 +153,14 @@ class bookmark(Document):
     # "name" : "6月3日人流データ",
     # "url" : "?datetime=20150603122120&timerange=60&experiment=0&language=jp",
     # "frequency" : 0
+
+# ブックマーク情報(tag_track_map用)
+class tagbookmark(Document):
+    name = StringField(max_length=255)
+    url = StringField(max_length=255)
+    frequency = IntField()
+
+    meta = DB_ALIAS
 
 # RealTimeビュー用生データ(Real Time RAW data)
 class rtraw(Document):
@@ -228,7 +236,7 @@ class tmpcol(Document):
 class pastdata(Document):
     mac         = StringField()
     update_dt   = DateTimeField()
-    nodecnt_dict= DictField() 
+    nodecnt_dict= DictField()
     pastlist    = ListField()
 
     meta = DB_ALIAS
@@ -237,7 +245,7 @@ class pastdata(Document):
     # "update_dt":datetime.datetime(2015,12,3,12,35,30),
     # "nodecnt_dict":{"W2-6F":{1:0,2:0,3:0...},
     #                 "W2-7F":{1:0,2:0,3:0...}
-    #                },    
+    #                },
     # "pastlist": [ {"dt":datetime.datetime(2015,12,3,12,35,00),
     #                "start_node":{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},
     #                "node":[{"floor":"W2-6F", "pcwl_id":10, "rssi":-60},

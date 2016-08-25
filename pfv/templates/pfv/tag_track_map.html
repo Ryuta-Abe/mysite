@@ -36,18 +36,19 @@
       {
          border: solid 1px #808080;
          width: 350px;
-         height: 115px;
+         height: 120px;
          padding: 0.5em;
          overflow: auto;
          display: inline-block;
          _display: inline;
+         background-color: white;
       }
 
   *.logbox2
       {
          border: solid 1px #808080;
          width: 700px;
-         height: 115px;
+         height: 120px;
          padding: 0.5em;
          overflow: auto;
          display: inline-block;
@@ -58,7 +59,7 @@
   {
     margin: 0px;
     padding: 0px;
-    position: absolute;
+    /*position: absolute;*/
   }
   p.tabs a
   {
@@ -69,33 +70,91 @@
     padding: 8px;
     text-align: center;
     border-radius: 12px 12px 0px 0px;
-    background-color: blue;
-    color: white;
+    cursor: pointer;
   }
-  p.tabs a.tab1
+  p.tabs a.select_tab
   {
-    background-color: blue;
+    background-color: black;
     color: white;
+    padding: 8px;
   }
-  p.tabs a.tab2
+  p.tabs a.waiting_tab
   {
-    background-color: red;
+    background-color: black;
     color: white;
-  }
-  p.tabs a.tab3
-  {
-    background-color: green;
-    color: white;
+    opacity: 0.5;
   }
   p.tabs a:hover
   {
-    color: black;
+    color: yellow;
+  }
+
+  select {
+    cursor: pointer;
+    padding: 0.3em 0em;
+    /*color: white;*/
+    border: 1px solid black;
+    border-radius: 8px;
+    /*background: black;*/
+    font-weight: bold;
+  }
+
+  .btn{
+    /*color: white;
+    border: 1px solid black;*/
+    border-radius: 8px;
+    /*background: blue;*/
+    font-weight: bold;
+    /*font-size: 15px;*/
+    /*font-family: sans-serif;*/
+  }
+  .page-header{
+    font-weight: bold;
+    font-size: 25px;
+  }
+  .container{
+    width: 1360px;
+    /*background-color: aliceblue;*/
+  }
+  #svg1{
+    float: left;
+    background-color: white;
+    border: 3px solid black;
+  }
+  #svg2{
+    float: right;
+    position: relative;
+    background-color: white;
+    border: 3px solid black;
+  }
+  body{
+    background-color: aliceblue;
+  }
+
+  #tag_list p{
+    /*position: relative;*/
+    float: right;
+    display: block;
+    /*width: 22.3em;*/
+    /*float: left;*/
+    margin: 0px 0px 0px 0px;
+    /*padding: 8px;*/
+    text-align: center;
+    /*border-radius: 0px 0px 0px 0px;*/
+    background-color: black;
+    color: white;
+    width: 300px;
+    height: 30px;
+    font-size: 25px;
+  }
+  #bookmark_list p a, #bookmark_add p a{
+    cursor: pointer;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<h3 id="header" class="page-header"></h3>
+<h1 id="header" class="page-header"></h1>
 <form name="Sample_form" action="Sample.html">
   <!--<a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>-->
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
@@ -221,22 +280,19 @@
   </div>
 </form>
 <br><!-- ボタンと地図の間にスペースを -->
-<div class="tabbox">
-  <p class="tabs">
-    <a onclick="jump_floor('W2-6F')" class="tab1">W2-6F</a>
-    <a onclick="jump_floor('W2-7F')" class="tab2">W2-7F</a>
-    <a onclick="jump_floor('kaiyo')" class="tab3">kaiyo</a>
-  </p>
-</div>
+<div class="tabbox" id="tabbox"></div>
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
   <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
 </svg>
 <div id="tooltip_div"></div>
-<svg id="svg2" width="1000" height="100"></svg>
-<br>
-<Div Align="right"><a id="difference_language" onclick="change_language()"></a></Div>
-<br>
+<div id="tag_list">
+    <p>タグ一覧</p>
+</div>
+<svg id="svg2" width="300" height="530"></svg>
+<!-- <br> -->
+<!-- <Div Align="right"><a id="difference_language" onclick="change_language()"></a></Div> -->
+<!-- <br> -->
 
 <script type="text/javascript">
 
@@ -263,6 +319,28 @@
     d3.select("#btn_realtime").text("RealTime");
     Sample_form.textbox_mac.value = "{{ mac }}";
 
+    //floorのリストと現在の階を定義
+    var floor_list = ["W2-6F","W2-7F","kaiyo"];
+    var floor = "{{ floor }}";
+
+    //タブ用の枠を作成
+    var tab = d3.select("#tabbox").append("p").attr("class", "tabs");
+    tab.selectAll("p.tab")
+    .data(floor_list)
+    .enter()
+    .append("a")
+    .text(function(d){return d})
+    .attr("onclick",function(d){return "jump_floor('"+d+"')"})
+    .attr("id", function(d){return d})
+    .attr("class", function(d){
+      if(floor == d){
+        return "select_tab"
+      } else{
+        return "waiting_tab"
+      }
+    })
+
+
     // マップ画像の挿入
     if ("{{ floor }}" == "W2-6F") {
       var file_name = "6F_west2.jpg";
@@ -284,7 +362,7 @@
     bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
     {% endfor %}
     {% for s in pfvinfo %}
-    pfvinfo.push({mac:"{{ s.mac }}",color:"{{ s.color }}",route:{{ s.route }}});
+    pfvinfo.push({mac:"{{ s.mac }}",color:"{{ s.color }}",route:{{ s.route }},floor:"{{ s.floor }}"});
     {% endfor %}
 
     // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
@@ -493,7 +571,6 @@
       }
     }
     // // Floor関係の描画
-    var floor_list = ["W2-6F","W2-7F","kaiyo"];
     for (var i = 0; i < floor_list.length; i++) {
       add_floor_list(floor_list[i]);
     };
@@ -512,7 +589,6 @@
         book.append("p").attr("id","space").text("_"); // 間隔調整
       };
     }
-    var floor = "{{ floor }}";
 
     // ブックマーク関係の描画
     for (var i = 0; i < bookmarks.length; i++) {
@@ -629,7 +705,7 @@
       if(window.confirm(alert)){
         $.ajax({
           type: 'GET',
-          url: "{% url 'pfv:bookmark_edit' %}"+"?delete=1&name="+name,
+          url: "{% url 'pfv:bookmark_edit' %}"+"?delete=3&name="+name,
           dataType: 'json',
           success: function(json){
             d3.select("#bookmark_list").select("#name"+name).remove();
@@ -654,7 +730,7 @@
         if (window.confirm(alert2)) {
           $.ajax({
             type: 'GET',
-            url: "{% url 'pfv:bookmark_edit' %}"+"?delete=2",
+            url: "{% url 'pfv:bookmark_edit' %}"+"?delete=4",
             dataType: 'json',
             success: function(json){
               d3.select("#bookmark_list").selectAll("p").remove();
@@ -675,26 +751,28 @@
     var padding = 30;
     var max = 10; // 最大表示人数
 
+  // 参照画面を描画
+     var g_color_reference = svg2.append("g").attr("id","g_color_reference")
+    .selectAll("g.color_reference")
+    .data(pfvinfo)
+    .enter()
+    .append("g")
+    .attr({
+      transform: function(d,i) {
+        return "translate(" + 30 + "," + (i*85 + padding + 20) + ")";
+        // if (d.color == "blue" || d.color == "red" || d.color == "green"){
+        //   return "translate(" + (i*320 + padding) + "," + 30 + ")";
+        // } else {
+        //   return "translate(" + (i*320 + padding - 960) + "," + 80 + ")";
+        // }
+      },
+    })
+
     // macに対する色の参照画面を描画
     function make_color_reference(){
       // 開始時に前の画面を消去
-      svg2.select("#g_color_reference").remove();
+      //svg2.select("#g_color_reference").remove();
 
-      // 参照画面を描画
-      var g_color_reference = svg2.append("g").attr("id","g_color_reference")
-      .selectAll("g.color_reference")
-      .data(pfvinfo)
-      .enter()
-      .append("g")
-      .attr({
-        transform: function(d,i) {
-          if (d.color == "blue" || d.color == "red" || d.color == "green"){
-            return "translate(" + (i*180 + padding) + "," + 30 + ")";
-          } else {
-            return "translate(" + (i*180 + padding - 540) + "," + 80 + ")";
-          }
-        },
-      })
       // 円の描画
       g_color_reference.append("circle")
       .attr({
@@ -707,8 +785,10 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "5.85em",
+        "dx": "4.35em",
         "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
         "fill": function(d){return d.color;},
       })
       .text(function(d) {
@@ -719,15 +799,30 @@
               }　else if (d.mac == "00:11:81:10:01:17") {
                 return "さいこんたん";
               } else if (d.mac == "00:11:81:10:01:1a") {
-                return "もみだれや予備";
+                return "予備1";
               } else if (d.mac == "00:11:81:10:01:23") {
-                return "あじや予備";
+                return "予備2";
               } else if (d.mac == "00:11:81:10:01:1b") {
-                return "さいこんたん予備";
+                return "予備3";
               } /*else {
                 return d.mac;
               }*/
       });
+
+      //現在階の描画
+      g_color_reference.append("text")
+      .attr({
+        "text-anchor": "middle",
+        "dx": "10.85em",
+        "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
+        "fill": function(d){return d.color;},
+      })
+      .text(function(d) {
+                return d.floor;
+              }
+      );
 
     }
     make_color_reference();
@@ -823,6 +918,7 @@
         success: function(json){
           describe_datetime();
           Reload_pfvinfo(json);
+          Reload_mac_floor(json);
         }
       });
     }
@@ -840,6 +936,7 @@
           describe_datetime();
           Reload_pcwlnode(json);
           Reload_pfvinfo(json);
+          Reload_mac_floor(json);
         }
       });
     }
@@ -877,22 +974,31 @@
       Load_JSON2(datetime);
     }
 
+    //別のフロアにジャンプする際の判定用フラグ
+      var flag_jud_anime = false;
+      var flag_jud_real = false;
+
     // 別のフロアへジャンプ
     function jump_floor(floor_name){
-      //document.location = "{% url 'pfv:tag_track_map' %}"+ make_url_query() + "&floor=" + floor_name;
-      // g.length = 0;
-      // for (var i = 0; i < pfvinfo.length; i ++){
-      //   d3.select("#arrowhead"+i).remove();
-      // }
-      // d3.select("#svg1").select("defs").remove();
-      //パターン１
-      // for (var i = 0; i < pcwlnode.length; i ++) {
-      //   d3.select("#g_pcwl_"+pcwlnode[i]["pcwl_id"]).remove();
-      // }
-      //パターン２
+
+      if(flag_Auto2){
+        flag_jud_anime = !flag_jud_anime;
+        Auto_Animation2();
+      };
+      if (flag_realtime) {
+        flag_jud_real = !flag_jud_real;
+        realtime();
+      };
       d3.select("#svg1").selectAll("g").remove();
+      //変更前のfloorのタブを待機状態に変更
+      var before_floor_ID = document.getElementById(floor);
+      before_floor_ID.className = 'waiting_tab';
       //階層を変更
       floor = floor_name;
+      //変更後のfloorのタブを選択状態に変更
+      var after_floor_ID = document.getElementById(floor);
+      after_floor_ID.className = 'select_tab';
+      //リストpcwlnodeを空にする
       pcwlnode.length = 0;
       // マップ画像の挿入
       if (floor == "W2-6F") {
@@ -903,6 +1009,8 @@
         var file_name = "kaiyo.png";
       };
       d3.select("#map_image").attr("xlink:href","http://160.16.74.119/~abe/images/"+file_name);
+      // staycircleの描画空間
+      stay_palet = svg1.append("g")
       //データの更新
       Load_Form2();
     }
@@ -928,9 +1036,7 @@
     }
 
     function Reload_pcwlnode(json){
-      // g.remove();
-      //g.length = 0;
-      //d3.select("#g_").remove();
+
       // //pcwlnodeの更新
       for (var i = 0; i < json["pcwlnode"].length; i++){
         pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"]});
@@ -971,6 +1077,14 @@
       .text(function(d) {
               return d.pcwl_id;
       });
+      if(flag_jud_anime){
+        Auto_Animation2();
+        flag_jud_anime = !flag_jud_anime;
+      };
+      if (flag_jud_real) {
+        realtime();
+        flag_jud_real = !flag_jud_real;
+      };
       // {% for s in pcwlnode %}
       // pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
       // {% endfor %}
@@ -997,6 +1111,33 @@
     var flag_Auto2 = false;
     var Timer;
 
+    function Reload_mac_floor(json){
+
+      //svg2.select("#g_color_reference").remove();
+      var node = document.getElementById('g_color_reference');
+
+      // macアドレスの現在のfloorを更新
+      for (var i = 0; i < json["pfvinfo"].length; i++) {
+          pfvinfo[i]["floor"] = json["pfvinfo"][i]["floor"]
+          node.children[i].children[2].remove();
+        };
+
+      //現在階の描画
+      g_color_reference.append("text")
+      .attr({
+        "text-anchor": "middle",
+        "dx": "10.85em",
+        "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
+        "fill": function(d){return d.color;},
+      })
+      .text(function(d) {
+                return d.floor;
+              }
+      );
+    }
+
     function Auto_Ajax(){
       slide_DT(-1);
     }
@@ -1015,7 +1156,9 @@
       // flagによりアニメーション実行or停止
       if (flag_Auto2) {
         flag_Auto2 = !flag_Auto2;
-        d3.select("#btn_Auto2").style("color","black");
+        if(!flag_jud_anime){
+          d3.select("#btn_Auto2").style("color","black");
+        };
         if (!flag_realtime) {
           clearInterval(Timer);
         };
@@ -1088,7 +1231,9 @@
    function realtime(){
     if (flag_realtime) {
       flag_realtime = !flag_realtime;
-      d3.select("#btn_realtime").style("color","black");
+      if(!flag_jud_real){
+        d3.select("#btn_realtime").style("color","black");
+      };
       clearInterval(RT_Timer);
       Load_Form();
       if (flag_Auto2) {

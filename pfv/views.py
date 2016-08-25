@@ -801,8 +801,8 @@ def tag_track_map(request):
   pcwlnode += db.pcwlnode.find({"floor":floor})
 
   # ブックマーク情報の取り出し
-  bookmarks = []
-  bookmarks += db.bookmark.find()
+  tagbookmarks = []
+  tagbookmarks += db.tagbookmark.find()
 
   # mac検索条件
   mac_query = [] # 検索するmacのリスト
@@ -811,10 +811,10 @@ def tag_track_map(request):
     mac_query.append(mac[0+i*18:17+i*18].lower())
 
   # macの色づけ
-  color_list = ["blue","red","green","aqua","pink","lime"]
+  color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -834,8 +834,22 @@ def tag_track_map(request):
       if t_data["mac"] == p_data["mac"]:
         p_data["route"].append([[t_data["pcwl_id"]]])
 
+  #pfvinfoに現在のfloor情報を紐付け
+  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
+  floor_list = ["W2-6F","W2-7F","kaiyo"]
+  for i in pfvinfo:
+    for j in floor_list:
+      tmp_count = []
+      tmp_count += db.pfvmacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      tmp_count += db.staymacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      if len(tmp_count) >= 1:
+        i["floor"] = j
+        break
+
+
+
   return render_to_response('pfv/tag_track_map.html',  # 使用するテンプレート
-                              {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':bookmarks,
+                              {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':tagbookmarks,
                                'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second}
@@ -868,10 +882,10 @@ def tag_track_map_json(request):
     mac_query.append(mac[0+i*18:17+i*18].lower())
 
   # macの色づけ
-  color_list = ["blue","red","green","aqua","pink","lime"]
+  color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[]})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -890,6 +904,19 @@ def tag_track_map_json(request):
     for p_data in pfvinfo:
       if t_data["mac"] == p_data["mac"]:
         p_data["route"].append([[t_data["pcwl_id"]]])
+
+#pfvinfoに現在のfloor情報を紐付け
+  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
+  floor_list = ["W2-6F","W2-7F","kaiyo"]
+  for i in pfvinfo:
+    for j in floor_list:
+      tmp_count = []
+      tmp_count += db.pfvmacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      tmp_count += db.staymacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      if len(tmp_count) >= 1:
+        i["floor"] = j
+        break
+
 
   # 送信するデータセット
   dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode}

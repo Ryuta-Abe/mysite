@@ -48,5 +48,15 @@ def bookmark_edit(request):
   #tagtrack用のbookmark関連
   elif add == 2:
     url = "?datetime="+date_time+"&timerange="+str(timerange)+"&language="+language+"&mac="+mac+"&floor="+floor
-    db.bookmark.insert({'url':date_time,'name':name,'frequency':0})
+    db.tagbookmark.insert({'url':date_time,'name':name,'frequency':0})
     return render_json_response(request,{'url':date_time,'name':name,'frequency':0})
+
+  # ブックマーク削除
+  elif delete == 3:
+    db.tagbookmark.remove({"name":name})
+    return render_json_response(request,{'response':'Bookmarks deleted'})
+
+  # ブックマーク全削除
+  elif delete == 4:
+    db.tagbookmark.remove()
+    return render_json_response(request,{'response':'Bookmarks deleted'})
