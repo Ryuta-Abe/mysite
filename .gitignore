@@ -3,3 +3,4 @@
 
 # __pycache__フォルダを無視
 __pycache__/
+.idea/

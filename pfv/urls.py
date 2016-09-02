@@ -15,14 +15,14 @@ urlpatterns = patterns('',
 
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
 
-    url(r'^rt_raw_save/$', realtime.rt_raw_save, name='rt_raw_save'), # RealTime用生データ登録
+    # url(r'^rt_raw_save/$', realtime.rt_raw_save, name='rt_raw_save'), # RealTime用生データ登録
 
-    url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
-    url(r'^process_all/$', aggregate.process_all, name='process_all'),
+    # url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
+    # url(r'^process_all/$', aggregate.process_all, name='process_all'),
 
-    url(r'^get_start_end/$', get_start_end.get_start_end, name='get_start_end'),
-    url(r'^get_start_end_rt/$', get_start_end.get_start_end_rt, name='get_start_end_rt'),
-    url(r'^XXX/$', make_pfvinfo.XXX, name='XXX'),
+    # url(r'^get_start_end/$', get_start_end.get_start_end, name='get_start_end'),
+    # url(r'^get_start_end_rt/$', get_start_end.get_start_end_rt, name='get_start_end_rt'),
+    # url(r'^XXX/$', make_pfvinfo.XXX, name='XXX'),
     url(r'^mac_trace/$', views.mac_trace, name='mac_trace'), #mac_trace
     url(r'^mac_trace_json/$', views.mac_trace_json, name='mac_trace_json'),
     # # データ一覧
