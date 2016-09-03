@@ -15,32 +15,32 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
 
-	  cond = {"$limit":1000000}
-	  col_name = timeoutlog
-	  ag = col_name._get_collection().aggregate([
-		                                            cond,
-		                                            {"$group":
-		                                              {"_id":
-		                                                {"timeout_ip":"$timeout_ip",
-		                                                },
-		                                               "count":{"$sum":1},
-		                                              },
-		                                            },
-		                                            {"$out": "tmptolog"},
-		                                          ],
-		                                        allowDiskUse=True,
-		                                        )
+      cond = {"$limit":1000000}
+      col_name = timeoutlog
+      ag = col_name._get_collection().aggregate([
+                                                    cond,
+                                                    {"$group":
+                                                      {"_id":
+                                                        {"timeout_ip":"$timeout_ip",
+                                                        },
+                                                       "count":{"$sum":1},
+                                                      },
+                                                    },
+                                                    {"$out": "tmptolog"},
+                                                  ],
+                                                allowDiskUse=True,
+                                                )
 
-	  print("aggregate finish")
+      print("aggregate finish")
 
-	  datas = db.tmptolog.find()
-	  for data in datas:
-	  	ip = data["_id"]["timeout_ip"]
-	  	ip_list = db.pcwliplist.find_one({"ip":ip})
-	  	data["floor"] = ip_list["floor"]
-	  	data["pcwl_id"] = ip_list["pcwl_id"]
-	  	data["ip"] = data["_id"]["timeout_ip"]
-	  	del(data["_id"])
-	  	db.tmptolog.save(data)
+      datas = db.tmptolog.find()
+      for data in datas:
+        ip = data["_id"]["timeout_ip"]
+        ip_list = db.pcwliplist.find_one({"ip":ip})
+        data["floor"] = ip_list["floor"]
+        data["pcwl_id"] = ip_list["pcwl_id"]
+        data["ip"] = data["_id"]["timeout_ip"]
+        del(data["_id"])
+        db.tmptolog.save(data)
 
-	  
+      

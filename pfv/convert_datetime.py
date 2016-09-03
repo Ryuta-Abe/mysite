@@ -52,7 +52,7 @@ def dt_from_iso_to_jap(dt):
 	return dt
 
 
-# isodate形式 --> 指定時刻分ずらしたisodate形式
+# isodate形式 + int(+ or -) --> 指定時刻分ずらしたisodate形式
 def shift_seconds(dt, second):
 	import datetime
 	dt = dt + datetime.timedelta(seconds = second)

@@ -81,7 +81,7 @@ def get_start_end_mod(all_flag, tr_flag):
   # data取り出し
   mac_query = ""
   datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
-  # print("gse_count"+str(datas.count()))
+  print("gse_count:"+str(datas.count()))
   # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
   # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
@@ -125,7 +125,7 @@ def get_start_end_mod(all_flag, tr_flag):
       else:
         # print("--- RT process ---")
         if (pastd != []) and (data['id']['get_time_no'] <= pastd[0]["update_dt"]):
-          print("0")
+          print("0:(dt > update_dt)or(pastd==[])")
           pass
         else:
           # 無ければ初期nodecnt_dict, 初期pastlistを作成
@@ -143,14 +143,14 @@ def get_start_end_mod(all_flag, tr_flag):
 
           update_nodecnt_dict(node_cnt, min_interval ,data, pastd[0]["nodecnt_dict"])
           if (pastd[0]["pastlist"] != []):
-            print("1")
+            # print("1")
             pastd[0]['pastlist'] = sorted(pastd[0]['pastlist'], key=lambda x:x["dt"], reverse=True)
             tmp_startdt = pastd[0]["pastlist"][0]["dt"]
             for num in range(0, node_cnt):
               tmp_num   = str(data["nodelist"][num]['pcwl_id'])
               tmp_floor = data["nodelist"][num]['floor']
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
-                print("2")
+                # print("2")
                 # flow
                 if (data["nodelist"][num]["pcwl_id"] != pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
                   print("flow")
@@ -240,7 +240,7 @@ def get_start_end_mod(all_flag, tr_flag):
                     break
                 # other floor
                 else:
-                  print("4")
+                  print("4:other floor")
                   # pastlist update
                   update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                   save_pastd(pastd[0], tmp_enddt)
@@ -248,7 +248,7 @@ def get_start_end_mod(all_flag, tr_flag):
 
               # RSSI小
               else:
-                print("5")
+                print("5:low RSSI")
                 # pastdataそのままsave
                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                 save_pastd(pastd[0], tmp_enddt)
@@ -256,7 +256,7 @@ def get_start_end_mod(all_flag, tr_flag):
 
           # pastlist == []
           else:
-            print("6")
+            print("6:not append")
             for num in range(0, node_cnt):
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
                 # nodecnt_dict update
@@ -420,8 +420,8 @@ def save_pastd(pastd,update_dt):
 
 def fix_velocity(floor, interval):
   # 各floor速度対応
-  v_W2_6F = 22
-  v_W2_7F = 22
+  v_W2_6F = 30
+  v_W2_7F = 30
   v_kaiyo = 62
   velocity_dict = {"W2-6F":{"lt10":v_W2_6F*2,"gte10":v_W2_6F},
                    "W2-7F":{"lt10":v_W2_7F*2,"gte10":v_W2_7F},
