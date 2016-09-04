@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from pfv import views, make_pfvinfo, aggregate, get_start_end, bookmark_edit, realtime
-
+from pfv import views, make_pfvinfo, aggregate, get_start_end, bookmark_edit
 urlpatterns = patterns('',
 
     url(r'^pfv_map/$', views.pfv_map, name='pfv_map'), #pfvマップ
@@ -14,8 +13,6 @@ urlpatterns = patterns('',
     url(r'^tag_track_map_json/$', views.tag_track_map_json, name='tag_track_map_json'), #tag_track用マップJSON
 
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
-
-    # url(r'^rt_raw_save/$', realtime.rt_raw_save, name='rt_raw_save'), # RealTime用生データ登録
 
     # url(r'^aggregate/$', aggregate.aggregate_data, name='aggregate_data'),
     # url(r'^process_all/$', aggregate.process_all, name='process_all'),
