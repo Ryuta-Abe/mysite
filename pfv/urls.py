@@ -26,14 +26,14 @@ urlpatterns = patterns('',
     url(r'^mac_trace/$', views.mac_trace, name='mac_trace'), #mac_trace
     url(r'^mac_trace_json/$', views.mac_trace_json, name='mac_trace_json'),
     # # データ一覧
-    url(r'^data_list/$', views.data_list, name='data_list'),
-    url(r'^data_list/limit=(?P<limit>\d+)/$', views.data_list, name='data_list'),
-    url(r'^data_list/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.data_list, name='data_list'),
+    # url(r'^data_list/$', views.data_list, name='data_list'),
+    # url(r'^data_list/limit=(?P<limit>\d+)/$', views.data_list, name='data_list'),
+    # url(r'^data_list/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.data_list, name='data_list'),
 
-    url(r'^analyze/$', views.analyze_direction, name='analyze_direction'),
-    url(r'^analyze/mac=(?P<mac>[\w,\W]*)/limit=(?P<limit>\d+)/$', views.analyze_direction, name='analyze_direction'),
+    # url(r'^analyze/$', views.analyze_direction, name='analyze_direction'),
+    # url(r'^analyze/mac=(?P<mac>[\w,\W]*)/limit=(?P<limit>\d+)/$', views.analyze_direction, name='analyze_direction'),
     # url(r'^analyze/limit=(?P<limit>\d+)/$', views.analyze_direction, name='analyze_direction'),
-    url(r'^analyze/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.analyze_direction, name='analyze_direction'),
+    # url(r'^analyze/limit=(?P<limit>\d+)/datetime=(?P<date_time>\w+)/$', views.analyze_direction, name='analyze_direction'),
 
     url(r'^count_result/$', views.count_result, name='count_result'),
 

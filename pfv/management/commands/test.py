@@ -7,4 +7,8 @@ class Command(BaseCommand):
   help = u'django command test'
 
   def handle(self, *args, **options):
-    print("django test")
+    # print("django test")
+    in_function()
+
+def in_function():
+	print("executed function in command")

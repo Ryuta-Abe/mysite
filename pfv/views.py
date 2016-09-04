@@ -6,8 +6,8 @@ from django.template import RequestContext
 # from cms.models import Sensor2, Sensor3, initial_db, temp_db, error_db, pr_req
 from pfv.models import pr_req, test, pcwlnode, tmpcol, pfvinfo, pfvinfoexperiment, pfvinfoexperiment2, pcwltime, stayinfo, bookmark
 from pfv.convert_nodeid import *
-from pfv.save_pfvinfo import make_pfvinfo
-from pfv.make_pcwltime import make_pcwltime
+# from pfv.save_pfvinfo import make_pfvinfo
+# from pfv.make_pcwltime import make_pcwltime
 from mongoengine import *
 from pymongo import *
 import requests
@@ -16,7 +16,7 @@ import json
 import math
 import datetime
 import locale
-from cms.convert_datetime import datetime_to_12digits, dt_from_str_to_iso, shift_time, dt_from_iso_to_str, dt_insert_partition_to_min, dt_from_iso_to_jap, dt_from_14digits_to_iso
+from pfv.scripts.convert_datetime import *
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593

@@ -7,7 +7,7 @@ from pfv.models import pr_req, test, tmpcol, pcwlroute, pastdata, pfvinfo, pfvma
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvmacinfo, make_stayinfo, make_staymacinfo, optimize_routeinfo, select_one_route
 from pfv.make_pcwltime import make_pcwltime
 from pfv.convert_nodeid import *
-from pfv.convert_datetime import shift_seconds
+from pfv.scripts.convert_datetime import shift_seconds
 from mongoengine import *
 from pymongo import *
 
@@ -451,36 +451,3 @@ def route_partial_match(current_route, past_route):
   else:
     stay_flag = False
   return stay_flag
-
-### not using ###
-# def distance_filter(st_list,ed_list,interval):
-#   route_info = [] # 経路情報の取り出し
-#   if ed_list == []:
-#     return [[],[]]
-
-#   route_info += db.pcwlroute.find({"$and":[
-#                                             {"query" : st_list[0]["pcwl_id"]}, 
-#                                             {"query" : ed_list[0]["pcwl_id"]}
-#                                           ]})
-#   route_info = route_info[0]["dlist"]
-#   d_total = 0
-#   d_total_max = 0
-#   for route in route_info:
-#     for node in route:
-#       d_total += node["distance"]
-#     if (d_total > d_total_max):
-#       d_total_max = d_total
-#   if d_total_max < interval*20:
-#     return [st_list,ed_list]
-#   else :
-#     if (len(st_list)>=2) and (len(ed_list)>=2):
-#       if (st_list[1]["rssi"]) > (ed_list[1]["rssi"]):
-#         return distance_filter(st_list,ed_list[1:],interval)
-#       else :
-#         return distance_filter(st_list[1:],ed_list,interval)
-#     elif (len(st_list)>=2) and (len(ed_list)==1):
-#       return distance_filter(st_list[1:],ed_list,interval)
-#     elif (len(st_list)==1) and (len(ed_list)>=2):
-#       return distance_filter(st_list,ed_list[1:],interval)
-#     else :
-#       return [[],[]]

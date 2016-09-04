@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
 
-from pfv.convert_datetime import *
-from pfv.aggregate import *
-from pfv.get_start_end import get_start_end, get_start_end_mod
+from pfv.scripts.convert_datetime import *
+from pfv.scripts.aggregate import *
+from pfv.scripts.get_start_end import get_start_end_mod
 
 
 class Command(BaseCommand):
@@ -12,26 +12,16 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     st_dt = str(args[0])
-    st_dt_end = int(str(st_dt)[-1:])
-    if (0 <= st_dt_end <=4):
-      tmp_st = str(st_dt[0:13]) + "0"
-    elif (5 <= st_dt_end <=9):
-      tmp_st = str(st_dt[0:13]) + "5"
-
-
-    # dt05
+    ed_dt = str(args[1])
+    
     datas = db.trtmp.find()
     for data in datas:
-      dt_end = int(str(data["get_time_no"])[-1:])
-      if (0 <= dt_end <=4):
-        data["dt_end05"] = int(str(data["get_time_no"])[0:13] + "0")
-      elif (5 <= dt_end <=9):
-        data["dt_end05"] = int(str(data["get_time_no"])[0:13] + "5")
+      data["dt_end05"] = int(dt_end_to_05(data["get_time_no"]))
       db.trtmp.save(data)
-      
 
+    tmp_st = dt_end_to_05(st_dt)
     tmp_st = dt_from_14digits_to_iso(tmp_st)
-    ed_dt    = dt_from_14digits_to_iso(str(args[1]))
+    ed_dt  = dt_from_14digits_to_iso(ed_dt)
 
     while(tmp_st < ed_dt):
       after_5s = shift_seconds(tmp_st, 5)
@@ -42,5 +32,3 @@ class Command(BaseCommand):
       get_start_end_mod(False, True)
       # print(tmp_st)
       tmp_st = after_5s
-
-    print("django test")

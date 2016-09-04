@@ -124,7 +124,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
     cond = {"$match": {"dt_end05": {"$gte":startdt_int14, "$lt":enddt_int14} } }
     dt_end = "$dt_end05"
     min_interval = 5
-
+    
   ag = col_name._get_collection().aggregate([
                                           # {"$limit":1000},
                                             cond,
