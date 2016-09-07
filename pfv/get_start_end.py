@@ -7,7 +7,7 @@ from pfv.models import pr_req, test, tmpcol, pcwlroute, pastdata, pfvinfo, pfvma
 from pfv.save_pfvinfo import make_pfvinfo, make_pfvmacinfo, make_stayinfo, make_staymacinfo, optimize_routeinfo, select_one_route
 from pfv.make_pcwltime import make_pcwltime
 from pfv.convert_nodeid import *
-from pfv.convert_datetime import shift_seconds
+from pfv.scripts.convert_datetime import shift_seconds
 from mongoengine import *
 from pymongo import *
 
@@ -81,7 +81,7 @@ def get_start_end_mod(all_flag, tr_flag):
   # data取り出し
   mac_query = ""
   datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
-  # print("gse_count"+str(datas.count()))
+  print("gse_count:"+str(datas.count()))
   # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:17"}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
   # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
   # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
@@ -125,7 +125,7 @@ def get_start_end_mod(all_flag, tr_flag):
       else:
         # print("--- RT process ---")
         if (pastd != []) and (data['id']['get_time_no'] <= pastd[0]["update_dt"]):
-          print("0")
+          print("0:(dt > update_dt)or(pastd==[])")
           pass
         else:
           # 無ければ初期nodecnt_dict, 初期pastlistを作成
@@ -143,14 +143,14 @@ def get_start_end_mod(all_flag, tr_flag):
 
           update_nodecnt_dict(node_cnt, min_interval ,data, pastd[0]["nodecnt_dict"])
           if (pastd[0]["pastlist"] != []):
-            print("1")
+            # print("1")
             pastd[0]['pastlist'] = sorted(pastd[0]['pastlist'], key=lambda x:x["dt"], reverse=True)
             tmp_startdt = pastd[0]["pastlist"][0]["dt"]
             for num in range(0, node_cnt):
               tmp_num   = str(data["nodelist"][num]['pcwl_id'])
               tmp_floor = data["nodelist"][num]['floor']
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
-                print("2")
+                # print("2")
                 # flow
                 if (data["nodelist"][num]["pcwl_id"] != pastd[0]["pastlist"][0]["start_node"]["pcwl_id"])and(data["nodelist"][num]["floor"] == pastd[0]["pastlist"][0]["start_node"]["floor"]):
                   print("flow")
@@ -240,7 +240,7 @@ def get_start_end_mod(all_flag, tr_flag):
                     break
                 # other floor
                 else:
-                  print("4")
+                  print("4:other floor")
                   # pastlist update
                   update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                   save_pastd(pastd[0], tmp_enddt)
@@ -248,7 +248,7 @@ def get_start_end_mod(all_flag, tr_flag):
 
               # RSSI小
               else:
-                print("5")
+                print("5:low RSSI")
                 # pastdataそのままsave
                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                 save_pastd(pastd[0], tmp_enddt)
@@ -256,7 +256,7 @@ def get_start_end_mod(all_flag, tr_flag):
 
           # pastlist == []
           else:
-            print("6")
+            print("6:not append")
             for num in range(0, node_cnt):
               if (data["nodelist"][num]["rssi"] >= TH_RSSI):
                 # nodecnt_dict update
@@ -420,8 +420,8 @@ def save_pastd(pastd,update_dt):
 
 def fix_velocity(floor, interval):
   # 各floor速度対応
-  v_W2_6F = 22
-  v_W2_7F = 22
+  v_W2_6F = 30
+  v_W2_7F = 30
   v_kaiyo = 62
   velocity_dict = {"W2-6F":{"lt10":v_W2_6F*2,"gte10":v_W2_6F},
                    "W2-7F":{"lt10":v_W2_7F*2,"gte10":v_W2_7F},
@@ -451,36 +451,3 @@ def route_partial_match(current_route, past_route):
   else:
     stay_flag = False
   return stay_flag
-
-### not using ###
-# def distance_filter(st_list,ed_list,interval):
-#   route_info = [] # 経路情報の取り出し
-#   if ed_list == []:
-#     return [[],[]]
-
-#   route_info += db.pcwlroute.find({"$and":[
-#                                             {"query" : st_list[0]["pcwl_id"]}, 
-#                                             {"query" : ed_list[0]["pcwl_id"]}
-#                                           ]})
-#   route_info = route_info[0]["dlist"]
-#   d_total = 0
-#   d_total_max = 0
-#   for route in route_info:
-#     for node in route:
-#       d_total += node["distance"]
-#     if (d_total > d_total_max):
-#       d_total_max = d_total
-#   if d_total_max < interval*20:
-#     return [st_list,ed_list]
-#   else :
-#     if (len(st_list)>=2) and (len(ed_list)>=2):
-#       if (st_list[1]["rssi"]) > (ed_list[1]["rssi"]):
-#         return distance_filter(st_list,ed_list[1:],interval)
-#       else :
-#         return distance_filter(st_list[1:],ed_list,interval)
-#     elif (len(st_list)>=2) and (len(ed_list)==1):
-#       return distance_filter(st_list[1:],ed_list,interval)
-#     elif (len(st_list)==1) and (len(ed_list)>=2):
-#       return distance_filter(st_list,ed_list[1:],interval)
-#     else :
-#       return [[],[]]
