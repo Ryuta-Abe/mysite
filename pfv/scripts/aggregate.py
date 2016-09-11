@@ -90,6 +90,7 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
                                          "get_time_no":dt_end,
                                          # "get_time_no":"$dt_end05",
                                         },
+                                        # node_id -> ip
                                      "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
                                     },
                                 },
