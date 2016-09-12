@@ -63,6 +63,67 @@ db.pcwliplist.insert({"ip":"10.0.11.145","node_id":1262,"floor":"W2-7F","pcwl_id
 db.pcwliplist.insert({"ip":"10.0.12.47" ,"node_id":1298,"floor":"W2-7F","pcwl_id":26}) # 26
 db.pcwliplist.insert({"ip":"10.0.12.37" ,"node_id":1299,"floor":"W2-7F","pcwl_id":27}) # 27
 
+# W2-8F
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":1 }) # 1
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":2 }) # 2
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":3 }) # 3
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":4 }) # 4
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":5 }) # 5
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":6 }) # 6
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":7 }) # 7
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":8 }) # 8
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":9 }) # 9
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":10}) # 10
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":11}) # 11
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":12}) # 12
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":13}) # 13
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":14}) # 14
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":15}) # 15
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":16}) # 16
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":17}) # 17
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":18}) # 18
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":19}) # 19
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":20}) # 20
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":21}) # 21
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":22}) # 22
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":23}) # 23
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":24}) # 24
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":25}) # 25
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":26}) # 26
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":27}) # 27
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":28}) # 28
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":29}) # 29
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-8F","pcwl_id":30}) # 30
+
+# W2-9F
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":1 }) # 1
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":2 }) # 2
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":3 }) # 3
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":4 }) # 4
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":5 }) # 5
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":6 }) # 6
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":7 }) # 7
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":8 }) # 8
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":9 }) # 9
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":10}) # 10
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":11}) # 11
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":12}) # 12
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":13}) # 13
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":14}) # 14
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":15}) # 15
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":16}) # 16
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":17}) # 17
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":18}) # 18
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":19}) # 19
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":20}) # 20
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":21}) # 21
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":22}) # 22
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":23}) # 23
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":24}) # 24
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":25}) # 25
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":26}) # 26
+# db.pcwliplist.insert({"ip":"","node_id":0,"floor":"W2-9F","pcwl_id":27}) # 27
+
 # kaiyo
 db.pcwliplist.insert({"ip":"10.0.12.135","node_id":9001,"floor":"kaiyo","pcwl_id":1}) # 1
 db.pcwliplist.insert({"ip":"10.0.12.91" ,"node_id":9002,"floor":"kaiyo","pcwl_id":2}) # 2

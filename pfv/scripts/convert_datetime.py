@@ -83,3 +83,10 @@ def dt_end_to_05(dt):
       dt = str(dt[0:13]) + "5"
     
     return dt
+
+# input:isodate, output:isodate(end 0or5)
+def iso_to_end05iso(dt):
+    dt = dt_from_iso_to_str(dt)
+    dt = dt_end_to_05(dt)
+    dt = dt_from_14digits_to_iso(dt)
+    return dt

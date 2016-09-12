@@ -8,6 +8,8 @@ from multiprocessing import Pool
 from multiprocessing import Process
 import os
 
+from convert_datetime import *
+from analyze import analyze_mod
 # mongoDBに接続
 from pymongo import *
 client = MongoClient()
@@ -77,7 +79,9 @@ def save_rttmp(ip,floor,pcwl_id):
 					first = False
 				if time_stamp > ts_th:
 					# add : floor, pcwl_id
-					new_data = {"ip":ip,"get_time_no":now,"mac":mac, "floor":floor, "pcwl_id":pcwl_id, "rssi":rssi,"dbm":rssi - 95}
+					new_data = {"ip":ip,"get_time_no":now,"mac":mac, "rssi":rssi,"dbm":rssi - 95}
+					# 8fとフォーマットを合わせるためfloor,pcwl_id delete
+					# new_data = {"ip":ip,"get_time_no":now,"mac":mac, "floor":floor, "pcwl_id":pcwl_id, "rssi":rssi,"dbm":rssi - 95}
 					# data_list.append(new_data)
 					data_list.append(new_data)
 					print(type(data_list))
@@ -132,6 +136,7 @@ def multi(pcwliplist):
 # db.rttmp.remove() # 一旦DBを空に37v
 #now = dt_from_iso_to_numlong(datetime.datetime.today()) # 現在時刻を取得し14桁の数字列に変換
 now = datetime.datetime.today()
+now = iso_to_end05iso(now)
 # if __name__ == '__main__':
 st = time.time()
 
@@ -168,4 +173,7 @@ if __name__ == '__main__':
 ed = time.time()
 print(ed-st)
 
-# print("エラー無しやな")
+### when execute all process, uncomment under 3 lines. ###
+# ed_dt = dt_from_iso_to_str(now)[:14]
+# st_de = shift_seconds(ed_dt, -5)
+# analyze(st_dt, ed_dt)

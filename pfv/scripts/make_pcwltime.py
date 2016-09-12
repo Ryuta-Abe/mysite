@@ -31,7 +31,8 @@ def make_pcwltime(min_interval, all_bool):
 
     # dt05
     for jdata in jdatas:
-        jdata["datetime"] = datetime.strptime(str(jdata["_id"]["get_time_no"]), "%Y%m%d%H%M%S")
+        # jdata["datetime"] = datetime.strptime(str(jdata["_id"]["get_time_no"]), "%Y%m%d%H%M%S")
+        jdata["datetime"] = jdata["_id"]["get_time_no"]
         del(jdata["_id"])
         exist = db.pcwltime.find({"datetime":jdata["datetime"]}).count()
         # 重複確認、なければ登録

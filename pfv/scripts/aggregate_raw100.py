@@ -9,52 +9,78 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
-lt = "20160821160000"
+lt  = "20160821160000"
 gte = "20160821180000"
 
 def aggregate_raw100(lt=lt):
-    st = time.time()
-    # 入力は14桁数字(int)
-    lt = str(dt_end_to_05(lt))
-    lt  = dt_from_14digits_to_iso(lt)
+  st = time.time()
+  gte = shift_seconds(lt, -5)
 
-    gte = shift_seconds(lt, -5)
+  # db.raw100.find().forEach(function (x) {db.raw100_buckup.save(x)})
+  dt_cond = {"on_recv": {"$gte":gte, "$lt":lt}}
+  raw_datas = db.raw100.find(dt_cond)
+  for data in raw_datas:
+    db.raw100_buckup.save(data)
 
-    cond = {"$match": {"on_recv": {"$gte":gte, "$lt":lt} } }
-    ag = db.raw100.aggregate([
-                              cond,
-                              {"$group":
-                                {"_id":
-                                        {
-                                           "mac":"$mac", 
-                                           "get_time_no":"$on_recv",
-                                           "ap_ip":"$ap_ip"
-                                        },
-                                 "dbm":{
-                                        "$max":"$dbm"
-                                        },
-                                },
+  cond = {"$match":dt_cond}
+  ag = db.raw100.aggregate([
+                            cond,
+                            {"$group":
+                              {"_id":
+                                  {
+                                     "mac":"$mac", 
+                                     "get_time_no":"$on_recv",
+                                     "ip":"$ap_ip"
+                                  },
+                               "dbm":{
+                                  "$max":"$dbm"
+                                  },
                               },
-                              {"$group":
-                                {"_id":
-                                        {
-                                           "mac":"$_id.mac", 
-                                           "get_time_no":"$_id.get_time_no",
-                                        },
-                                 "nodelist":{
-                                            "$push":
-                                                {
-                                                "ap_ip":"$_id.ap_ip",
-                                                "dbm":"$dbm"
-                                                },
-                                            }
-                                },
+                            },
+                            {"$group":
+                              {"_id":
+                                  {
+                                     "mac":"$_id.mac", 
+                                     "get_time_no":"$_id.get_time_no",
+                                  },
+                               "nodelist":{
+                                    "$push":
+                                      {
+                                      "ip":"$_id.ip",
+                                      "dbm":"$dbm"
+                                      },
+                                    }
                               },
-                              {"$out": "raw100tmp"},
-                            ],
+                            },
+                            {"$out": "raw100tmp"},
+                          ],
                           allowDiskUse=True,
-                          )
+                        )
 
-    print(time.time() - st)
+  print(time.time() - st)
+  insert_raw100_to_tmpcol()
+  # data = db.raw100tmp.find_one()
+  # data["test"] = "test"
+  # db.raw100tmp.save(data)
 
-aggregate_raw100()
+def insert_raw100_to_tmpcol():
+  datas = db.raw100tmp.find()
+  for data in datas:
+    data["_id.get_time_no"] = iso_to_end05iso(datetime["_id.get_time_no"])
+    cond = {
+            "_id.mac":data["_id.mac"],
+            "_id.get_time_no":data["_id.get_time_no"],
+            }
+    ins_col = db.tmpcol
+    tmpcol_data = ins_col.find_one(cond)
+
+    if tmpcol_data.count() == 1:
+      # ins_col.update(cond,{"$set": {"th":time_stamp, "ip":ip}}, True)
+      for node in data["nodelist"]:
+        tmpcol_data["nodelist"].append(node)
+      ins_col.save(tmpcol_data)
+    else:
+      ins_col.insert(data)
+
+
+# aggregate_raw100()

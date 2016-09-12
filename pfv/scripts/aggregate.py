@@ -58,14 +58,6 @@ def RTtracking(startdt_int14=startdt_int14, enddt_int14=enddt_int14, DEBUG=True)
 min_interval = 10
 
 def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
-    ### testコレクションにstr型のget_time_noが入ってしまった場合にコメントアウト解除 ###
-    # datas = db.test.find()
-    # for data in datas:
-    #   data["get_time_no"] = int(data["get_time_no"])
-    #   data["dt_end0"]     = int(str(data["get_time_no"])[0:13] + "0")
-    #   db.test.save(data)
-    #################################################################
-
     if RT_flag:
         cond = {"$limit":1000000}
         if tr_flag:
@@ -91,7 +83,8 @@ def aggregate_mod(startdt_int14, enddt_int14, all_bool, RT_flag, tr_flag):
                                          # "get_time_no":"$dt_end05",
                                         },
                                         # node_id -> ip
-                                     "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
+                                     "nodelist":{"$push":{"dbm":"$dbm", "ip":"$ip"}},
+                                     # "nodelist":{"$push":{"dbm":"$dbm", "node_id":"$node_id"}},
                                     },
                                 },
                                 {"$out": "tmpcol"},

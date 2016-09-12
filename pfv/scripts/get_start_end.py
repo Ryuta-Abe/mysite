@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from save_pfvinfo import make_pfvinfo, make_pfvmacinfo, make_stayinfo, make_staymacinfo, optimize_routeinfo, select_one_route
+from convert_ip import convert_ip
 from convert_nodeid import convert_nodeid
 from convert_datetime import shift_seconds
 from mongoengine import *
@@ -65,24 +66,22 @@ def get_start_end_mod(all_flag, tr_flag):
     if (datas.count() != 0):
         # 1番目の設定
         datas[0]["nodelist"] = reverse_list(datas[0]["nodelist"], "dbm")
-        for tmp_node_id in datas[0]["nodelist"]:
-            # node_id -> ip
-            end_node_list.append({"pcwl_id":convert_nodeid(tmp_node_id["node_id"])["node_id"],
-                                    "floor":convert_nodeid(tmp_node_id["node_id"])["floor"],
-                                    "rssi":tmp_node_id["dbm"],
-                                })
-
         for data in datas:
             data["id"] = data["_id"]
             del(data["_id"])
-            data["id"]["get_time_no"] = datetime.strptime(str(data["id"]["get_time_no"]), "%Y%m%d%H%M%S")
+            # get_time_no : int -> isodate
+            # data["id"]["get_time_no"] = datetime.strptime(str(data["id"]["get_time_no"]), "%Y%m%d%H%M%S")
             
             for list_data in data["nodelist"]:
                 # node_id -> ip
-                list_data["floor"]   = convert_nodeid(list_data["node_id"])["floor"]
-                list_data["pcwl_id"] = convert_nodeid(list_data["node_id"])["node_id"]
+                # list_data["floor"]   = convert_nodeid(list_data["node_id"])["floor"]
+                # list_data["pcwl_id"] = convert_nodeid(list_data["node_id"])["node_id"]
+                # list_data["rssi"] = list_data["dbm"]
+                # del(list_data["node_id"])
+                list_data["floor"]   = convert_ip(list_data["ip"])["floor"]
+                list_data["pcwl_id"] = convert_ip(list_data["ip"])["pcwl_id"]
                 list_data["rssi"] = list_data["dbm"]
-                del(list_data["node_id"])
+                del(list_data["ip"])
                 del(list_data["dbm"])
             data["nodelist"] = reverse_list(data["nodelist"], "rssi")
             
