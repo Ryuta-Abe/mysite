@@ -98,65 +98,63 @@ save_pcwlnode(11,550,150,[2,4,8,9],"kaiyo")
 # W2-8F nodes
 save_pcwlnode(1,990,130,[2],"W2-8F")
 save_pcwlnode(2,920,150,[1,3],"W2-8F")
-save_pcwlnode(3,925,225,[2,4],"W2-8F")
-save_pcwlnode(4,800,200,[5,17],"W2-8F")
-save_pcwlnode(5,790,275,[4,7],"W2-8F")
+save_pcwlnode(3,920,225,[2,4],"W2-8F")
+save_pcwlnode(4,790,200,[3,5,17],"W2-8F")
+save_pcwlnode(5,785,260,[4,7],"W2-8F")
 save_pcwlnode(6,900,350,[7],"W2-8F")
 save_pcwlnode(7,790,350,[5,6,8],"W2-8F")
-# save_pcwlnode(8,670,340,[7,10],"W2-8F")
+save_pcwlnode(8,680,350,[7,10],"W2-8F")
 # save_pcwlnode(9,670,340,[10],"W2-8F")
-save_pcwlnode(10,630,325,[8,9,15],"W2-8F")
-save_pcwlnode(11,x,y,[12,18],"W2-8F")
+save_pcwlnode(10,630,330,[8,15],"W2-8F")
+save_pcwlnode(11,300,180,[12,18],"W2-8F") #too far to num 18, much closer to num 24
 save_pcwlnode(12,400,180,[11,13],"W2-8F")
-save_pcwlnode(13,470,180,[12,14,17],"W2-8F")
-save_pcwlnode(14,480,275,[13,15],"W2-8F")
+save_pcwlnode(13,475,180,[12,14,17],"W2-8F")
+save_pcwlnode(14,475,255,[13,15],"W2-8F")
 save_pcwlnode(15,475,350,[10,14,16],"W2-8F")
-save_pcwlnode(16,410,330,[15,18],"W2-8F") #y?
-save_pcwlnode(17,700,190,[4,13,19],"W2-8F")
-save_pcwlnode(18,300,350,[11,16],"W2-8F") #?
+save_pcwlnode(16,400,330,[15,18],"W2-8F") #y?
+save_pcwlnode(17,705,190,[4,13,19],"W2-8F")
+save_pcwlnode(18,300,340,[11,16],"W2-8F") #too far to num 11
 save_pcwlnode(19,700,250,[17],"W2-8F")
-#室内は全て隣接とした（暫定）
-#20~23は室内（828号室）
-save_pcwlnode(20,x,y,[21,22,23],"W2-8F")
-save_pcwlnode(21,x,y,[20,22,23],"W2-8F")
-save_pcwlnode(22,x,y,[20,21,23],"W2-8F")
-save_pcwlnode(23,x,y,[20,21,22],"W2-8F")
-#24~28は室内（809号室）
-save_pcwlnode(24,x,y,[25,26,27,28],"W2-8F")
-save_pcwlnode(25,x,y,[24,26,27,28],"W2-8F")
-save_pcwlnode(26,x,y,[24,25,27,28],"W2-8F")
-save_pcwlnode(27,x,y,[24,25,26,28],"W2-8F")
-save_pcwlnode(28,x,y,[24,25,26,27],"W2-8F")
+# 室内は全て隣接とした（暫定）
+# 20~23は室内（828号室）
+# save_pcwlnode(20,820,270,[21,22,23],"W2-8F")
+# save_pcwlnode(21,890,320,[20,22,23],"W2-8F")
+# save_pcwlnode(22,810,330,[20,21,23],"W2-8F")
+# save_pcwlnode(23,890,260,[20,21,22],"W2-8F")
+# 24~28は室内（809号室）
+# save_pcwlnode(24,330,190,[25,26,27,28],"W2-8F")
+# save_pcwlnode(25,450,180,[24,26,27,28],"W2-8F")
+# save_pcwlnode(26,440,150,[24,25,27,28],"W2-8F")
+# save_pcwlnode(27,380,140,[24,25,26,28],"W2-8F")
+# save_pcwlnode(28,330,145,[24,25,26,27],"W2-8F")
 
 # W2-9F nodes
 save_pcwlnode(1,990,130,[2],"W2-9F")
 save_pcwlnode(2,920,150,[1,3],"W2-9F")
-save_pcwlnode(3,925,225,[2,4],"W2-9F")
-save_pcwlnode(4,,,[3,5],"W2-9F")
-save_pcwlnode(5,800,200,[4,6,24],"W2-9F")
-save_pcwlnode(6,700,190,[5,7,10],"W2-9F")
+save_pcwlnode(3,920,225,[2,4],"W2-9F")
+save_pcwlnode(4,840,200,[3,5],"W2-9F")
+save_pcwlnode(5,785,200,[4,6,24],"W2-9F")
+save_pcwlnode(6,710,190,[5,7,10],"W2-9F")
 save_pcwlnode(7,590,180,[6,8],"W2-9F")
-save_pcwlnode(8,x,y,[7,25,27],"W2-9F")
-save_pcwlnode(9,400,180,[],"W2-9F")        #室内（925号室）
+save_pcwlnode(8,530,180,[7,9,27],"W2-9F")
+save_pcwlnode(9,450,180,[8,25],"W2-9F")#室内（925号室）?
 save_pcwlnode(10,700,250,[6],"W2-9F")
-save_pcwlnode(11,300,180,[12,25],"W2-9F")
-save_pcwlnode(12,x,y,[11,13,26],"W2-9F")
+save_pcwlnode(11,300,190,[12,25],"W2-9F")
+save_pcwlnode(12,250,200,[11,13,26],"W2-9F")
 save_pcwlnode(13,130,200,[12],"W2-9F")
-save_pcwlnode(14,x,y,[15],"W2-9F")  #?
-save_pcwlnode(15,x,y,[14,17,26],"W2-9F")
-save_pcwlnode(16,410,330,[17,18],"W2-9F")
+save_pcwlnode(14,130,345,[15],"W2-9F")  #?
+save_pcwlnode(15,245,350,[14,17,26],"W2-9F")
+save_pcwlnode(16,420,350,[17,18],"W2-9F")
 save_pcwlnode(17,350,340,[15,16],"W2-9F")
-save_pcwlnode(18,x,y,[16,19,27],"W2-9F")
-save_pcwlnode(19,x,y,[18,20,21],"W2-9F")
-save_pcwlnode(20,x,y,[21],"W2-9F")
-save_pcwlnode(21,670,340,[19,22],"W2-9F")
+save_pcwlnode(18,535,350,[16,19,27],"W2-9F")
+save_pcwlnode(19,630,330,[18,21],"W2-9F")
+#save_pcwlnode(20,650,280,[21],"W2-9F")
+save_pcwlnode(21,680,350,[19,22],"W2-9F")
 save_pcwlnode(22,790,350,[21,23,24],"W2-9F")
 save_pcwlnode(23,900,350,[22],"W2-9F")
 save_pcwlnode(24,790,275,[5,22],"W2-9F")
-save_pcwlnode(25,400,180,[8,11],"W2-9F")
-save_pcwlnode(26,x,y,[12,15],"W2-9F")
-save_pcwlnode(27,x,y,[8,18],"W2-9F")
-# 第二ブロックは8,27,18
-# 第三ブロックは12,26,15
+save_pcwlnode(25,400,180,[9,11],"W2-9F")
+save_pcwlnode(26,245,290,[12,15],"W2-9F")
+save_pcwlnode(27,535,280,[8,18],"W2-9F")
 
 print("エラー無しやな")
