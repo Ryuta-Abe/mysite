@@ -320,7 +320,7 @@
     Sample_form.textbox_mac.value = "{{ mac }}";
 
     //floorのリストと現在の階を定義
-    var floor_list = ["W2-6F","W2-7F","kaiyo"];
+    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"];
     var floor = "{{ floor }}";
 
     //タブ用の枠を作成
@@ -346,6 +346,10 @@
       var file_name = "6F_west2.jpg";
     } else if ("{{ floor }}" == "W2-7F"){
       var file_name = "7F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-8F"){
+      var file_name = "8F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-9F"){
+      var file_name = "9F_west2.jpg";
     } else if ("{{ floor }}" == "kaiyo"){
       var file_name = "kaiyo.png";
     };
@@ -1005,6 +1009,10 @@
         var file_name = "6F_west2.jpg";
       } else if (floor == "W2-7F"){
         var file_name = "7F_west2.jpg";
+      } else if (floor == "W2-8F"){
+        var file_name = "8F_west2.jpg";
+      } else if (floor == "W2-9F"){
+        var file_name = "9F_west2.jpg";
       } else if (floor == "kaiyo"){
         var file_name = "kaiyo.png";
       };

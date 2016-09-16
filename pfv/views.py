@@ -836,7 +836,7 @@ def tag_track_map(request):
 
   #pfvinfoに現在のfloor情報を紐付け
   gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
-  floor_list = ["W2-6F","W2-7F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -907,7 +907,7 @@ def tag_track_map_json(request):
 
 #pfvinfoに現在のfloor情報を紐付け
   gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
-  floor_list = ["W2-6F","W2-7F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []

@@ -13,7 +13,7 @@ db.pfvinfo.create_index([("datetime", ASCENDING)])
 db.stayinfo.create_index([("datetime", ASCENDING)])
 db.pcwlroute.create_index([("query", ASCENDING)])
 
-floor_list = ["W2-6F","W2-7F","kaiyo"]
+floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 pfvinfo_dict  = {}
 stayinfo_dict = {}
 

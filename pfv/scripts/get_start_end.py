@@ -19,7 +19,7 @@ db.tmpcol.create_index([("_id.get_time_no", ASCENDING), ("_id.mac", ASCENDING)])
 # CONST
 MIN_NODE_NUM = 1
 MAX_NODE_NUM = 27
-FLOOR_LIST   = ["W2-6F","W2-7F","kaiyo"]
+FLOOR_LIST   = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 int_time_range = 60
 time_range = timedelta(seconds=int_time_range) # 過去の参照時間幅設定
 TH_RSSI    = -80
@@ -407,11 +407,15 @@ def fix_velocity(floor, interval):
     # 各floor速度対応
     v_W2_6F = 30
     v_W2_7F = 30
+    v_W2_8F = 30
+    v_W2_9F = 30
     v_kaiyo = 62
     velocity_dict = {"W2-6F":{"lt10":v_W2_6F*2,"gte10":v_W2_6F},
-                                     "W2-7F":{"lt10":v_W2_7F*2,"gte10":v_W2_7F},
-                                     "kaiyo":{"lt10":v_kaiyo*2,"gte10":v_kaiyo},
-                                    }
+                     "W2-7F":{"lt10":v_W2_7F*2,"gte10":v_W2_7F},
+                     "W2-7F":{"lt10":v_W2_8F*2,"gte10":v_W2_8F},
+                     "W2-7F":{"lt10":v_W2_9F*2,"gte10":v_W2_9F},
+                     "kaiyo":{"lt10":v_kaiyo*2,"gte10":v_kaiyo},
+                    }
     if interval < 10:
         velocity = velocity_dict[floor]["lt10"]
     else:

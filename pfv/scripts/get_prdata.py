@@ -35,7 +35,7 @@ tag_list = ["00:11:81:10:01:1c",
 
 # 6Fのデータ収集
 pcwliplist = []
-search_floor = ["W2-6F","W2-7F"]
+search_floor = ["W2-6F","W2-7F","W2-8F","W2-9F"]
 #search_floor = ["kaiyo"]
 
 for floor in search_floor:
