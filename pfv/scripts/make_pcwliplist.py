@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # mongoDBに接続
 from pymongo import *
 client = MongoClient()
@@ -137,4 +138,4 @@ db.pcwliplist.insert({"ip":"10.0.12.141","node_id":9009,"floor":"kaiyo","pcwl_id
 db.pcwliplist.insert({"ip":"10.0.12.125","node_id":9010,"floor":"kaiyo","pcwl_id":10}) # 10
 db.pcwliplist.insert({"ip":"10.0.12.97" ,"node_id":9011,"floor":"kaiyo","pcwl_id":11}) # 11
 
-print("ip,node_id情報登録完了")
+# print("ip,node_id情報登録完了")

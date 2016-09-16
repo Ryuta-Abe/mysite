@@ -10,16 +10,18 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
-# input:int or str datetime
+# input:iso datetime
 def analyze_mod(st_dt, ed_dt):
     datas = db.trtmp.find()
     for data in datas:
         data["dt_end05"] = data["get_time_no"]
         db.trtmp.save(data)
 
+    st_dt  = dt_from_iso_to_str(st_dt)
     tmp_st = dt_end_to_05(st_dt)
     tmp_st = dt_from_14digits_to_iso(tmp_st)
-    ed_dt  = dt_from_14digits_to_iso(ed_dt)
+    tmp_ed  = dt_from_iso_to_str(ed_dt)
+    ed_dt  = dt_from_14digits_to_iso(tmp_ed)
 
     while(tmp_st < ed_dt):
         after_5s = shift_seconds(tmp_st, 5)

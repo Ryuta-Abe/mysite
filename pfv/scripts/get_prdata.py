@@ -18,6 +18,7 @@ db = client.nm4bd
 
 # db.rttmp.remove() # 一旦DBを空に
 db.trtmp.remove() # 一旦DBを空に
+
 now = datetime.datetime.today()
 now = iso_to_end05iso(now)
 user = "root"
@@ -39,20 +40,6 @@ search_floor = ["W2-6F","W2-7F"]
 
 for floor in search_floor:
 	pcwliplist.extend(db.pcwliplist.find({"floor":floor},{"_id":False, "node_id":False}))
-
-if __name__ == "__main__":
-	multi(pcwliplist)
-
-ed = time.time()
-print(ed-st)
-
-### Check col_name trtmp or trtmp_test ###
-### when execute all process, uncomment under 3 lines. ###
-ed_dt = dt_from_iso_to_str(now)[:14]
-st_de = shift_seconds(ed_dt, -5)
-analyze_mod(st_dt, ed_dt)
-##########################################################
-
 
 ### using functions ###
 def make_empty_maccache(num):
@@ -83,11 +70,11 @@ def save_rttmp(ip,floor,pcwl_id):
 		    for line in page.readlines():
 		        html.append(line.decode('utf-8'))
 
-		if db.tscache_test.find({"ip":ip}).count() == 0:
+		if db.tscache.find({"ip":ip}).count() == 0:
 			ts_cache = [{"th":0,"ip":ip}]
 		else:
 			# remove node_id , add : ip
-			ts_cache = db.tscache_test.find({"ip":ip}).sort("_id",-1).limit(1)
+			ts_cache = db.tscache.find({"ip":ip}).sort("_id",-1).limit(1)
 		ts_th = ts_cache[0]["th"] #type:int, store old time_stamp 
 
 		dbsave_flag = False
@@ -102,7 +89,7 @@ def save_rttmp(ip,floor,pcwl_id):
 				time_stamp = int(line_split[3])
 				if first:
 					# db.tscache.insert({"th":time_stamp,"node_id":node_id})
-					db.tscache_test.update({"ip":ip},{"$set": {"th":time_stamp, "ip":ip}}, True) 
+					db.tscache.update({"ip":ip},{"$set": {"th":time_stamp, "ip":ip}}, True) 
 					first = False
 				if time_stamp > ts_th:
 					# add : floor, pcwl_id
@@ -111,18 +98,18 @@ def save_rttmp(ip,floor,pcwl_id):
 					# new_data = {"ip":ip,"get_time_no":now,"mac":mac, "floor":floor, "pcwl_id":pcwl_id, "rssi":rssi,"dbm":rssi - 95}
 					# data_list.append(new_data)
 					data_list.append(new_data)
-					print(type(data_list))
+					# print(type(data_list))
 				else :
 					break
 			if "Station Count:" in line:
 				dbsave_flag = True
 	except urllib.error.URLError:
 		# add : floor, pcwl_id
-		db.timeoutlog_test.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Normal timeout"})
+		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Normal timeout"})
 		print("Timeout "+ip)
 	except socket.timeout:
 		# add : floor, pcwl_id
-		db.timeoutlog_test.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"})
+		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"})
 		print("Socket Timeout "+ip)
 	return data_list
 
@@ -132,13 +119,28 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 	data_list = save_rttmp(pcwlip["ip"],pcwlip["floor"],pcwlip["pcwl_id"])
 	# print(data_list)
 	if len(data_list) > 1:
-			db.rttmp_test.insert(data_list)
-			db.rttmp3_test.insert(data_list)
+			db.rttmp.insert(data_list)
+			db.rttmp3.insert(data_list)
 	# return data_list
 	for data in data_list:
 		if data["mac"] in tag_list:
-			db.trtmp_test.insert(data)
+			db.trtmp.insert(data)
 
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)
+
+
+if __name__ == "__main__":
+	multi(pcwliplist)
+
+ed = time.time()
+print(ed-st)
+
+### Check col_name trtmp or trtmp_test ###
+### when execute all process, uncomment under 3 lines. ###
+ed_dt = dt_from_iso_to_str(now)[:14]
+ed_dt = dt_from_14digits_to_iso(ed_dt)
+st_dt = shift_seconds(ed_dt, -5)
+analyze_mod(st_dt, ed_dt)
+##########################################################
