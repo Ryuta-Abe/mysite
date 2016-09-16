@@ -20,9 +20,10 @@ from cms.write_to_mongo import *
 client = MongoClient()
 db = client.sensordb
 
-limit = '50' # 親機1台につき取得するデータの件数
+limit = '100' # 親機1台につき取得するデータの件数
 datetime = '"201412091900"' # 取得時間帯
-box_list = ["06","07","08","09","0A","0B","0C","0D","0E","0F"]
+# box_list = ["06","07","08","09","0A","0B","0C","0D","0E","0F"]
+box_list = ["0B","0A"]
 
 class Command(BaseCommand):
   # args = '<target_id target_id ...>'
@@ -31,7 +32,7 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     for num in box_list: # 親機ループ
 
-      r = requests.get('http://api1.ginga-box.com:8080/ginga/sol?mode=getdata&v={box_id:"9CBD9D01000'+num+'", limit:'+limit+'}')
+      r = requests.get('http://api1.ginga-box.com:8080/ginga/sol?mode=getdata&v={box_id:"9CBD9D0100'+num+'", limit:'+limit+'}', timeout=120)
       t = r.json()
 
       # 最新データ取り出し

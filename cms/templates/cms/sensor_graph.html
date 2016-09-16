@@ -42,6 +42,8 @@
       <select name="textbox_year">
             <option id="year2014" value="2014"/>2014</option>
             <option id="year2015" value="2015"/>2015</option>
+            <option id="year2015" value="2016"/>2016</option>
+            <option id="year2015" value="2017"/>2017</option>
       </select>
       年
       <select name="textbox_month">
@@ -136,6 +138,13 @@
       </select>
       分
       <input type="button" value="更新" onclick="reload_datetime()" class="btn btn-default btn-sm">
+      <input type="text" name="device_id" size="5", value="{{ device_id }}">
+      <select name="sensor_id">
+            <option id="sensor_id0" value="0"/>加速度</option>
+            <option id="sensor_id1" value="1"/>照度</option>
+            <option id="sensor_id2" value="2"/>赤外線</option>
+      </select>
+      <input type="button" value="reload" onclick="reload_device()" class="btn btn-default btn-sm">
       <br>
       <text id="id2">表示日数：</text>
       <a id="one_day" onclick="one_day()" class="btn btn-default btn-sm">1日</a>
@@ -745,6 +754,19 @@
       var minute = Sample_form.textbox_minute.value;
       document.location = "{% url 'cms:sensor_graph' %}"+"limit=" + limit 
       + "/datetime=" + year + month + day + hour + minute + "/type=" + "{{ sensor }}" + "{{ device_id }}";
+    }
+    
+    function reload_device(){
+      var limit = 500;
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var device_id = String(Sample_form.device_id.value);
+      var sensor_id = String(Sample_form.sensor_id.value);
+      document.location = "{% url 'cms:sensor_graph' %}"+"limit=" + limit 
+      + "/datetime=" + year + month + day + hour + minute + "/type=" + sensor_id + device_id;
     }
     
     // // 更新前の選択状態を記憶
