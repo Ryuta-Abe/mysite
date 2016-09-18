@@ -364,7 +364,7 @@
     var bookmarks = [];
     var pfvinfo = [];
     {% for s in pcwlnode %}
-    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},state:"{{ s.state }}"});
     {% endfor %}
     {% for s in bookmarks %}
     bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
@@ -422,7 +422,15 @@
     .attr({
       "id": function(d){return "pcwl_circle"+d.pcwl_id;},
       "r": 0.1,
-      "fill": "purple",
+      // "fill": "purple",
+      "fill": function(d){
+        if(d.state == "timeout"){
+          return "black";
+        }
+        else{
+          return "purple";
+        }
+      },
     })
     .transition().duration(1000)
     .attr("r", 13);
@@ -1021,6 +1029,7 @@
         dataType: 'json',
         success: function(json){
           describe_datetime();
+          Reload_timeout(json);
           Reload_pfvinfo(json);
           Reload_mac_floor(json);
         }
@@ -1145,11 +1154,25 @@
       set_selectbox();
     }
 
+    function Reload_timeout(json){
+      var to_node;
+      for (var i = 0; i < json["pcwlnode"].length; i++){
+        to_node = document.getElementById('pcwl_circle' + json["pcwlnode"][i]["pcwl_id"]);
+        if(json["pcwlnode"][i]["state"] == "timeout"){
+          // to_node.attr("fill","black");
+          to_node.style.setProperty('fill', "black");
+        } else{
+          // to_node.attr("fill","purple");
+          to_node.style.setProperty('fill', "purple");
+        }
+      }
+    }
+
     function Reload_pcwlnode(json){
 
       // //pcwlnodeの更新
       for (var i = 0; i < json["pcwlnode"].length; i++){
-        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"]});
+        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"],state:json["pcwlnode"][i]["state"]});
       }
       // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
       pcwlnode_id.length = 0;
@@ -1172,7 +1195,14 @@
       .attr({
         "id": function(d){return "pcwl_circle"+d.pcwl_id;},
         "r": 0.1,
-        "fill": "purple",
+        "fill": function(d){
+          if(d.state == "timeout"){
+            return "black";
+          }
+          else{
+            return "purple";
+          }
+        },
       })
       .transition().duration(1000)
       .attr("r", 13);
