@@ -156,5 +156,3 @@ save_pcwlnode(24,790,275,[5,22],"W2-9F")
 save_pcwlnode(25,400,180,[9,11],"W2-9F")
 save_pcwlnode(26,245,290,[12,15],"W2-9F")
 save_pcwlnode(27,535,280,[8,18],"W2-9F")
-
-print("エラー無しやな")
