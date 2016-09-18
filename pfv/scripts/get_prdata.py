@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import time
-st = time.time()
 import urllib.request
 import datetime
 import sys
@@ -125,22 +124,27 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 	for data in data_list:
 		if data["mac"] in tag_list:
 			db.trtmp.insert(data)
+			print("inserted.")
 
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)
-
+	p.close()
+	p.join()
 
 if __name__ == "__main__":
+	st = time.time()
 	multi(pcwliplist)
+	ed = time.time()
+	# time.sleep(1.5)
+	print(ed-st)
 
-ed = time.time()
-print(ed-st)
-
-### Check col_name trtmp or trtmp_test ###
-### when execute all process, uncomment under 3 lines. ###
-ed_dt = dt_from_iso_to_str(now)[:14]
-ed_dt = dt_from_14digits_to_iso(ed_dt)
-st_dt = shift_seconds(ed_dt, -5)
-analyze_mod(st_dt, ed_dt)
-##########################################################
+	### Check col_name trtmp or trtmp_test ###
+	### when execute all process, uncomment under 3 lines. ###
+	param = sys.argv
+	st_dt = dt_end_to_05(str(param[1]))
+	# st_dt = dt_from_iso_to_str(now)[:14]
+	st_dt = dt_from_14digits_to_iso(st_dt)
+	ed_dt = shift_seconds(st_dt, 5)
+	analyze_mod(st_dt, ed_dt)
+	##########################################################
