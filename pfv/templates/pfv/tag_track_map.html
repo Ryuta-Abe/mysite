@@ -129,6 +129,7 @@
   }
   body{
     background-color: aliceblue;
+    /*background-color: cornsilk;*/
   }
 
   #tag_list p{
@@ -150,6 +151,9 @@
   #bookmark_list p a, #bookmark_add p a{
     cursor: pointer;
   }
+  #btn_coordinate{
+    float: right;
+  }
 </style>
 {% endblock %}
 
@@ -162,6 +166,7 @@
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
+  <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
   　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
   <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
   <span id="selected_datetime">
@@ -287,7 +292,8 @@
 </svg>
 <div id="tooltip_div"></div>
 <div id="tag_list">
-    <p>タグ一覧</p>
+    <!-- <p>タグ一覧</p> -->
+    <p>表示タグ / 所在フロア</p>
 </div>
 <svg id="svg2" width="300" height="530"></svg>
 <!-- <br> -->
@@ -299,6 +305,7 @@
     // ヘッダーやその他文字の表示
     if ("{{ language }}" == "en") {
       d3.select("#header").text("{{floor}}People Flow Map");
+      d3.select("#btn_coordinate").text("coordinate");
       d3.select("#datetime_header").text("datetime : ");
       d3.select("#category_1").text("adjust");
       d3.select("#btn_reload").text("Reload");
@@ -308,6 +315,7 @@
       d3.select("#difference_language").text("日本語");
     } else {
       d3.select("#header").text("{{floor}}人流マップ");
+      d3.select("#btn_coordinate").text("座標");
       d3.select("#datetime_header").text("取得日時：");
       d3.select("#category_1").text("時間調整");
       d3.select("#btn_reload").text("更新");
@@ -360,7 +368,7 @@
     var bookmarks = [];
     var pfvinfo = [];
     {% for s in pcwlnode %}
-    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},state:"{{ s.state }}"});
     {% endfor %}
     {% for s in bookmarks %}
     bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
@@ -418,7 +426,15 @@
     .attr({
       "id": function(d){return "pcwl_circle"+d.pcwl_id;},
       "r": 0.1,
-      "fill": "purple",
+      // "fill": "purple",
+      "fill": function(d){
+        if(d.state == "timeout"){
+          return "black";
+        }
+        else{
+          return "purple";
+        }
+      },
     })
     .transition().duration(1000)
     .attr("r", 13);
@@ -473,6 +489,14 @@
       .data(pfvinfo)
       .enter()
       .append("g")
+      .attr("id", function(d){return d.color + "path";})
+      .style("opacity", function(d){
+        if ($.inArray(d.color, hidden_color) >= 0){
+          return 0;
+        } else{
+          return 1;
+        }
+      })
       .each(function(d,i){
         for (var j = 0; j < d.route.length; j++) { // 各時刻に対して
           for (var k = 0; k < d.route[j].length; k++) { // 各ルートに対して
@@ -512,14 +536,69 @@
                 "cy": pcwlnode[pcwlnode_id[d.route[j][k][0]]]["pos_y"],
                 "r": 20,
                 "fill": d.color,
+                'id': d.color + "stay",
               })
-              .style("opacity",0.5)
+              .style("opacity",function(){
+                if ($.inArray(d.color, hidden_color) >= 0){
+                  return 0;
+                } else{
+                  return 0.5;
+                }
+              })
             };
           };
         }
       })
     }
     make_stable_view();
+
+    // マップの座標(目盛り)と温度・照度を追加
+    var coordinate_width = 50; // 座標間の幅
+    var coordinate = [];
+    for (var i = 0; i*coordinate_width < 1024; i++) {
+     for (var j = 0; j*coordinate_width < 560; j++) {
+      var x = i*coordinate_width;
+      var y = j*coordinate_width;
+      coordinate.push({x:x, y:y});
+     }
+   }
+
+    // 座標目盛りの透明度をトグルで切り替える
+    var flag_opacity = false;
+    function coordinate_opacity(){
+        if (flag_opacity) {
+          if(!flag_jud_coordinate){
+            d3.select("#btn_coordinate").style("color","black");
+          };
+          svg1.select("#g_coordinate")
+              .transition()
+              .duration(1000)
+              .style("opacity",0);
+        } else {
+          d3.select("#btn_coordinate").style("color","blue");
+          svg1.select("#g_coordinate")
+              .transition()
+              .duration(1000)
+              .style("opacity",1);
+          };
+      flag_opacity = !flag_opacity;
+    }
+
+    function make_coordinate() {
+      // 座標目盛り(円)の生成
+      svg1.append("g").attr("id","g_coordinate").style("opacity",0);
+      svg1.select("#g_coordinate").selectAll("g.coordinate")
+      .data(coordinate)
+      .enter()
+      .append("circle")
+      .attr({
+        "cx": function(d) { return d.x;},
+        "cy": function(d) { return d.y;},
+        "r": 3,
+        "fill": "purple",
+      })
+    }
+    make_coordinate();
 
     // 折りたたみ表示
     function show(inputData) {
@@ -782,9 +861,13 @@
       .attr({
         "r": 0.1,
         "fill": function(d){return d.color;},
+        "stroke": function(d){return d.color;},
+        "id": function(d){return d.color + "circle"},
+        "cursor": "pointer",
       })
       .transition().duration(1000)
-      .attr("r", 18);
+      .attr("r", 18)
+      .attr("onclick", function(d){return "mac_color_opacity('"+ d.color +"')"});
       // テキストの描画
       g_color_reference.append("text")
       .attr({
@@ -830,6 +913,35 @@
 
     }
     make_color_reference();
+
+    //非表示にする色のリスト
+    var hidden_color = [];
+
+    //指定したタグの表示・非表示の切り替え用関数
+    function mac_color_opacity(color) {
+      if ($.inArray(color, hidden_color) >= 0) {
+        svg2.select("#"+color+"circle").attr("fill", color);
+        svg1.select("#"+color+"path").style("opacity", 1);
+        svg1.select("#"+color+"stay").style("opacity", 0.5);
+        svg1.select("#"+color+"anime").style("opacity", 0.8);
+        hidden_color.splice($.inArray(color, hidden_color), 1);
+      } else{
+        hidden_color.push(color);
+        svg2.select("#"+color+"circle").attr("fill", "Transparent");
+        svg1.select("#"+color+"path").style("opacity", 0);
+        svg1.select("#"+color+"stay").style("opacity", 0);
+        svg1.select("#"+color+"anime").style("opacity", 0);
+      }
+      // if(flag_Auto2){
+      //   animate_circle.remove();
+      //   make_animate_circle();
+      // } else{
+      //   d3.select("#g_arrow").remove();
+      //   d3.select("#g_staycircle").remove();
+      //   d3.select("#svg1").select("defs").remove();
+      //   make_stable_view();
+      // }
+    }
 
     // 言語切替
     function change_language(){
@@ -921,6 +1033,7 @@
         dataType: 'json',
         success: function(json){
           describe_datetime();
+          Reload_timeout(json);
           Reload_pfvinfo(json);
           Reload_mac_floor(json);
         }
@@ -938,6 +1051,7 @@
             d3.select("#header").text(floor+"人流マップ");
           }
           describe_datetime();
+          make_coordinate();
           Reload_pcwlnode(json);
           Reload_pfvinfo(json);
           Reload_mac_floor(json);
@@ -981,6 +1095,7 @@
     //別のフロアにジャンプする際の判定用フラグ
       var flag_jud_anime = false;
       var flag_jud_real = false;
+      var flag_jud_coordinate = false;
 
     // 別のフロアへジャンプ
     function jump_floor(floor_name){
@@ -993,6 +1108,10 @@
         flag_jud_real = !flag_jud_real;
         realtime();
       };
+      if (flag_opacity){
+        flag_jud_coordinate = !flag_jud_coordinate;
+        coordinate_opacity();
+      }
       d3.select("#svg1").selectAll("g").remove();
       //変更前のfloorのタブを待機状態に変更
       var before_floor_ID = document.getElementById(floor);
@@ -1043,11 +1162,25 @@
       set_selectbox();
     }
 
+    function Reload_timeout(json){
+      var to_node;
+      for (var i = 0; i < json["pcwlnode"].length; i++){
+        to_node = document.getElementById('pcwl_circle' + json["pcwlnode"][i]["pcwl_id"]);
+        if(json["pcwlnode"][i]["state"] == "timeout"){
+          // to_node.attr("fill","black");
+          to_node.style.setProperty('fill', "black");
+        } else{
+          // to_node.attr("fill","purple");
+          to_node.style.setProperty('fill', "purple");
+        }
+      }
+    }
+
     function Reload_pcwlnode(json){
 
       // //pcwlnodeの更新
       for (var i = 0; i < json["pcwlnode"].length; i++){
-        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"]});
+        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"],state:json["pcwlnode"][i]["state"]});
       }
       // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
       pcwlnode_id.length = 0;
@@ -1070,7 +1203,14 @@
       .attr({
         "id": function(d){return "pcwl_circle"+d.pcwl_id;},
         "r": 0.1,
-        "fill": "purple",
+        "fill": function(d){
+          if(d.state == "timeout"){
+            return "black";
+          }
+          else{
+            return "purple";
+          }
+        },
       })
       .transition().duration(1000)
       .attr("r", 13);
@@ -1093,6 +1233,10 @@
         realtime();
         flag_jud_real = !flag_jud_real;
       };
+      if (flag_jud_coordinate){
+        coordinate_opacity();
+        flag_jud_coordinate = !flag_jud_coordinate;
+      }
       // {% for s in pcwlnode %}
       // pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
       // {% endfor %}
@@ -1198,8 +1342,15 @@
       .attr({
         "r": 0,
         "fill":function(d){return d.color;},
+        "id": function(d){return d.color + "anime";},
       })
-      .style("opacity", 0.8)
+      .style("opacity", function(d){
+                if ($.inArray(d.color, hidden_color) >= 0){
+                  return 0;
+                } else{
+                  return 0.8;
+                }
+              })
     }
     function move_animate_circle(){
       if (flag_realtime) {

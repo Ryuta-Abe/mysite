@@ -796,9 +796,21 @@ def tag_track_map(request):
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
+  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
   # pcwl情報の取り出し
   pcwlnode = []
   pcwlnode += db.pcwlnode.find({"floor":floor})
+
+  # timeout情報の取り出し
+  timeout = []
+  timeout += db.timeoutlog.find({"datetime":{"$gt":gt_tag, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+
+  for i in pcwlnode:
+    i["state"] = "default"
+    for j in timeout:
+      if j["pcwl_id"] == i["pcwl_id"]:
+        i["state"] = "timeout"
+        break
 
   # ブックマーク情報の取り出し
   tagbookmarks = []
@@ -835,7 +847,6 @@ def tag_track_map(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
   floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
   for i in pfvinfo:
     for j in floor_list:
@@ -870,11 +881,21 @@ def tag_track_map_json(request):
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
 
+  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
   # pcwl情報の取り出し
   pcwlnode = []
   pcwlnode += db.pcwlnode.find({"floor":floor})
+  # timeout情報の取り出し
+  timeout = []
+  timeout += db.timeoutlog.find({"datetime":{"$gt":gt_tag, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
   for i in pcwlnode:
     del i["_id"]
+    i["state"] = "default"
+    for j in timeout:
+      if j["pcwl_id"] == i["pcwl_id"]:
+        i["state"] = "timeout"
+        break
+
   # mac検索条件
   mac_query = [] # 検索するmacのリスト
   mac_num = round(len(mac)/18) # 検索するmac数
@@ -906,7 +927,6 @@ def tag_track_map_json(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
 #pfvinfoに現在のfloor情報を紐付け
-  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
   floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
   for i in pfvinfo:
     for j in floor_list:
