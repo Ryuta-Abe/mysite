@@ -16,3 +16,4 @@ db = client.nm4bd
 db.raw100.remove({})
 db.raw100_buckup.remove({})
 db.rttmp3.remove({})
+db.timeoutlog.remove({})

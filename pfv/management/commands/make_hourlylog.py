@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from pymongo import *
 from mongoengine import *
 from pfv.models import timeoutlog, pcwliplist, tmptolog, hourlytolog
-from pfv.convert_datetime import *
+from pfv.scripts.convert_datetime import *
 
 # mongoDBに接続
 client = MongoClient()
@@ -17,7 +17,8 @@ db = client.nm4bd
 # 2.フィールド一覧ソート
 #   py txt_sort.py fields.txt
 # 3.不要なフィールド(_id等)削除 & datetime先頭に移動
-# 4.mongoexport実行
+# 4.py -3 manage.py hourlylog
+# 5.mongoexport実行
 #   mongoexport --sort {"datetime":1} -d nm4bd -c hourlytolog -o hourlytolog.csv --csv --fieldFile fields.txt
 class Command(BaseCommand):
   help = u'aggregate timeout-logs'
@@ -25,8 +26,8 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
   	# hourly aggregate
 	  db.hourlytolog.remove({})
-	  iso_st = dt_from_14digits_to_iso("20160817180000")
-	  iso_ed = dt_from_14digits_to_iso("20160818190000")
+	  iso_st = dt_from_14digits_to_iso("20160915000000")
+	  iso_ed = dt_from_14digits_to_iso("20160919000000")
 	  print(iso_st)
 	  print(iso_ed)
 	  gte = iso_st
