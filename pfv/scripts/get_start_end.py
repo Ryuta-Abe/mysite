@@ -74,6 +74,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
         for data in datas:
             data["id"] = data["_id"]
             del(data["_id"])
+            ins_flag = False
             
             for list_data in data["nodelist"]:
                 list_data["floor"]   = convert_ip(list_data["ip"])["floor"]
@@ -178,6 +179,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                                                         # pastlist update
                                                         update_pastlist_alt(pastd[0], tmp_enddt, num, data["nodelist"], pastlist[0]["start_node"])
                                                         save_pastd(pastd[0], tmp_enddt)
+                                                        ins_flag = True
                                                         break
 
                                             # data_lists append
@@ -186,6 +188,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                                             update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                             save_pastd(pastd[0], tmp_enddt)
                                             print("flow1")
+                                            ins_flag = True
                                             break
 
                                     else:
@@ -194,6 +197,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                                         update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                         save_pastd(pastd[0], tmp_enddt)
                                         print("flow2")
+                                        ins_flag = True
                                         break
 
                                 # stay
@@ -208,11 +212,13 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                                         update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                         save_pastd(pastd[0], tmp_enddt)
                                         print("stay1")
+                                        ins_flag = True
                                         break
                                     else:
                                         update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                         save_pastd(pastd[0], tmp_enddt)
                                         print("stay2")
+                                        ins_flag = True
                                         break
                                 # other floor
                                 else:
@@ -220,6 +226,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                                     # pastlist update
                                     update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                     save_pastd(pastd[0], tmp_enddt)
+                                    ins_flag = True
                                     break
 
                             # RSSI小
@@ -243,8 +250,10 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                                 break
 
             count_all += 1
-            update_maclist(data["id"]["mac"])
+            if (ins_flag):
+                update_maclist(data["id"]["mac"])
 
+        print("ins_flag:"+str(ins_flag))
         data_lists      = reverse_list(data_lists, "start_time")
         data_lists_stay = reverse_list(data_lists_stay, "start_time")
 
@@ -280,13 +289,14 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                         # print(node)
                         # print(pastmacdata)
                         data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
+                        update_pastlist_keep_alive(pastmacdata, all_st_time, 0, [], node["start_node"])
                         save_pastd(pastmacdata, all_st_time)
                         break
                         # append_data_lists_stay_alive(0, data, stdt, eddt, nid, data_lists_stay)
                         # TODO: key -> isCreated / updatedt / save_pastd
                         # when append data to pastlist, add key of "keep_alive"
 
-    print("goto save func")
+    # print("goto save func")
     # print(data_lists)
     # print(data_lists_stay)
     make_pfvinfo(data_lists,db.pfvinfo,all_flag,min_interval)
@@ -415,6 +425,7 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
                 "end_node"  :tmp_node_id["pcwl_id"],
                 "floor"     :tmp_node_id["floor"],
                 }
+    print(se_data)
     return se_data
 
 def update_pastlist(pastd, get_time_no, num, nodelist):
@@ -506,5 +517,5 @@ def update_maclist(mac):
     #     mac_list.remove(mac)
     if (db.pastmaclist.find({"_id.mac":mac}).count() == 1):
         db.pastmaclist.remove({"_id.mac":mac})
-        print("removed "+str(mac))
+        # print("removed "+str(mac))
     # return mac_list
