@@ -20,12 +20,15 @@ db.tmpcol.create_index([("_id.get_time_no", ASCENDING), ("_id.mac", ASCENDING)])
 MIN_NODE_NUM = 1
 MAX_NODE_NUM = 27
 FLOOR_LIST   = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
-int_time_range = 60
+int_time_range = 30
 time_range = timedelta(seconds=int_time_range) # 過去の参照時間幅設定
 TH_RSSI    = -80
 repeat_cnt = 99
+INT_KEEP_ALIVE = 15
+KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 
-def get_start_end_mod(all_flag, tr_flag):
+# TODO:add input : all start time
+def get_start_end_mod(all_st_time, all_flag, tr_flag):
     from datetime import datetime, timedelta
     # dt05
     if tr_flag:
@@ -59,9 +62,11 @@ def get_start_end_mod(all_flag, tr_flag):
     # data取り出し
     mac_query = ""
     datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
-    print("gse_count:"+str(datas.count()))
+    # print("gse_count:"+str(datas.count()))
     # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
+    make_pastmaclist()
+    print("--- "+str(all_st_time)+" ---")
 
     if (datas.count() != 0):
         # 1番目の設定
@@ -69,15 +74,8 @@ def get_start_end_mod(all_flag, tr_flag):
         for data in datas:
             data["id"] = data["_id"]
             del(data["_id"])
-            # get_time_no : int -> isodate
-            # data["id"]["get_time_no"] = datetime.strptime(str(data["id"]["get_time_no"]), "%Y%m%d%H%M%S")
             
             for list_data in data["nodelist"]:
-                # node_id -> ip
-                # list_data["floor"]   = convert_nodeid(list_data["node_id"])["floor"]
-                # list_data["pcwl_id"] = convert_nodeid(list_data["node_id"])["node_id"]
-                # list_data["rssi"] = list_data["dbm"]
-                # del(list_data["node_id"])
                 list_data["floor"]   = convert_ip(list_data["ip"])["floor"]
                 list_data["pcwl_id"] = convert_ip(list_data["ip"])["pcwl_id"]
                 list_data["rssi"] = list_data["dbm"]
@@ -112,7 +110,7 @@ def get_start_end_mod(all_flag, tr_flag):
                     # pastdata確認
                     if (pastlist != []):
                         # pastlist1件ずつ参照
-                        make_nodecnt_dict(pastlist, data, pastd[0]["nodecnt_dict"])
+                        make_nodecnt_dict(pastlist, data["id"]["get_time_no"], pastd[0]["nodecnt_dict"])
 
                         pastlist = reverse_list(pastlist, "dt")
 
@@ -176,7 +174,7 @@ def get_start_end_mod(all_flag, tr_flag):
                                                     if (route_partial_match(current_route,past_route[0]["route"])):
                                                         print("alt_stay")
                                                         # data_lists_"stay" append
-                                                        data_lists_stay.append(append_data_lists_stay_alt(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists_stay))
+                                                        data_lists_stay.append(append_data_lists_stay_alt(data["id"]["mac"], tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists_stay))
                                                         # pastlist update
                                                         update_pastlist_alt(pastd[0], tmp_enddt, num, data["nodelist"], pastlist[0]["start_node"])
                                                         save_pastd(pastd[0], tmp_enddt)
@@ -245,23 +243,56 @@ def get_start_end_mod(all_flag, tr_flag):
                                 break
 
             count_all += 1
+            update_maclist(data["id"]["mac"])
 
         data_lists      = reverse_list(data_lists, "start_time")
         data_lists_stay = reverse_list(data_lists_stay, "start_time")
 
         # import time
         # start = time.time()
-        make_pfvinfo(data_lists,db.pfvinfo,all_flag,min_interval)
-        make_stayinfo(data_lists_stay,db.stayinfo,all_flag,min_interval)
-        make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag,min_interval)
-        make_staymacinfo(data_lists_stay,db.staymacinfo,all_flag,min_interval)
+        # make_pfvinfo(data_lists,db.pfvinfo,all_flag,min_interval)
+        # make_stayinfo(data_lists_stay,db.stayinfo,all_flag,min_interval)
+        # make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag,min_interval)
+        # make_staymacinfo(data_lists_stay,db.staymacinfo,all_flag,min_interval)
         # end = time.time()
         # print("time:"+str(end-start))
 
-        return(data_lists[:2000], count, count_all)
+        # return(data_lists[:2000], count, count_all)
 
     else:
-        return([],0, 0)
+        pass
+        # return([],0, 0)
+
+    past_maclist = db.pastmaclist.find()
+    # print(past_maclist.count())
+    # print("pmac_list:"+str(past_maclist))
+    for data in past_maclist:
+        mac = data["_id"]["mac"]
+        pastmacdata = db.pastdata.find_one({"mac":mac})
+        pastmacdata["pastlist"] = reverse_list(pastmacdata["pastlist"], "dt")
+        # TODO: 
+        make_nodecnt_dict(pastmacdata["pastlist"], all_st_time, pastmacdata["nodecnt_dict"])
+        if (len(pastmacdata["pastlist"]) != 0):
+            for node in pastmacdata["pastlist"]:
+                if(all_st_time - node["dt"] <= KEEP_ALIVE):
+                    if (node["alive"]):
+                        print("keep alive")
+                        # print(node)
+                        # print(pastmacdata)
+                        data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
+                        save_pastd(pastmacdata, all_st_time)
+                        break
+                        # append_data_lists_stay_alive(0, data, stdt, eddt, nid, data_lists_stay)
+                        # TODO: key -> isCreated / updatedt / save_pastd
+                        # when append data to pastlist, add key of "keep_alive"
+
+    print("goto save func")
+    # print(data_lists)
+    # print(data_lists_stay)
+    make_pfvinfo(data_lists,db.pfvinfo,all_flag,min_interval)
+    make_stayinfo(data_lists_stay,db.stayinfo,all_flag,min_interval)
+    make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag,min_interval)
+    make_staymacinfo(data_lists_stay,db.staymacinfo,all_flag,min_interval)
 
 # 実験用 mac→name フィルタ
 def name_filter(mac):
@@ -312,12 +343,12 @@ def init_nodecnt_dict():
 
     return nodecnt_dict
 
-def make_nodecnt_dict(node_history, data, nodecnt_dict):
+def make_nodecnt_dict(node_history, get_time_no, nodecnt_dict):
     remove_list = []
     loop_cnt = 0
     for history in node_history:
         his_node_cnt = min(len(history["node"]),3)
-        if not(data["id"]["get_time_no"] - time_range <= history["dt"] <= data["id"]["get_time_no"]):
+        if not(get_time_no - time_range <= history["dt"] <= get_time_no):
             for h_num in range(0, his_node_cnt):
                 tmp_id   = history["node"][h_num]["pcwl_id"]
                 tmp_floor = history["node"][h_num]["floor"]
@@ -371,12 +402,12 @@ def append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_
     return se_data
 
 # 行き来した場合stayに
-def append_data_lists_stay_alt(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists_stay):
+def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_lists_stay):
     if tmp_enddt < tmp_startdt:
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
         print("---------! stay ed-st>60 error !---------")
-    se_data =  {"mac":data["id"]["mac"],
+    se_data =  {"mac":mac,
                 "start_time":tmp_startdt,
                 "end_time"  :tmp_enddt,
                 "interval"  :(tmp_enddt - tmp_startdt).seconds,
@@ -387,11 +418,15 @@ def append_data_lists_stay_alt(num, data, tmp_startdt, tmp_enddt, tmp_node_id, d
     return se_data
 
 def update_pastlist(pastd, get_time_no, num, nodelist):
-    past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist} 
+    past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist, "alive":True} 
     pastd["pastlist"].append(past_dict)
 
 def update_pastlist_alt(pastd, get_time_no, num, nodelist, start_node):
-    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist} 
+    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True} 
+    pastd["pastlist"].append(past_dict)
+
+def update_pastlist_keep_alive(pastd, get_time_no, num, nodelist, start_node):
+    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":False}
     pastd["pastlist"].append(past_dict)
 
 def save_pastd(pastd,update_dt):
@@ -445,3 +480,31 @@ def reverse_list(data_list, sort_key):
     data_list = sorted(data_list, key=lambda x:x[str(sort_key)], reverse=True)
     return data_list
     
+def make_pastmaclist():
+    # mac_list = []
+    # tmp_list = []
+    db.pastdata.aggregate([
+                            {"$group":
+                                {"_id":
+                                    {"mac":"$mac"},
+                                },
+                            },
+                            {"$out": "pastmaclist"},
+                        ],
+                        allowDiskUse=True,
+                        )
+
+    # tmp_list += db.pastmaclist.find()
+    # mac_list  = db.pastmaclist.find()
+    # for data in tmp_list:
+    #     pass
+    #     # mac_list.append(data["_id"]["mac"])
+    # return mac_list
+
+def update_maclist(mac):
+    # if (mac in mac_list):
+    #     mac_list.remove(mac)
+    if (db.pastmaclist.find({"_id.mac":mac}).count() == 1):
+        db.pastmaclist.remove({"_id.mac":mac})
+        print("removed "+str(mac))
+    # return mac_list
