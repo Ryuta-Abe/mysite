@@ -129,6 +129,7 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)
+	# 同期処理
 	p.close()
 	p.join()
 
@@ -143,7 +144,6 @@ if __name__ == "__main__":
 	### when execute all process, uncomment under 3 lines. ###
 	param = sys.argv
 	st_dt = dt_end_to_05(str(param[1]))
-	# st_dt = dt_from_iso_to_str(now)[:14]
 	st_dt = dt_from_14digits_to_iso(st_dt)
 	ed_dt = shift_seconds(st_dt, 5)
 	analyze_mod(st_dt, ed_dt)

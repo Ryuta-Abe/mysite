@@ -14,6 +14,6 @@ client = MongoClient()
 db = client.nm4bd
 
 db.raw100.remove({})
-db.raw100_buckup.remove({})
+db.raw100_backup.remove({})
 db.rttmp3.remove({})
 db.timeoutlog.remove({})
