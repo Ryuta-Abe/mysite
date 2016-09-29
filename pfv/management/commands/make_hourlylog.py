@@ -12,6 +12,8 @@ db = client.nm4bd
 
 ##### hourlytolog 作成手順 #####
 # 0.logを作る日時をiso_st,edに指定
+# 0.1. mongoimport -d nm4bd -c timeoutlog tolog_hogehoge.json
+# 0.5. py -3 manage.py hourlylog
 # 1.key一覧取得
 #   mongo nm4bd --quiet --eval "for (key in db.hourlytolog.findOne()) print(key)" > fields.txt
 # 2.フィールド一覧ソート
