@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from pfv import views, make_pfvinfo, aggregate, get_start_end, bookmark_edit
+from pfv import views, bookmark_edit
 urlpatterns = patterns('',
 
     url(r'^pfv_map/$', views.pfv_map, name='pfv_map'), #pfvマップ

@@ -61,7 +61,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
 
     # data取り出し
     mac_query = ""
-    datas = db.tmpcol.find().sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
+    datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.mac",ASCENDING).sort("_id.get_time_no",ASCENDING)
     # print("gse_count:"+str(datas.count()))
     # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort("_id.get_time_no",1)
@@ -76,12 +76,22 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
             del(data["_id"])
             ins_flag = False
             
+            remove_list = []
+            loop_cnt = 0
             for list_data in data["nodelist"]:
                 list_data["floor"]   = convert_ip(list_data["ip"])["floor"]
                 list_data["pcwl_id"] = convert_ip(list_data["ip"])["pcwl_id"]
                 list_data["rssi"] = list_data["dbm"]
                 del(list_data["ip"])
                 del(list_data["dbm"])
+                if list_data["floor"] == "Unknown":
+                    remove_list.append(loop_cnt)
+                loop_cnt += 1
+
+            if remove_list != []:
+                for l_num in reversed(remove_list):
+                    del data["nodelist"][l_num]
+
             data["nodelist"] = reverse_list(data["nodelist"], "rssi")
             
             # RSSI上位3つまで参照
@@ -125,6 +135,8 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
                             tmp_node   = data["nodelist"][num]
                             tmp_id_str = str(tmp_node["pcwl_id"])
                             tmp_floor  = tmp_node["floor"]
+                            if tmp_floor == "Unknown":
+                                continue
                             if (tmp_node["rssi"] >= TH_RSSI):
                                 # flow
                                 if (tmp_node["pcwl_id"] != pastlist[0]["start_node"]["pcwl_id"])and(tmp_floor == pastlist[0]["start_node"]["floor"]):
@@ -253,7 +265,7 @@ def get_start_end_mod(all_st_time, all_flag, tr_flag):
             if (ins_flag):
                 update_maclist(data["id"]["mac"])
 
-        print("ins_flag:"+str(ins_flag))
+        # print("ins_flag:"+str(ins_flag))
         data_lists      = reverse_list(data_lists, "start_time")
         data_lists_stay = reverse_list(data_lists_stay, "start_time")
 

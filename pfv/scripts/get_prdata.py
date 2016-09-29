@@ -34,7 +34,7 @@ tag_list = ["00:11:81:10:01:1c",
 
 # 6Fのデータ収集
 pcwliplist = []
-search_floor = ["W2-6F","W2-7F","W2-8F","W2-9F"]
+search_floor = ["W2-6F","W2-7F","W2-9F"]
 #search_floor = ["kaiyo"]
 
 for floor in search_floor:
@@ -124,7 +124,7 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 	for data in data_list:
 		if data["mac"] in tag_list:
 			db.trtmp.insert(data)
-			print("inserted.")
+			# print("inserted.")
 
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択

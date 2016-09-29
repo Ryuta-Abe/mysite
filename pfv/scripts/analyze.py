@@ -37,7 +37,9 @@ def analyze_mod(st_dt, ed_dt):
         # print("ed:"+str(int_ed))
 
         aggregate_mod(iso_st, iso_ed, False, False, True)
-        # aggregate_raw100(int_ed)
+        aggregate_raw100(iso_ed)
+        # print(iso_ed)
+        # print(db.raw100tmp.count())
         get_start_end_mod(iso_st, False, True)
         tmp_st = after_5s
         #####################################
