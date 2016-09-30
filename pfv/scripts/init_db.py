@@ -13,3 +13,6 @@ db.stayinfo.drop()
 db.staymacinfo.drop()
 db.pcwltime.drop()
 db.pastdata.drop()
+
+if __name__ == '__main__':
+    db.tmpcol_backup.drop()
