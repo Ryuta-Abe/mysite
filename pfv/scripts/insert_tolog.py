@@ -6,7 +6,7 @@ import json
 from pymongo import *
 from mongoengine import *
 from convert_datetime import *
-from pfv.models import timeoutlog, pcwliplist, tmptolog, hourlytolog
+# from pfv.models import timeoutlog, pcwliplist, tmptolog, hourlytolog
 
 
 # mongoDBに接続
@@ -26,23 +26,17 @@ db = client.nm4bd
 # 	2.フィールド一覧ソート
 #   	python txt_sort.py fields.txt
 # 	3.不要なフィールド(_id等)削除 & datetime先頭に移動
-    
-if len(sys.argv) < 4:
-	print ("usage: python insert_tolog json_file_name str_st(14 digits) str_ed")
-	exit()
-
-json_file = sys.argv[1] #　jsonファイルのパス
-str_st = sys.argv[2] # 14桁のstr、例："20160929000000"
-str_ed = sys.argv[3]
-insert_tolog(json_file,str_st,str_ed)
 
 def insert_tolog(file,st,ed):
-	f = open(file)
-	datas = json.load(f)
-	f.close()
-	for data in datas:
-		del(data["_id"])
-		db.timeoutlog.insert(data)
+	f = open(file, 'r')
+	# f = json.dumps(f)
+	# datas = json.load(f)
+	# f.close()
+	for line in f:
+		line = json.loads(line)
+		del(line["_id"])
+		print(line)
+		db.tolog_test.insert(line)
 	
 	db.hourlytolog.remove({})
 	iso_st = dt_from_14digits_to_iso(st)
@@ -72,5 +66,11 @@ def insert_tolog(file,st,ed):
 
 	# db.timeoutlog.remove({})
 
+if len(sys.argv) < 4:
+	print ("usage: python insert_tolog json_file_name str_st(14 digits) str_ed")
+	exit()
 
-
+json_file = sys.argv[1] #　jsonファイルのパス
+str_st = sys.argv[2] # 14桁のstr、例："20160929000000"
+str_ed = sys.argv[3]
+insert_tolog(json_file,str_st,str_ed)
