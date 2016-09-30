@@ -9,27 +9,25 @@ from pfv.scripts.convert_datetime import *
 # mongoDBに接続
 client = MongoClient()
 db = client.nm4bd
+import sys
+import json
 
-##### hourlytolog 作成手順 #####
-# 0.logを作る日時をiso_st,edに指定
-# 0.1. mongoimport -d nm4bd -c timeoutlog tolog_hogehoge.json
-# 0.5. py -3 manage.py hourlylog
-# 1.key一覧取得
-#   mongo nm4bd --quiet --eval "for (key in db.hourlytolog.findOne()) print(key)" > fields.txt
-# 2.フィールド一覧ソート
-#   py txt_sort.py fields.txt
-# 3.不要なフィールド(_id等)削除 & datetime先頭に移動
-# 4.py -3 manage.py hourlylog
-# 5.mongoexport実行
-#   mongoexport --sort {"datetime":1} -d nm4bd -c hourlytolog -o hourlytolog.csv --csv --fieldFile fields.txt
-class Command(BaseCommand):
-  help = u'aggregate timeout-logs'
 
-  def handle(self, *args, **options):
-  	# hourly aggregate
+json_file = sys.argv[1]　#　jsonファイルのパス
+str_st = sys.argv[2] # 14桁のstr、例："20160929000000"
+str_ed = sys.argv[3]
+insert_tolog(json_file,st,ed)
+
+def insert_tolog(file,st,ed):
+	f = open(file)
+	datas = json.load(f)
+	f.close()
+	for data in datas:
+		del(data["_id"])
+		db.timeoutlog.insert(data)
 	  db.hourlytolog.remove({})
-	  iso_st = dt_from_14digits_to_iso("20160929000000")
-	  iso_ed = dt_from_14digits_to_iso("20160930000000")
+	  iso_st = dt_from_14digits_to_iso(st)
+	  iso_ed = dt_from_14digits_to_iso(ed)
 	  print(iso_st)
 	  print(iso_ed)
 	  gte = iso_st
@@ -74,3 +72,6 @@ class Command(BaseCommand):
 	  	
 	  	gte = shift_hours(gte,1)
 	  	lt  = shift_hours(gte,1)
+
+
+
