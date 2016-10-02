@@ -16,3 +16,4 @@ db.pastdata.drop()
 
 if __name__ == '__main__':
     db.tmpcol_backup.drop()
+    print("tmpcol_backup dropped.")
