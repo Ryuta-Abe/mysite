@@ -64,12 +64,12 @@
   p.tabs a
   {
     display: block;
-    width: 22.3em;
+    width: 13em;
     float: left;
-    margin: 0px 1px 0px 0px;
+    margin: 0px 1px 0px 1px;
     padding: 8px;
     text-align: center;
-    border-radius: 12px 12px 0px 0px;
+    border-radius: 15px 15px 0px 0px;
     cursor: pointer;
   }
   p.tabs a.select_tab
@@ -120,6 +120,7 @@
     float: left;
     background-color: white;
     border: 3px solid black;
+    margin: 0px 0px 0px 1px;
   }
   #svg2{
     float: right;
@@ -288,7 +289,7 @@
 <div class="tabbox" id="tabbox"></div>
 <?xml version="1.0" standalone="no"?>
 <svg id="svg1" width="1024" height="560">
-  <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.7"></image>
+  <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.6"></image>
 </svg>
 <div id="tooltip_div"></div>
 <div id="tag_list">
@@ -429,7 +430,8 @@
       // "fill": "purple",
       "fill": function(d){
         if(d.state == "timeout"){
-          return "black";
+          // return "black";
+          return "darkgray";
         }
         else{
           return "purple";
@@ -1168,7 +1170,8 @@
         to_node = document.getElementById('pcwl_circle' + json["pcwlnode"][i]["pcwl_id"]);
         if(json["pcwlnode"][i]["state"] == "timeout"){
           // to_node.attr("fill","black");
-          to_node.style.setProperty('fill', "black");
+          // to_node.style.setProperty('fill', "black");
+          to_node.style.setProperty('fill', "darkgray");
         } else{
           // to_node.attr("fill","purple");
           to_node.style.setProperty('fill', "purple");
@@ -1205,7 +1208,8 @@
         "r": 0.1,
         "fill": function(d){
           if(d.state == "timeout"){
-            return "black";
+            // return "black";
+            return "darkgray";
           }
           else{
             return "purple";
