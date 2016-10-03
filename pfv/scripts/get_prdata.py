@@ -34,7 +34,7 @@ tag_list = ["00:11:81:10:01:1c",
 
 # 6Fのデータ収集
 pcwliplist = []
-search_floor = ["W2-6F","W2-7F","W2-8F","W2-9F"]
+search_floor = ["W2-6F","W2-7F","W2-9F"] # exclude W2-8F
 #search_floor = ["kaiyo"]
 
 for floor in search_floor:
@@ -124,11 +124,12 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 	for data in data_list:
 		if data["mac"] in tag_list:
 			db.trtmp.insert(data)
-			print("inserted.")
+			# print("inserted.")
 
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)
+	# 同期処理
 	p.close()
 	p.join()
 
@@ -140,10 +141,9 @@ if __name__ == "__main__":
 	print(ed-st)
 
 	### Check col_name trtmp or trtmp_test ###
-	### when execute all process, uncomment under 3 lines. ###
+	### when execute all process, uncomment under 5 lines. ###
 	param = sys.argv
 	st_dt = dt_end_to_05(str(param[1]))
-	# st_dt = dt_from_iso_to_str(now)[:14]
 	st_dt = dt_from_14digits_to_iso(st_dt)
 	ed_dt = shift_seconds(st_dt, 5)
 	analyze_mod(st_dt, ed_dt)

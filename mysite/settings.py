@@ -114,3 +114,5 @@ STATICFILES_DIRS = (
 BASE_PATH = os.path.abspath(os.path.split(__file__)[0])
 MEDIA_ROOT = os.path.join(BASE_PATH, 'static')
 MEDIA_URL = '/static_site/'
+
+STATIC_DOC_ROOT=os.path.dirname(__file__)+os.sep+'..'+os.sep+'media'

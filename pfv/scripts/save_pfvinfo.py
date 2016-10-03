@@ -218,7 +218,8 @@ def make_pfvinfo(dataset,db_name,all_flag,min_interval):
 
         progress += 1
         if ((progress % 1000) == 0) or (progress == len(dataset)):
-            print("pfvinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            pass
+            # print("pfvinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
         # db_name.create_index([("datetime", ASCENDING)])
 
 def is_experiment(db_name): # 実験用DBか否かを判定
@@ -304,7 +305,8 @@ def make_pfvmacinfo(dataset,db_name,all_flag,min_interval):
 
         progress += 1
         if ((progress % 1000) == 0) or (progress == len(dataset)):
-            print("pfvmacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            pass
+            # print("pfvmacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
         # db_name.create_index([("datetime", ASCENDING)])
 
 # 滞留端末情報stayinfo関係
@@ -340,7 +342,8 @@ def make_stayinfo(dataset,db_name,all_flag,min_interval):
             db_name.save(tmp_plist)
         # print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
         if ((progress % 1000) == 0) or (progress == len(dataset)):
-            print("stayinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            pass
+            # print("stayinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
             # print(data["start_time"])
         progress += 1
         # db_name.create_index([("datetime", ASCENDING)])
@@ -364,7 +367,8 @@ def make_staymacinfo(dataset,db_name,all_flag,min_interval):
 
         progress += 1
         if ((progress % 1000) == 0) or (progress == len(dataset)):
-            print("staymacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            pass
+            # print("staymacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
         # db_name.create_index([("datetime", ASCENDING)])
         
 # # 出発時刻、出発点、到着時刻、到着点のデータセット
