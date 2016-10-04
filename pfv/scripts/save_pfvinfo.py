@@ -306,7 +306,7 @@ def make_pfvmacinfo(dataset,db_name,all_flag,min_interval):
         progress += 1
         if ((progress % 1000) == 0) or (progress == len(dataset)):
             pass
-            # print("pfvmacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            print("pfvmacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
         # db_name.create_index([("datetime", ASCENDING)])
 
 # 滞留端末情報stayinfo関係
@@ -343,7 +343,7 @@ def make_stayinfo(dataset,db_name,all_flag,min_interval):
         # print(str(data["start_time"])+" interval = "+str(interval)+" node = "+str(data["start_node"])+" 保存")
         if ((progress % 1000) == 0) or (progress == len(dataset)):
             pass
-            # print("stayinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            print("stayinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
             # print(data["start_time"])
         progress += 1
         # db_name.create_index([("datetime", ASCENDING)])
