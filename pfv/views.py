@@ -17,6 +17,7 @@ import math
 import datetime
 import locale
 from pfv.scripts.convert_datetime import *
+from pfv.scripts.convert_nodeid import *
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
@@ -397,7 +398,6 @@ def dt_from_iso_to_str14(dt):
 def mac_trace(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
-  experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
@@ -433,9 +433,10 @@ def mac_trace(request):
     t = db.tmpcol.find({"_id.get_time_no":{"$gt":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
 
   for data in t:
-    for i in range(0,len(data["nodelist"])):
-      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
-    dataset.append(data)
+    if convert_nodeid(data["nodelist"][0]["node_id"])["floor"] == floor:
+      for i in range(0,len(data["nodelist"])):
+        data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
+      dataset.append(data)
 
   # ブックマーク情報の取り出し
   bookmarks = []
@@ -472,7 +473,7 @@ def mac_trace(request):
   return render_to_response('pfv/mac_trace.html',  # 使用するテンプレート
                               # {'floor':floor,'mac_data':mac_data,'pcwlnode': _pcwlnode_with_rssi,'bookmarks':bookmarks,
                               {'floor':floor,'pcwlnode': _pcwlnode_with_rssi,'bookmarks':bookmarks,
-                               'experiment':experiment,'language':language,'mac':mac,
+                               'language':language,'mac':mac,
                                'year':lt.year,'month':lt.month,'day':lt.day,
                                'hour':lt.hour,'minute':lt.minute,'second':lt.second}
                               )
@@ -482,7 +483,6 @@ def mac_trace_json(request):
 
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
-  experiment = int(request.GET.get('experiment', 0))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
@@ -517,9 +517,10 @@ def mac_trace_json(request):
     t = db.tmpcol.find({"_id.get_time_no":{"$gt":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
 
   for data in t:
-    for i in range(0,len(data["nodelist"])):
-      data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
-    dataset.append(data)
+    if convert_nodeid(data["nodelist"][0]["node_id"])["floor"] == floor:
+      for i in range(0,len(data["nodelist"])):
+        data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
+      dataset.append(data)
 
   #データをdbmでソート
   if dataset != []:
