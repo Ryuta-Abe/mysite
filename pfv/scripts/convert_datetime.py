@@ -74,14 +74,14 @@ def shift_hours(dt, hour):
 
 # input : int or str datetime
 def dt_end_to_05(dt):
-    dt = str(dt)
+    dt = str(dt)[0:14]
     dt_end = int(dt[-1:])
-    
+
     if (0 <= dt_end <=4):
       dt = str(dt[0:13]) + "0"
     elif (5 <= dt_end <=9):
       dt = str(dt[0:13]) + "5"
-    
+
     return dt
 
 # input:isodate, output:isodate(end 0or5)

@@ -52,6 +52,7 @@ def make_empty_maccache(num):
 # ipアドレスがipのPCWLにコマンドを投げてhtml解析後DB登録
 def save_rttmp(ip,floor,pcwl_id):
 	data_list = [] #type:[{}]
+	to_list = []
 	# Basic認証用のパスワードマネージャーを作成
 	LOGIN_URL = "http://"+ip+"/ja/private/nmsetinfo"
 	password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
@@ -75,7 +76,7 @@ def save_rttmp(ip,floor,pcwl_id):
 		else:
 			# remove node_id , add : ip
 			ts_cache = db.tscache.find({"ip":ip}).sort("_id",-1).limit(1)
-		ts_th = ts_cache[0]["th"] #type:int, store old time_stamp 
+		ts_th = ts_cache[0]["th"] #type:int, store old time_stamp
 
 		dbsave_flag = False
 		first = True
@@ -89,7 +90,7 @@ def save_rttmp(ip,floor,pcwl_id):
 				time_stamp = int(line_split[3])
 				if first:
 					# db.tscache.insert({"th":time_stamp,"node_id":node_id})
-					db.tscache.update({"ip":ip},{"$set": {"th":time_stamp, "ip":ip}}, True) 
+					db.tscache.update({"ip":ip},{"$set": {"th":time_stamp, "ip":ip}}, True)
 					first = False
 				if time_stamp > ts_th:
 					# add : floor, pcwl_id
@@ -105,24 +106,33 @@ def save_rttmp(ip,floor,pcwl_id):
 				dbsave_flag = True
 	except urllib.error.URLError:
 		# add : floor, pcwl_id
-		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Normal timeout"})
+		# db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Normal timeout"})
+		to_data = {"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Normal timeout"}
+		to_list.append(to_data)
+		# print(to_data)
 		print("Timeout "+ip)
 	except socket.timeout:
 		# add : floor, pcwl_id
-		db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"})
+		# db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"})
+		sto_data = {"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"}
+		to_list.append(sto_data)
+		# print(sto_data)
 		print("Socket Timeout "+ip)
-	return data_list
+	return {"data_list":data_list,"to_list":to_list}
 
 
 def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 	#print ('process id:' + str(os.getpid())) #プロセス番号の表示（確認用）
 	data_list = save_rttmp(pcwlip["ip"],pcwlip["floor"],pcwlip["pcwl_id"])
 	# print(data_list)
-	if len(data_list) > 1:
-			db.rttmp.insert(data_list)
-			db.rttmp3.insert(data_list)
+	if len(data_list["data_list"]) >= 1:
+		db.rttmp.insert(data_list["data_list"])
+		db.rttmp3.insert(data_list["data_list"])
+	if len(data_list["to_list"]) >= 1:
+		db.timeoutlog.insert(data_list["to_list"])
+		# print("-------------------Tolog was inserted----------------------")
 	# return data_list
-	for data in data_list:
+	for data in data_list["data_list"]:
 		if data["mac"] in tag_list:
 			db.trtmp.insert(data)
 			# print("inserted.")
@@ -135,6 +145,7 @@ def multi(pcwliplist):
 	p.join()
 
 if __name__ == "__main__":
+	# print(now)
 	st = time.time()
 	multi(pcwliplist)
 	ed = time.time()
