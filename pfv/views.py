@@ -17,7 +17,7 @@ import math
 import datetime
 import locale
 from pfv.scripts.convert_datetime import *
-from pfv.scripts.convert_nodeid import *
+from pfv.scripts.convert_ip import convert_ip
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
@@ -421,21 +421,16 @@ def mac_trace(request):
     for i in range(0,mac_num):
       mac_query.append(mac[0+i*18:17+i*18])
 
-  # 指定時間のデータの取り出し
-  tmp_lt = dt_from_iso_to_str14(lt)
-  tmp_gt = dt_from_iso_to_str14(gt)
-  mod_gt = int(tmp_gt)
-  mod_lt = int(tmp_lt)
   dataset = []
   if mac == "":
     t = []
   else :
-    t = db.tmpcol.find({"_id.get_time_no":{"$gt":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+    t = db.tmpcol_backup.find({"_id.get_time_no":{"$gt":gt, "$lte":lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
 
   for data in t:
-    if convert_nodeid(data["nodelist"][0]["node_id"])["floor"] == floor:
+    if convert_ip(data["nodelist"][0]["ip"])["floor"] == floor:
       for i in range(0,len(data["nodelist"])):
-        data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
+        data["nodelist"][i]["node_id"] = convert_ip(data["nodelist"][i]["ip"])["pcwl_id"]
       dataset.append(data)
 
   # ブックマーク情報の取り出し
@@ -506,20 +501,16 @@ def mac_trace_json(request):
       mac_query.append(mac[0+i*18:17+i*18])
 
   # 指定時間のデータの取り出し
-  tmp_lt = dt_from_iso_to_str14(lt)
-  tmp_gt = dt_from_iso_to_str14(gt)
-  mod_gt = int(tmp_gt)
-  mod_lt = int(tmp_lt)
   dataset = []
   if mac == "":
     t = []
   else :
-    t = db.tmpcol.find({"_id.get_time_no":{"$gt":mod_gt, "$lte":mod_lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
+    t = db.tmpcol_backup.find({"_id.get_time_no":{"$gt":gt, "$lte":lt},"_id.mac":{"$in":mac_query}}).sort("_id.get_time_no", DESCENDING)
 
   for data in t:
-    if convert_nodeid(data["nodelist"][0]["node_id"])["floor"] == floor:
+    if convert_ip(data["nodelist"][0]["ip"])["floor"] == floor:
       for i in range(0,len(data["nodelist"])):
-        data["nodelist"][i]["node_id"] = convert_nodeid(data["nodelist"][i]["node_id"])["node_id"]
+        data["nodelist"][i]["node_id"] = convert_ip(data["nodelist"][i]["ip"])["pcwl_id"]
       dataset.append(data)
 
   #データをdbmでソート
