@@ -118,5 +118,3 @@ for floor_str in floor_list:
 A = []
 A += pcwlroute.objects(query__all=[1,3])
 print("query = "+str(A[0].query)+" dlist = "+str(A[0].dlist))
-
-print("エラー無しやな")

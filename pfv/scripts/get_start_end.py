@@ -440,8 +440,8 @@ def fix_velocity(floor, interval):
     v_kaiyo = 62
     velocity_dict = {"W2-6F":{"lt10":v_W2_6F*2,"gte10":v_W2_6F},
                      "W2-7F":{"lt10":v_W2_7F*2,"gte10":v_W2_7F},
-                     "W2-7F":{"lt10":v_W2_8F*2,"gte10":v_W2_8F},
-                     "W2-7F":{"lt10":v_W2_9F*2,"gte10":v_W2_9F},
+                     "W2-8F":{"lt10":v_W2_8F*2,"gte10":v_W2_8F},
+                     "W2-9F":{"lt10":v_W2_9F*2,"gte10":v_W2_9F},
                      "kaiyo":{"lt10":v_kaiyo*2,"gte10":v_kaiyo},
                     }
     if interval < 10:

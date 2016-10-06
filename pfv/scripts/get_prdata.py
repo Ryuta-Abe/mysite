@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+all_st = time.time()
 import urllib.request
 import datetime
 import sys
@@ -149,7 +150,7 @@ if __name__ == "__main__":
 	multi(pcwliplist)
 	ed = time.time()
 	# time.sleep(1.5)
-	print(ed-st)
+	print("getPR:"+str(ed-st))
 
 	### Check col_name trtmp or trtmp_test ###
 	### when execute all process, uncomment under 5 lines. ###
@@ -158,4 +159,5 @@ if __name__ == "__main__":
 	st_dt = dt_from_14digits_to_iso(st_dt)
 	ed_dt = shift_seconds(st_dt, 5)
 	analyze_mod(st_dt, ed_dt)
+	print("Total:"+str(time.time()-all_st))
 	##########################################################

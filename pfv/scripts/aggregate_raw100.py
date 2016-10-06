@@ -21,6 +21,7 @@ def aggregate_raw100(lt=lt):
   dt_cond = {"on_recv": {"$gte":cond_gte, "$lt":cond_lt}}
   raw_datas = db.raw100.find(dt_cond)
   for data in raw_datas:
+    del(data["_id"])
     data["on_recv"] = shift_hours(data["on_recv"], 9)
     db.raw100_backup.insert(data)
     db.raw100.save(data)
