@@ -417,9 +417,9 @@
     .append("g")
     .attr({
       "id": function(d){return "g_pcwl_"+d.pcwl_id;},
-      transform: function(d) {
-        return "translate(" + d.pos_x + "," + d.pos_y + ")";
-      },
+       // transform: function(d) {
+         // return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      "transform": "translate(" + 0 + "," + 0 + ")",
     })
 
     // 円の描画
@@ -438,15 +438,31 @@
         }
       },
     })
-    .transition().duration(1000)
-    .attr("r", 13);
+    .transition()
+    .delay(function(d,i){return i * 20;})
+    .duration(800)
+    .ease("bounce")
+    .attr({
+      "r": 13,
+      transform: function(d) {
+        return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      },
+    })
+
     // テキストの描画
     g.append("text")
+    .transition()
+    .delay(function(d,i){return i * 20;})
+    .duration(800)
+    .ease("bounce")
     .attr({
       "id": function(d){return "pcwl_text"+d.pcwl_id;},
       "text-anchor": "middle",
       "dy": ".35em",
       "fill": "white",
+      transform: function(d) {
+        return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      },
     })
     .text(function(d) {
             return d.pcwl_id;
@@ -1334,7 +1350,8 @@
         d3.select("#btn_Auto2").style("color","blue");
         if (!flag_realtime) {
           Auto_Ajax();
-          Timer = setInterval(Auto_Ajax,1000);
+          Timer = setInterval(Auto_Ajax,2000);
+          // Timer = setInterval(Auto_Ajax,5000);
         };
       };
     }
@@ -1360,7 +1377,8 @@
       if (flag_realtime) {
         var ball_animation_time = 5000; // リアルタイムビューの場合5秒かけてアニメーション
       } else {
-        var ball_animation_time = 1000; // そうでなければ1秒かけてアニメーション
+        var ball_animation_time = 1800; // そうでなければ1秒かけてアニメーション
+        // var ball_animation_time = 5000; //localでのrealtimeデバッグ用
       };
 
       animate_circle
@@ -1378,7 +1396,8 @@
           .attr("r",18)
           if (d.route[0][0].length == 2) { // ボールが動く場合
             for (var i = 0; i < d.route[0].length; i++) { // 各ルートに対して
-              ball = ball.transition().duration(ball_animation_time*0.8/d.route[0].length)
+              ball = ball.transition(d.mac).duration(ball_animation_time*0.7/d.route[0].length)
+              .ease("linear")
               .attr({
                 "cx": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_x"],
                 "cy": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_y"],
@@ -1400,7 +1419,8 @@
       clearInterval(RT_Timer);
       Load_Form();
       if (flag_Auto2) {
-        Timer = setInterval(Auto_Ajax,1000);
+        Timer = setInterval(Auto_Ajax,2000);
+        // Timer = setInterval(Auto_Ajax,5000);
       };
       describe_datetime();
     } else {
