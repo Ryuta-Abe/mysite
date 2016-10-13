@@ -263,10 +263,10 @@ def get_start_end_mod(all_st_time):
                         break
 
     # save_pfvinfo.py へ渡す
-    make_pfvinfo(data_lists,db.pfvinfo,all_flag,min_interval)
-    make_stayinfo(data_lists_stay,db.stayinfo,all_flag,min_interval)
-    make_pfvmacinfo(data_lists,db.pfvmacinfo,all_flag,min_interval)
-    make_staymacinfo(data_lists_stay,db.staymacinfo,all_flag,min_interval)
+    make_pfvinfo(data_lists,db.pfvinfo,min_interval)
+    make_stayinfo(data_lists_stay,db.stayinfo,min_interval)
+    make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
+    make_staymacinfo(data_lists_stay,db.staymacinfo,min_interval)
 
 # 実験用 mac→name フィルタ
 def name_filter(mac):
