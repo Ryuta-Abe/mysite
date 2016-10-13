@@ -115,6 +115,6 @@ for floor_str in floor_list:
 				save_pcwlroute([st,ed],dlist,floor_str)
 
 # 経路情報取り出しテスト
-A = []
-A += pcwlroute.objects(query__all=[1,3])
-print("query = "+str(A[0].query)+" dlist = "+str(A[0].dlist))
+# A = []
+# A += pcwlroute.objects(query__all=[1,3])
+# print("query = "+str(A[0].query)+" dlist = "+str(A[0].dlist))

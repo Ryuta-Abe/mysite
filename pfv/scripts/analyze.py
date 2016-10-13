@@ -30,9 +30,9 @@ def analyze_mod(st_dt, ed_dt):
         iso_ed = after_5s
 
         ### execute following all process ###
-        aggregate_mod(iso_st, iso_ed, False, False, True)
+        aggregate_mod(iso_st, iso_ed)
         aggregate_raw100(iso_ed)
-        get_start_end_mod(iso_st, False, True)
+        get_start_end_mod(iso_st)
         tmp_st = after_5s
         #####################################
         # print(time.time()-loop_st)
