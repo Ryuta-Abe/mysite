@@ -18,10 +18,8 @@ def analyze_mod(st_dt, ed_dt):
         data["dt_end05"] = data["get_time_no"]
         db.trtmp.save(data)
 
-    st_dt  = dt_from_iso_to_str(st_dt)
-    tmp_st = dt_from_14digits_to_iso(st_dt)
-    tmp_ed = dt_from_iso_to_str(ed_dt)
-    ed_dt  = dt_from_14digits_to_iso(tmp_ed)
+    # st_dt  = dt_from_iso_to_str(st_dt)
+    tmp_st = st_dt
 
     while(tmp_st < ed_dt):
         loop_st = time.time()
