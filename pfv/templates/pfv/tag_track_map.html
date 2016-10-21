@@ -417,9 +417,10 @@
     .append("g")
     .attr({
       "id": function(d){return "g_pcwl_"+d.pcwl_id;},
-       // transform: function(d) {
-         // return "translate(" + d.pos_x + "," + d.pos_y + ")";
-      "transform": "translate(" + 0 + "," + 0 + ")",
+       transform: function(d) {
+         return "translate(" + d.pos_x + "," + d.pos_y + ")";
+       },
+      // "transform": "translate(" + 0 + "," + 0 + ")",
     })
 
     // 円の描画
@@ -438,31 +439,34 @@
         }
       },
     })
-    .transition()
-    .delay(function(d,i){return i * 20;})
-    .duration(800)
-    .ease("bounce")
-    .attr({
-      "r": 13,
-      transform: function(d) {
-        return "translate(" + d.pos_x + "," + d.pos_y + ")";
-      },
-    })
+    .transition(function(d){return "pcwl_circle"+d.pcwl_id;})
+    // .delay(function(d,i){return i * 20;})
+    .duration(1000)
+    .attr("r",13);
+    // .duration(800)
+    // .ease("bounce")
+    // .attr({
+      // "r": 13,
+      // transform: function(d) {
+        // return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      // },
+    // })
 
     // テキストの描画
     g.append("text")
-    .transition()
-    .delay(function(d,i){return i * 20;})
-    .duration(800)
-    .ease("bounce")
+    // .transition(function(d){return "pcwl_text"+d.pcwl_id;})
+    // .delay(function(d,i){return i * 20;})
+    // .duration(1000)
+    // .duration(800)
+    // .ease("bounce")
     .attr({
       "id": function(d){return "pcwl_text"+d.pcwl_id;},
       "text-anchor": "middle",
       "dy": ".35em",
       "fill": "white",
-      transform: function(d) {
-        return "translate(" + d.pos_x + "," + d.pos_y + ")";
-      },
+      // transform: function(d) {
+        // return "translate(" + d.pos_x + "," + d.pos_y + ")";
+      // },
     })
     .text(function(d) {
             return d.pcwl_id;
@@ -544,7 +548,7 @@
                 transform: "translate("+trans_x+","+trans_y+")",
               })
               .style("opacity",0)
-              .transition().duration(animation_time)
+              .transition(function(d){return d.mac+"arrow";}).duration(animation_time)
               .style("opacity",0.8)
             } else if (d.route[j][k].length == 1) { // 滞留円を記述
 
@@ -589,13 +593,13 @@
             d3.select("#btn_coordinate").style("color","black");
           };
           svg1.select("#g_coordinate")
-              .transition()
+              .transition("coordinate_disappear")
               .duration(1000)
               .style("opacity",0);
         } else {
           d3.select("#btn_coordinate").style("color","blue");
           svg1.select("#g_coordinate")
-              .transition()
+              .transition("coordinate_appear")
               .duration(1000)
               .style("opacity",1);
           };
@@ -883,7 +887,7 @@
         "id": function(d){return d.color + "circle"},
         "cursor": "pointer",
       })
-      .transition().duration(1000)
+      .transition(function(d){return d.color+"circle";}).duration(1000)
       .attr("r", 18)
       .attr("onclick", function(d){return "mac_color_opacity('"+ d.color +"')"});
       // テキストの描画
@@ -1232,7 +1236,7 @@
           }
         },
       })
-      .transition().duration(1000)
+      .transition(function(d){return "repcwl_circle"+d.pcwl_id;}).duration(1000)
       .attr("r", 13);
       // テキストの描画
       g.append("text")
@@ -1350,7 +1354,8 @@
         d3.select("#btn_Auto2").style("color","blue");
         if (!flag_realtime) {
           Auto_Ajax();
-          Timer = setInterval(Auto_Ajax,2000);
+          // Timer = setInterval(Auto_Ajax,2000);
+          Timer = setInterval(Auto_Ajax,1500);
           // Timer = setInterval(Auto_Ajax,5000);
         };
       };
@@ -1375,28 +1380,31 @@
     }
     function move_animate_circle(){
       if (flag_realtime) {
-        var ball_animation_time = 5000; // リアルタイムビューの場合5秒かけてアニメーション
+        var ball_animation_time = 4000; // リアルタイムビューの場合4秒かけてアニメーション
+        var ball_appear_time = 500; // リアルタイムビューの場合の出現・消滅時間
       } else {
-        var ball_animation_time = 1800; // そうでなければ1秒かけてアニメーション
-        // var ball_animation_time = 5000; //localでのrealtimeデバッグ用
+        var ball_animation_time = 1000; // そうでなければ1秒かけてアニメーション
+        var ball_appear_time = 100;
+        // var ball_animation_time = 4000; //localでのrealtimeデバッグ用
+        // var ball_appear_time = 500;
       };
 
       animate_circle
       .each(function(d){ // 円のそれぞれに対して以下を実行
         var ball = d3.select(this);
         if (d.route.length == 0) { // ボールのデータがない場合
-          ball = ball.transition().duration(ball_animation_time*0.2)
+          ball = ball.transition(d.mac+"disappear").duration(ball_appear_time)
           .attr("r",0)
         } else { // ボールのデータが有る場合
           ball = ball.attr({
             "cx": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_x"],
             "cy": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_y"],
           })
-          .transition().duration(ball_animation_time*0.2)
+          .transition(d.mac+"appear").duration(ball_appear_time)
           .attr("r",18)
           if (d.route[0][0].length == 2) { // ボールが動く場合
             for (var i = 0; i < d.route[0].length; i++) { // 各ルートに対して
-              ball = ball.transition(d.mac).duration(ball_animation_time*0.7/d.route[0].length)
+              ball = ball.transition(d.mac+"move").duration(ball_animation_time/d.route[0].length)
               .ease("linear")
               .attr({
                 "cx": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_x"],
@@ -1419,7 +1427,8 @@
       clearInterval(RT_Timer);
       Load_Form();
       if (flag_Auto2) {
-        Timer = setInterval(Auto_Ajax,2000);
+        // Timer = setInterval(Auto_Ajax,2000);
+        Timer = setInterval(Auto_Ajax,1500);
         // Timer = setInterval(Auto_Ajax,5000);
       };
       describe_datetime();
