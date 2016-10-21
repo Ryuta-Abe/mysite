@@ -12,5 +12,3 @@ class Command(BaseCommand):
 
 def in_function():
 	print("executed function in command")
-
-# LINE Notify test
