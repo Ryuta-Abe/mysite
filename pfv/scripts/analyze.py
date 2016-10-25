@@ -19,18 +19,16 @@ def analyze_mod(st_dt, ed_dt):
         db.trtmp.save(data)
 
     # st_dt  = dt_from_iso_to_str(st_dt)
-    tmp_st = st_dt
+    tmp_st = st_dt  # for debug
 
     while(tmp_st < ed_dt):
-        loop_st = time.time()
+        # loop_st = time.time()
         after_5s = shift_seconds(tmp_st, 5)
-        iso_st = tmp_st
-        iso_ed = after_5s
 
         ### execute following all process ###
-        aggregate_mod(iso_st, iso_ed)
-        aggregate_raw100(iso_ed)
-        get_start_end_mod(iso_st)
+        aggregate_mod(tmp_st, after_5s)
+        aggregate_raw100(after_5s)
+        get_start_end_mod(tmp_st)
         tmp_st = after_5s
         #####################################
         # print(time.time()-loop_st)
