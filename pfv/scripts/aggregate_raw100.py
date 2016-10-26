@@ -8,6 +8,7 @@ import time
 from pymongo import *
 client = MongoClient()
 db = client.nm4bd
+db.raw100.create_index([("shift_flag", ASCENDING)])
 
 lt  = "20160821160000"
 gte = "20160821180000"
@@ -18,15 +19,25 @@ def aggregate_raw100(lt=lt):
   cond_lt  = shift_hours(lt, -9)
   cond_gte = shift_hours(gte, -9)
 
-  dt_cond = {"on_recv": {"$gte":cond_gte, "$lt":cond_lt}}
+  # dt_cond = {"on_recv": {"$gte":cond_gte, "$lt":cond_lt}, "edited":{"$ne":True}}
+  dt_cond = {"edited":{"$ne":True}}
   raw_datas = db.raw100.find(dt_cond)
+  rem_id_list = []
   for data in raw_datas:
+    rem_id_list.append(data["_id"])
     del(data["_id"])
     data["on_recv"] = shift_hours(data["on_recv"], 9)
-    db.raw100_backup.insert(data)
+    data["on_recv"] = iso_to_end05iso(data["on_recv"])
+    data["mac"] = data["mac"].lower()
+    data["edited"] = True
     db.raw100.save(data)
+    db.raw100_backup.insert(data)
+    # db.raw100.remove(data)
 
-  dt_cond = {"on_recv": {"$gte":gte, "$lt":lt}}
+  for _id in rem_id_list:
+    db.raw100.remove({"_id":_id})
+
+  dt_cond = {"on_recv": {"$gte":gte, "$lt":lt},"edited":True}
   cond = {"$match":dt_cond}
   ag = db.raw100.aggregate([
                             cond,
