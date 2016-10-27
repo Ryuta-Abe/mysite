@@ -6,7 +6,7 @@ client = MongoClient()
 db = client.nm4bd
 
 # CONST
-MATCH_NODE_THRESHOLD = 100
+MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 
 
@@ -50,22 +50,23 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 		dlist =  ideal_one_route["dlist"]
 	total_distance = ideal_one_route["total_distance"]
 	velocity = total_distance / (ed_dt - st_dt).seconds
-	print(velocity)
+	print("from " + str(st_node) + " to " + str(ed_node) + " : velocity = " + str(velocity))
 	# tmp_distance = dlist[0]["distance"]
-
-	st_next05_dt = dt_to_end_next05(st_dt,"iso")
-	delta_distance = velocity * (st_next05_dt - st_dt).seconds
-	print(delta_distance)
-	nodes = find_closest_nodes(dlist,delta_distance)
-	db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes})
+	if db.examine_route.find({"datetime":st_dt}).count() == 0:
+		st_next05_dt = dt_to_end_next05(st_dt,"iso")
+		delta_distance = velocity * (st_next05_dt - st_dt).seconds
+		nodes = find_closest_nodes(dlist,delta_distance)
+		db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes})
+		print(str(st_next05_dt) + " : " + str(nodes))
+	else:
+		st_next05_dt = st_dt
 
 	while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 		delta_distance += velocity * UPDATE_INTERVAL
 		nodes = find_closest_nodes(dlist,delta_distance)
 		st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-		print(st_next05_dt)
 		db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes})
-		
+		print(str(st_next05_dt) + " : " + str(nodes))
 	
 def examine_route(floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
 	# st_dt = dt_to_end_next05(st_dt,"iso")
