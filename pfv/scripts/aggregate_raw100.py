@@ -91,3 +91,5 @@ def insert_raw100_to_tmpcol():
       ins_col.save(tmpcol_data)
     else:
       ins_col.insert(data)
+
+  db.raw100.remove({"edited":True})
