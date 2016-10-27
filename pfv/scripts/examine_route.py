@@ -10,7 +10,7 @@ MATCH_NODE_THRESHOLD = 100
 UPDATE_INTERVAL = 5
 
 
-def find_closest_nodes(floor,dlist,delta_distance):
+def find_closest_nodes(dlist,delta_distance):
 	tmp_distance = 0 # 一次保存用
 	next_distance = 0 # 計算した場所から次ノードまでの距離
 	prev_distance = 0 # 計算した場所から前ノードまでの距離
@@ -26,7 +26,7 @@ def find_closest_nodes(floor,dlist,delta_distance):
 			else:
 				return dlist[i]["direction"]
 	# print("couldn't find nodes!") # 例外処理（delta_distanceが大きすぎる）
-	return []
+	return [dlist[-1]["direction"][1]]
 
 
 
@@ -42,7 +42,7 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 
 	ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
 
-	if ideal_one_route["query"][0] != ideal_one_route["dlist"][0]["direction"][0]:
+	if ideal_one_route["query"][0] != st_node:
 	    temp_dlist = ideal_one_route["dlist"]
 	    for i in range(-1,-len(dlist)-1,-1):
 	        dlist.append({"direction":[tmp_dlist[i]["direction"][1],tmp_dlist[i]["direction"][0]],"distance":temp_dlist[i]["distance"]})
@@ -55,30 +55,30 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 
 	st_next05_dt = dt_to_end_next05(st_dt,"iso")
 	delta_distance = velocity * (st_next05_dt - st_dt).seconds
-	nodes = find_closest_nodes(floor,dlist,delta_distance)
+	print(delta_distance)
+	nodes = find_closest_nodes(dlist,delta_distance)
 	db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes})
 
 	while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 		delta_distance += velocity * UPDATE_INTERVAL
-		nodes = find_closest_nodes(floor,dlist,delta_distance)
-		shift_seconds(st_next05_dt,UPDATE_INTERVAL)
+		nodes = find_closest_nodes(dlist,delta_distance)
+		st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
+		print(st_next05_dt)
 		db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes})
 		
-		
-
-
-
+	
 def examine_route(floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
 	# st_dt = dt_to_end_next05(st_dt,"iso")
 	# ed_dt = dt_to_end_next05(ed_dt,"iso")
-	if len(via_nodes_list) == 0:
+	via_num = len(via_nodes_list)
+	if via_num == 0:
 		generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt)
 
 	else:
 		generate_ideal_nodes(floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0])
-		for i in range(len(via_dts_list)-1):
+		for i in range(via_num - 1):
 			generate_ideal_nodes(floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
-			generate_ideal_nodes(floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
+		generate_ideal_nodes(floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
 
 if __name__ == '__main__':
 	# param = sys.argv
@@ -92,6 +92,7 @@ if __name__ == '__main__':
 	# via_dts_list = []
 	# for i in len(param[6]):
 	# 	via_dts_list.append(dt_from_14digits_to_iso(common_dt+str(param[6][1])))
+	db.examine_route.remove({})
 	floor = "W2-6F"
 	st_node = 1
 	ed_node = 16
