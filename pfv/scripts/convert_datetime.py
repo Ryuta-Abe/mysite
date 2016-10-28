@@ -35,10 +35,10 @@ def dt_from_str_to_iso(dt):
 # 秒まで
 # 20141120194030(str) --> isodate形式
 def dt_from_14digits_to_iso(dt):
-    from datetime import datetime
-    dt = str(dt[0:4])+"-"+str("0"+dt[4:6])[-2:]+"-"+str("0"+dt[6:8])[-2:]+" "+str("00"+dt[8:10])[-2:]+":"+str("00"+dt[10:12])[-2:]+":"+str("00"+dt[12:14])[-2:]
-    dt = datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
-    return dt
+  from datetime import datetime
+  dt = str(dt[0:4])+"-"+str("0"+dt[4:6])[-2:]+"-"+str("0"+dt[6:8])[-2:]+" "+str("00"+dt[8:10])[-2:]+":"+str("00"+dt[10:12])[-2:]+":"+str("00"+dt[12:14])[-2:]
+  dt = datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+  return dt
 
 # 少数第3位まで対応可
 # isodate形式 --> str形式(20140405123456789)
@@ -83,6 +83,48 @@ def dt_end_to_05(dt):
       dt = str(dt[0:13]) + "5"
 
     return dt
+
+def str_to_next05_str(dt,input_type,output_type):
+    dt = str(dt)[0:14]
+    dt_end = int(dt[-1])
+
+    if (1 <= dt_end <= 4):
+      dt = dt[0:13] + "5"
+    elif (6 <= dt_end <= 9):
+      dt_end2 = int(dt[-2])
+      dt_end2 += 1 
+      dt = dt[0:12] + str(dt_end2) +  "5"
+
+    return dt
+  
+# input: dtはstr,isoのいずれでも可
+# output: output_typeで指定した型（"str"か"iso"）
+def dt_to_end_next05(dt,output_type):
+  import datetime
+  dt_end = 0
+
+  if output_type != "str" and output_type != "iso":
+    print("the argument num 2 must be str or datetime.datetime!")
+  
+  if isinstance(dt,datetime.datetime):
+    dt_end = int(dt_from_iso_to_str(dt)[13])  
+  elif isinstance(dt,str):
+    dt_end = int(dt[13])
+    dt = dt_from_14digits_to_iso(dt)
+  else:
+    print("the type of the argument num 1 must be str or datetime.datetime!")
+
+  if (1 <= dt_end <= 4):
+    delta = 5 - dt_end
+    dt = shift_seconds(dt,delta)
+  elif (6 <= dt_end <= 9):
+    delta = 10 - dt_end
+    dt = shift_seconds(dt,delta)
+
+  if output_type == "str":
+    dt = dt_from_iso_to_str(dt)[:14]
+
+  return dt 
 
 # input:isodate, output:isodate(end 0or5)
 def iso_to_end05iso(dt):
