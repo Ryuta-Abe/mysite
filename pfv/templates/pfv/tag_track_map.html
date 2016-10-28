@@ -1055,7 +1055,9 @@
         dataType: 'json',
         success: function(json){
           describe_datetime();
-          Reload_timeout(json);
+          if ((flag_jud_anime == false) && (flag_jud_real == false)){
+            Reload_timeout(json);
+          }
           Reload_pfvinfo(json);
           Reload_mac_floor(json);
         }
@@ -1077,6 +1079,18 @@
           Reload_pcwlnode(json);
           Reload_pfvinfo(json);
           Reload_mac_floor(json);
+          if(flag_jud_anime){
+            Auto_Animation2();
+            flag_jud_anime = !flag_jud_anime;
+          };
+          if (flag_jud_real) {
+            realtime();
+            flag_jud_real = !flag_jud_real;
+          };
+          if (flag_jud_coordinate){
+            coordinate_opacity();
+            flag_jud_coordinate = !flag_jud_coordinate;
+          }
         }
       });
     }
@@ -1121,7 +1135,9 @@
 
     // 別のフロアへジャンプ
     function jump_floor(floor_name){
-
+      for (var i = 0; i < floor_list.length; i++){
+          document.getElementById(floor_list[i]).setAttribute("onclick", "null");
+      }
       if(flag_Auto2){
         flag_jud_anime = !flag_jud_anime;
         Auto_Animation2();
@@ -1189,12 +1205,9 @@
       for (var i = 0; i < json["pcwlnode"].length; i++){
         to_node = document.getElementById('pcwl_circle' + json["pcwlnode"][i]["pcwl_id"]);
         if(json["pcwlnode"][i]["state"] == "timeout"){
-          // to_node.attr("fill","black");
-          // to_node.style.setProperty('fill', "black");
-          to_node.style.setProperty('fill', "darkgray");
+          to_node.setAttribute("fill", "darkgray");
         } else{
-          // to_node.attr("fill","purple");
-          to_node.style.setProperty('fill', "purple");
+          to_node.setAttribute("fill", "purple");
         }
       }
     }
@@ -1249,21 +1262,9 @@
       .text(function(d) {
               return d.pcwl_id;
       });
-      if(flag_jud_anime){
-        Auto_Animation2();
-        flag_jud_anime = !flag_jud_anime;
-      };
-      if (flag_jud_real) {
-        realtime();
-        flag_jud_real = !flag_jud_real;
-      };
-      if (flag_jud_coordinate){
-        coordinate_opacity();
-        flag_jud_coordinate = !flag_jud_coordinate;
+      for (var i = 0; i < floor_list.length; i++){
+          document.getElementById(floor_list[i]).setAttribute("onclick", "jump_floor('"+floor_list[i]+"')");
       }
-      // {% for s in pcwlnode %}
-      // pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }}});
-      // {% endfor %}
     }
 
     function Reload_pfvinfo(json){
