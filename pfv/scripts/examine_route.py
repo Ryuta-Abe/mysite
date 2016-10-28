@@ -13,13 +13,19 @@ MAC = "00:11:81:10:01:1c"
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
 
 floor = "W2-7F"
-st_node = 1
-ed_node = 1
-via_nodes_list = [5,7,9,12,17,21,5]
+st_node = 5
+ed_node = 5
+# via_nodes_list = [5,7,9,12,17,21,5]
+# common_dt = str(20161020) # 測定時刻における先頭の共通部分
+# st_dt = dt_from_14digits_to_iso(common_dt + str(125800))
+# ed_dt = dt_from_14digits_to_iso(common_dt + str(130126))
+# via_dts_list = [125827,125854,125925,125942,130010,130041,130058]
+
+via_nodes_list = []
 common_dt = str(20161020) # 測定時刻における先頭の共通部分
-st_dt = dt_from_14digits_to_iso(common_dt + str(125800))
-ed_dt = dt_from_14digits_to_iso(common_dt + str(130126))
-via_dts_list = [125827,125854,125925,125942,130010,130041,130058]
+st_dt = dt_from_14digits_to_iso(common_dt + str(115600))
+ed_dt = dt_from_14digits_to_iso(common_dt + str(120920))
+via_dts_list = []
 
 
 def is_correct_node(floor,dt,nodes):
@@ -44,7 +50,7 @@ def find_adjacent_nodes(floor,node,adjacent_flag):
 	elif adjacent_flag:
 		return adjacent_nodes
 	else:
-		return node
+		return [node]
 
 
 
@@ -106,6 +112,9 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 				correct_count += 1
 			db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
 			print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct))
+		return [correct_count,examine_count]
+
+
 
 
 	ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
