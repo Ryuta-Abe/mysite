@@ -10,6 +10,17 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 MAC = "00:11:81:10:01:1c"
+ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
+
+floor = "W2-7F"
+st_node = 1
+ed_node = 1
+via_nodes_list = [5,7,9,12,17,21,5]
+common_dt = str(20161020) # 測定時刻における先頭の共通部分
+st_dt = dt_from_14digits_to_iso(common_dt + str(125800))
+ed_dt = dt_from_14digits_to_iso(common_dt + str(130126))
+via_dts_list = [125827,125854,125925,125942,130010,130041,130058]
+
 
 def is_correct_node(floor,dt,nodes):
 	analyze_time = shift_seconds(dt,ANALYZE_LAG)
@@ -22,9 +33,23 @@ def is_correct_node(floor,dt,nodes):
 			return True
 	return False
 
+def find_adjacent_nodes(floor,node,adjacent_flag):
+	pcwlnode = {}
+	adjacent_nodes = [node]
+
+	pcwlnode = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
+	adjacent_nodes.extend(pcwlnode["next_id"])
+	if len(adjacent_nodes) >= 3:
+		return adjacent_nodes
+	elif adjacent_flag:
+		return adjacent_nodes
+	else:
+		return node
 
 
-def find_closest_nodes(dlist,delta_distance):
+
+
+def find_ideal_nodes(floor,dlist,delta_distance):
 	tmp_distance = 0 # 一次保存用
 	next_distance = 0 # 計算した場所から次ノードまでの距離
 	prev_distance = 0 # 計算した場所から前ノードまでの距離
@@ -34,13 +59,12 @@ def find_closest_nodes(dlist,delta_distance):
 			next_distance = tmp_distance - delta_distance
 			prev_distance = dlist[i]["distance"] - next_distance
 			if next_distance < MATCH_NODE_THRESHOLD:
-				return [dlist[i]["direction"][1]]
+				return find_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 			elif prev_distance < MATCH_NODE_THRESHOLD:
-				return [dlist[i]["direction"][0]]
+				return find_adjacent_nodes(floor,dlist[i]["direction"][0],ADJACENT_FLAG)
 			else:
 				return dlist[i]["direction"]
-	# print("couldn't find nodes!") # 例外処理（delta_distanceが大きすぎる）
-	return [dlist[-1]["direction"][1]]
+	return find_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 
 
 
@@ -59,6 +83,31 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 	examine_count = 0
 	# [正解数,判定数]
 
+	if st_node == ed_node:
+		nodes = find_adjacent_nodes(floor,st_node,ADJACENT_FLAG)
+
+		if db.examine_route.find({"datetime":st_dt}).count() == 0:
+			st_next05_dt = dt_to_end_next05(st_dt,"iso")
+			nodes = find_adjacent_nodes(floor,st_node,ADJACENT_FLAG)
+			is_correct = is_correct_node(floor,st_next05_dt,nodes)
+			examine_count += 1
+			if is_correct:
+				correct_count += 1
+			db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
+			print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct))
+		else:
+			st_next05_dt = st_dt
+
+		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
+			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
+			is_correct = is_correct_node(floor,st_next05_dt,nodes)
+			examine_count += 1
+			if is_correct:
+				correct_count += 1
+			db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
+			print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct))
+
+
 	ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
 
 	if ideal_one_route["query"][0] != st_node:
@@ -74,7 +123,7 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 	if db.examine_route.find({"datetime":st_dt}).count() == 0:
 		st_next05_dt = dt_to_end_next05(st_dt,"iso")
 		delta_distance = velocity * (st_next05_dt - st_dt).seconds
-		nodes = find_closest_nodes(dlist,delta_distance)
+		nodes = find_ideal_nodes(floor,dlist,delta_distance)
 		
 		is_correct = is_correct_node(floor,st_next05_dt,nodes)
 		examine_count += 1
@@ -88,7 +137,7 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 
 	while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 		delta_distance += velocity * UPDATE_INTERVAL
-		nodes = find_closest_nodes(dlist,delta_distance)
+		nodes = find_ideal_nodes(floor,dlist,delta_distance)
 		st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
 
 		is_correct = is_correct_node(floor,st_next05_dt,nodes)
@@ -152,14 +201,7 @@ if __name__ == '__main__':
 	# for i in len(param[6]):
 	# 	via_dts_list.append(dt_from_14digits_to_iso(common_dt+str(param[6][1])))
 	db.examine_route.remove({})
-	floor = "W2-7F"
-	st_node = 1
-	ed_node = 1
-	via_nodes_list = [5,7,9,12,17,21,5]
-	common_dt = str(20161020) # 測定時刻における先頭の共通部分
-	st_dt = dt_from_14digits_to_iso(common_dt + str(125800))
-	ed_dt = dt_from_14digits_to_iso(common_dt + str(130126))
-	via_dts_list = [125827,125854,125925,125942,130010,130041,130058]
+
 	for i in range(len(via_dts_list)):
 		via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
 	examine_route(floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
