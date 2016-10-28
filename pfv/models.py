@@ -4,6 +4,18 @@ from mongoengine import *
 
 DB_ALIAS = {"db_alias" : "nm4bd"}
 
+class examine_route(Document):
+    _id         = StringField(max_length=255)
+    mac         = StringField(max_length=255)
+    floor       = StringField(max_length=255)
+    st_node     = IntField()
+    ed_node     = IntField()
+    st_dt       = IntField()
+    ed_dt       = IntField()
+    via_nodes_list  = StringField(max_length=255)
+    via_dts_list  = StringField(max_length=255)
+    common_dt   = IntField()
+
 #データリスト用
 class pr_req(Document):
     _id         = StringField(max_length=255)
