@@ -10,38 +10,21 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-
-MAC = "00:11:81:10:01:19"
-floor = "W2-7F"
-
-st_node = 1
-ed_node = 1
-via_nodes_list = [5,21,17,12,9,7,5]
-common_dt = str(2016102013) # 測定時刻における先頭の共通部分
-st_dt = dt_from_14digits_to_iso(common_dt + str(5500))
-ed_dt = dt_from_14digits_to_iso(common_dt + str(5818))
-via_dts_list = [5528,5545,5613,5639,5654,5725,5749]
-
-# st_node = 5
-# ed_node = 5
-# via_nodes_list = []
-# common_dt = str(20161020) # 測定時刻における先頭の共通部分
-# st_dt = dt_from_14digits_to_iso(common_dt + str(115600))
-# ed_dt = dt_from_14digits_to_iso(common_dt + str(120920))
-# via_dts_list = []
+DEBUG_PRINT = False
 
 # rounding in specified place
 def rounding(num, round_place):
 	rounded_num = round(num*pow(10, round_place)) / pow(10, round_place)
 	return rounded_num
 
-def is_correct_node(floor,dt,nodes):
+# DBに入っているデータを出力することも可能(コメント解除)
+def is_correct_node(mac,floor,dt,nodes):
 	analyze_time = shift_seconds(dt,ANALYZE_LAG)
 	analyze_data = {}
-	pfv_query  = {"floor":floor,"datetime":analyze_time,"mac":MAC}
-	stay_query = {"floor":floor,"datetime":analyze_time,"mac":MAC}
-	pfv_query_alt  = {"datetime":analyze_time,"mac":MAC}
-	stay_query_alt = {"datetime":analyze_time,"mac":MAC}
+	pfv_query  = {"floor":floor,"datetime":analyze_time,"mac":mac}
+	stay_query = {"floor":floor,"datetime":analyze_time,"mac":mac}
+	pfv_query_alt  = {"datetime":analyze_time,"mac":mac}
+	stay_query_alt = {"datetime":analyze_time,"mac":mac}
 
 	for node in nodes:
 		analyze_data = db.pfvmacinfo.find_one(pfv_query)
@@ -73,9 +56,10 @@ def is_correct_node(floor,dt,nodes):
 	return False
 	# return False, None
 
-def is_exist_data(floor,dt,nodes):
+# DBにデータが入っているか確認
+def is_exist_data(mac,floor,dt,nodes):
 	analyze_time = shift_seconds(dt,ANALYZE_LAG)
-	query = {"floor":floor,"datetime":analyze_time,"mac":MAC}
+	query = {"floor":floor,"datetime":analyze_time,"mac":mac}
 	if(db.pfvmacinfo.find(query).count() != 0):
 		return True
 	elif(db.staymacinfo.find(query).count() != 0):
@@ -117,22 +101,23 @@ def find_ideal_nodes(floor,dlist,delta_distance):
 	return find_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 
 # judge correct, judge data exists, and insert examine_route  
-def judge_and_ins_correct_route(floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count):
-	is_correct = is_correct_node(floor,st_next05_dt,nodes)
+def judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count):
+	is_correct = is_correct_node(mac,floor,st_next05_dt,nodes)
 	# is_correct, analyzed_data = is_correct_node(floor,st_next05_dt,nodes)
-	is_exist = is_exist_data(floor,st_next05_dt,nodes)
+	is_exist = is_exist_data(mac,floor,st_next05_dt,nodes)
 	examine_count += 1
 	if is_correct:
 		correct_count += 1
 	if is_exist:
 		exist_count += 1
 	db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
-	print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct))
+	if DEBUG_PRINT:
+		print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct))
 	# print("    analyzed data     " + str(analyzed_data))
 	return examine_count, correct_count, exist_count
 
 
-def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
+def generate_ideal_nodes(mac,floor,st_node,ed_node,st_dt,ed_dt):
 	
 	ideal_one_route = {}
 	total_distance = 0
@@ -155,14 +140,14 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 		if db.examine_route.find({"datetime":st_dt}).count() == 0:
 			nodes = find_adjacent_nodes(floor,st_node,ADJACENT_FLAG)
 			st_next05_dt = dt_to_end_next05(st_dt,"iso")
-			examine_count, correct_count, exist_count = judge_and_ins_correct_route(floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
+			examine_count, correct_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
 
 		else:
 			st_next05_dt = st_dt
 
 		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-			examine_count, correct_count, exist_count = judge_and_ins_correct_route(floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
+			examine_count, correct_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
 		return [correct_count,examine_count,exist_count]
 
 
@@ -178,13 +163,14 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 		dlist =  ideal_one_route["dlist"]
 	total_distance = ideal_one_route["total_distance"]
 	velocity = total_distance / (ed_dt - st_dt).seconds
-	print("\n" + "from " + str(st_node) + " to " + str(ed_node) + " : velocity = " + str(rounding(velocity,2)) + " [px/s]")
+	if DEBUG_PRINT:
+		print("\n" + "from " + str(st_node) + " to " + str(ed_node) + " : velocity = " + str(rounding(velocity,2)) + " [px/s]")
 	# tmp_distance = dlist[0]["distance"]
 	if db.examine_route.find({"datetime":st_dt}).count() == 0:
 		st_next05_dt = dt_to_end_next05(st_dt,"iso")
 		delta_distance = velocity * (st_next05_dt - st_dt).seconds
 		nodes = find_ideal_nodes(floor,dlist,delta_distance)
-		examine_count, correct_count, exist_count = judge_and_ins_correct_route(floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
+		examine_count, correct_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
 	else:
 		st_next05_dt = st_dt
 
@@ -192,9 +178,8 @@ def generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt):
 		delta_distance += velocity * UPDATE_INTERVAL
 		nodes = find_ideal_nodes(floor,dlist,delta_distance)
 		st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-		examine_count, correct_count, exist_count = judge_and_ins_correct_route(floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
+		examine_count, correct_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count)
 
-	# print("\n")
 	return [correct_count,examine_count,exist_count]
 
 def update_count(results,total_correct_count,total_examine_count,total_exist_count):
@@ -206,17 +191,24 @@ def update_count(results,total_correct_count,total_examine_count,total_exist_cou
 def print_count_result(updated_list):
 	total_correct_count, total_examine_count,total_exist_count = updated_list
 
-	correct_answer_rate = total_correct_count / total_examine_count * 100
-	correct_answer_rate = rounding(correct_answer_rate, 2)
-	print ("\n" + "correct answer rate : " + str(correct_answer_rate) + "% "
-	 + "( " + str(total_correct_count) + " / " + str(total_examine_count) + " )")
+	if total_examine_count == 0 :
+		print("--- no data!! ---")
+	else:
+		correct_answer_rate = total_correct_count / total_examine_count * 100
+		correct_answer_rate = rounding(correct_answer_rate, 2)
+		print ("\n" + "correct answer rate : " + str(correct_answer_rate) + "% "
+		 + "( " + str(total_correct_count) + " / " + str(total_examine_count) + " )")
 
-	correct_answer_rate_alt = total_correct_count / total_exist_count * 100
-	correct_answer_rate_alt = rounding(correct_answer_rate_alt, 2)
-	print ("correct rate[exist only]: " + str(correct_answer_rate_alt) + "% "
-	 + "( " + str(total_correct_count) + " / " + str(total_exist_count) + " )")
+
+	if total_exist_count == 0 :
+		print("--- info_data does not exist! ---")
+	else:
+		correct_answer_rate_alt = total_correct_count / total_exist_count * 100
+		correct_answer_rate_alt = rounding(correct_answer_rate_alt, 2)
+		print ("accuracy[exist only]: " + str(correct_answer_rate_alt) + "% "
+		 + "( " + str(total_correct_count) + " / " + str(total_exist_count) + " )")
 	
-def examine_route(floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
+def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
 	result = []
 	total_correct_count = 0
 	total_examine_count = 0
@@ -226,34 +218,53 @@ def examine_route(floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
 
 	via_num = len(via_nodes_list)
 	if via_num == 0:
-		results = generate_ideal_nodes(floor,st_node,ed_node,st_dt,ed_dt)
+		results = generate_ideal_nodes(mac,floor,st_node,ed_node,st_dt,ed_dt)
 		updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
 		total_correct_count, total_examine_count, total_exist_count = updated
 		print_count_result(updated)
 
 	else:
 		#print(st_dt,via_dts_list[0])
-		results = generate_ideal_nodes(floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0])
+		results = generate_ideal_nodes(mac,floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0])
 		updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
 		total_correct_count, total_examine_count, total_exist_count = updated
 
 		for i in range(via_num - 1):
-			results = generate_ideal_nodes(floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
+			results = generate_ideal_nodes(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
 			updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
 			total_correct_count, total_examine_count, total_exist_count = updated
 
-		results = generate_ideal_nodes(floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
+		results = generate_ideal_nodes(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
 		updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
 		total_correct_count, total_examine_count, total_exist_count = updated
 		print_count_result(updated)
-	# examine_route += db.examine_route.find()
-	# for nodes_info in examine_route:
-	# 	if db.pfvmacinfo.find()
-
 
 
 
 if __name__ == '__main__':
+	### exp_info ###
+	mac = "00:11:81:10:01:19"
+	floor = "W2-7F"
+
+	### flow ###
+	st_node = 1
+	ed_node = 1
+	via_nodes_list = [5,21,17,12,9,7,5]
+	common_dt = str(2016102013) # 測定時刻における先頭の共通部分
+	st_dt = dt_from_14digits_to_iso(common_dt + str(5500))
+	ed_dt = dt_from_14digits_to_iso(common_dt + str(5818))
+	via_dts_list = [5528,5545,5613,5639,5654,5725,5749]
+
+	### stay ###
+	# st_node = 5
+	# ed_node = 5
+	# via_nodes_list = []
+	# common_dt = str(20161020) # 測定時刻における先頭の共通部分
+	# st_dt = dt_from_14digits_to_iso(common_dt + str(115600))
+	# ed_dt = dt_from_14digits_to_iso(common_dt + str(120920))
+	# via_dts_list = []
+
+
 	# param = sys.argv
 	# floor = param[1]
 	# st_node = param[2][0]
@@ -269,7 +280,7 @@ if __name__ == '__main__':
 
 	for i in range(len(via_dts_list)):
 		via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
-	examine_route(floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
+	examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
 
 # debug用
 # py examine_route.py "W2-6F" [1,16] [5,8] 2016102510 [2609,2812] [2641,2730]
