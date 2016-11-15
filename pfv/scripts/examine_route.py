@@ -10,7 +10,7 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = False
+DEBUG_PRINT = True
 
 # rounding in specified place
 def rounding(num, round_place):
@@ -23,22 +23,33 @@ def is_correct_node(mac,floor,dt,nodes):
 	analyze_data = {}
 	pfv_query  = {"floor":floor,"datetime":analyze_time,"mac":mac}
 	stay_query = {"floor":floor,"datetime":analyze_time,"mac":mac}
+	# print(pfv_query)
 	pfv_query_alt  = {"datetime":analyze_time,"mac":mac}
 	stay_query_alt = {"datetime":analyze_time,"mac":mac}
 
 	for node in nodes:
 		analyze_data = db.pfvmacinfo.find_one(pfv_query)
+		# print(analyze_data)
 		stay_query["pcwl_id"] = node
 		if (analyze_data is not None and analyze_data["route"][-1][1] == node):
-			return True
+			return True,analyze_data["route"][-1][1]
 			# return True, analyze_data["route"]
 		elif (db.staymacinfo.find(stay_query).count() == 1):
 			# TODO: ~.count() >= 2 pattern
-			return True
+			return True,db.staymacinfo.find_one(stay_query)["pcwl_id"]
 			# return True, node
 
+	# for node in nodes:
+	analyze_data = db.pfvmacinfo.find_one(pfv_query)
+	# print(analyze_data)
 	if (analyze_data is not None):
-		return False
+		return False,analyze_data["route"][-1][1]
+	# print(stay_query)
+	del(stay_query["pcwl_id"])
+	analyze_data = db.staymacinfo.find_one(stay_query)
+	# print(analyze_data)
+	if (analyze_data is not None):
+		return False,analyze_data["pcwl_id"]
 		# return False, analyze_data["route"]
 
 	for node in nodes:
@@ -53,7 +64,7 @@ def is_correct_node(mac,floor,dt,nodes):
 			return False
 			# return False, stay_data[0]["floor"]
 
-	return False
+	return False, None
 	# return False, None
 
 # DBにデータが入っているか確認
@@ -102,8 +113,8 @@ def find_ideal_nodes(floor,dlist,delta_distance):
 
 # judge correct, judge data exists, and insert examine_route  
 def judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count,correct_count,exist_count):
-	is_correct = is_correct_node(mac,floor,st_next05_dt,nodes)
-	# is_correct, analyzed_data = is_correct_node(floor,st_next05_dt,nodes)
+	# is_correct = is_correct_node(mac,floor,st_next05_dt,nodes)
+	is_correct, analyzed_data = is_correct_node(mac,floor,st_next05_dt,nodes)
 	is_exist = is_exist_data(mac,floor,st_next05_dt,nodes)
 	examine_count += 1
 	if is_correct:
@@ -112,7 +123,7 @@ def judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,examine_count
 		exist_count += 1
 	db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
 	if DEBUG_PRINT:
-		print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct))
+		print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct)+ " , "+ str(analyzed_data))
 	# print("    analyzed data     " + str(analyzed_data))
 	return examine_count, correct_count, exist_count
 
