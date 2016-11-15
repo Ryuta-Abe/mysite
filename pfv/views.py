@@ -853,6 +853,7 @@ def tag_track_map_json(request):
   mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
+  selectnode = request.GET.get("selectnode", "")
 
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
@@ -874,6 +875,15 @@ def tag_track_map_json(request):
       if j["pcwl_id"] == i["pcwl_id"]:
         i["state"] = "timeout"
         break
+
+  # 選択ノードよりmqttトリガー
+  print(len(selectnode))
+  if len(selectnode) != 0:
+    selectnode = list(map(int, selectnode.split(",")))
+    print(selectnode)
+    mqtt_cnt = []
+    mqtt_cnt += db.staymacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt}, "pcwl_id": {"$in":selectnode}}).sort("datetime", ASCENDING)
+    print(mqtt_cnt)
 
   # mac検索条件
   mac_query = [] # 検索するmacのリスト
