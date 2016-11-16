@@ -2,7 +2,7 @@ import sys
 from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
-from examine_route  import is_correct_node,find_adjacent_nodes,find_ideal_nodes,generate_ideal_nodes,examine_route
+from examine_route  import *
 client = MongoClient()
 db = client.nm4bd
 
@@ -66,7 +66,7 @@ def csv_examine_route(query=query):
 			print("---------------------------------------------")
 
 if __name__ == '__main__':
-	for x in range(17,18):
+	for x in range(16,21):
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
 		print(exp_num)
