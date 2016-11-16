@@ -13,189 +13,137 @@ ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
 DEBUG_PRINT = True
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
-# rounding in specified place
-def rounding(num, round_place):
-	rounded_num = round(num*pow(10, round_place)) / pow(10, round_place)
-	return rounded_num
+def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
+	result = []
+	total_examine_count = 0
+	total_exist_count = 0
+	total_match_count = 0
+	total_adjacent_count = 0
+	total_middle_count = 0
+	total_wrong_node_count = 0
+	total_wrong_floor_count = 0
+	total_error_distance = 0
+	correct_answer_rate = 0
+	correct_answer_rate_alt = 0
+	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance]
 
-# DBに入っているデータを出力することも可能(コメント解除)
-def is_correct_node(mac,floor,dt,nodes):
-	# dtにする
-	analyze_time = shift_seconds(dt,ANALYZE_LAG)
-	analyze_data = {}
-	pfv_query  = {"floor":floor,"datetime":analyze_time,"mac":mac}
-	stay_query = {"floor":floor,"datetime":analyze_time,"mac":mac}
-	# print(pfv_query)
-	pfv_query_alt  = {"datetime":analyze_time,"mac":mac}
-	stay_query_alt = {"datetime":analyze_time,"mac":mac}
+	if len(via_nodes_list)== 0:
+		total_count_list = examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list)
+		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
+		# total_correct_count, total_examine_count, total_exist_count = updated
 
-	for node in nodes:
-		analyze_data = db.pfvmacinfo.find_one(pfv_query)
-		# print(analyze_data)
-		stay_query["pcwl_id"] = node
-		if (analyze_data is not None and analyze_data["route"][-1][1] == node):
-			return True,analyze_data["route"][-1][1]
-			# return True, analyze_data["route"]
-		elif (db.staymacinfo.find(stay_query).count() == 1):
-			# TODO: ~.count() >= 2 pattern
-			return True,db.staymacinfo.find_one(stay_query)["pcwl_id"]
-			# return True, node
-
-	# for node in nodes:
-	analyze_data = db.pfvmacinfo.find_one(pfv_query)
-	# print(analyze_data)
-	if (analyze_data is not None):
-		return False,analyze_data["route"][-1][1]
-	# print(stay_query)
-	del(stay_query["pcwl_id"])
-	analyze_data = db.staymacinfo.find_one(stay_query)
-	# print(analyze_data)
-	if (analyze_data is not None):
-		return False,analyze_data["pcwl_id"]
-		# return False, analyze_data["route"]
-
-	for node in nodes:
-		analyze_data = db.pfvmacinfo.find_one(pfv_query_alt)
-		stay_query_alt["pcwl_id"] = node
-		stay_data = db.staymacinfo.find(stay_query_alt)
-		if (analyze_data is not None):
-			return False
-			# return False, analyze_data["route"]
-		elif (stay_data.count() == 1):
-			# TODO: ~.count() >= 2 pattern
-			return False
-			# return False, stay_data[0]["floor"]
-
-	return False, None
-	# return False, None
-
-# DBにデータが入っているか確認
-def is_exist_data(mac,floor,dt,nodes):
-	analyze_time = shift_seconds(dt,ANALYZE_LAG)
-	query = {"floor":floor,"datetime":analyze_time,"mac":mac}
-	if(db.pfvmacinfo.find(query).count() != 0):
-		return True
-	elif(db.staymacinfo.find(query).count() != 0):
-		return True
 	else:
-		return False
+		total_count_list = examine_partial_route(mac,floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0],total_count_list)
+		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
+		# total_correct_count, total_examine_count, total_exist_count = updated
 
-def add_adjacent_nodes(floor,node,adjacent_flag):
-	pcwlnode = {}
-	adjacent_nodes = [node]
+		for i in range(len(via_nodes_list) - 1):
+			total_count_list = examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1],total_count_list)
+			# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
+			# total_correct_count, total_examine_count, total_exist_count = updated
 
-	pcwlnode = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
-	adjacent_nodes.extend(pcwlnode["next_id"])
-	if len(adjacent_nodes) >= 3:
-		return adjacent_nodes
-	elif adjacent_flag:
-		return adjacent_nodes
-	else:
-		return [node]
+		total_count_list = examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt,total_count_list)
+		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
+		# total_correct_count, total_examine_count, total_exist_count = updated
+	print_count_result(total_count_list)
 
+def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list):
+	
+	ideal_one_route = {}
+	total_distance = 0
+	delta_distance = 0
+	velocity = 0
+	nodes = []
+	tmp_dlist = []
+	dlist = []
+	data = {}
+	is_correct = False
+	is_exist = False
+	judgement = ""
+	examine_count = 0
+	exist_count = 0
+	match_count = 0
+	adjacent_count = 0
+	middle_count = 0
+	none_count = 0
+	wrong_node_count = 0
+	wrong_floor_count = 0
+	error_distance = 0
+	temp_error_distance = 0
+	count_list = [examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count]
+	total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance = total_count_list
 
-def find_correct_nodes_and_position(floor,dlist,delta_distance):
-	tmp_distance = 0 # 一次保存用
-	next_distance = 0 # 計算した場所から次ノードまでの距離
-	prev_distance = 0 # 計算した場所から前ノードまでの距離
-	correct_nodes = []
-	actual_position_list = [0,0,0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])
-	for i in range(len(dlist)):
-		tmp_distance += dlist[i]["distance"]
-		if tmp_distance >= delta_distance:
-			next_distance = tmp_distance - delta_distance
-			prev_distance = dlist[i]["distance"] - next_distance
-			if next_distance < MATCH_NODE_THRESHOLD:
-				correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
-				break
+	if st_node == ed_node:
+		if db.examine_route.find({"datetime":st_dt}).count() == 0:
+			st_next05_dt = dt_to_end_next05(st_dt,"iso")
+			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
+			if temp_error_distance is not None:
+				error_distance += temp_error_distance
+			count_list = update_partial_count(judgement,count_list)
 
-			elif prev_distance < MATCH_NODE_THRESHOLD:
-				correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][0],ADJACENT_FLAG)
-				break
-
-			else:
-				correct_nodes = dlist[i]["direction"]
-				break
-
-	if len(correct_nodes) == 0:
-		if i == len(dlist)- 1:
-			print("reached ed_node!!")	
-			next_distance = 0
-			prev_distance = dlist[i]["distance"]
-			correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 		else:
-			print("calc. error")
+			st_next05_dt = st_dt
 
-	actual_position_list = [dlist[i]["direction"][0],rounding(prev_distance,2),rounding(next_distance,2),dlist[i]["direction"][1]]
-	return correct_nodes,actual_position_list
+		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
+			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
+			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
+			if temp_error_distance is not None:
+				error_distance += temp_error_distance
+			count_list = update_partial_count(judgement,count_list)
 
+	else:	
+		ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
+		if ideal_one_route["query"][0] != st_node:
+			tmp_dlist = ideal_one_route["dlist"]
+			for i in range(-1,-len(tmp_dlist)-1,-1):
+				dlist.append({"direction":[tmp_dlist[i]["direction"][1],tmp_dlist[i]["direction"][0]],"distance":tmp_dlist[i]["distance"]})
+		else:
+			dlist =  ideal_one_route["dlist"]
+		total_distance = ideal_one_route["total_distance"]
+		velocity = total_distance / (ed_dt - st_dt).seconds
+		if DEBUG_PRINT:
+			print("\n" + "from " + str(st_node) + " to " + str(ed_node) + " : velocity = " + str(rounding(velocity,2)) + " [px/s]")
+		if db.examine_route.find({"datetime":st_dt}).count() == 0:
+			st_next05_dt = dt_to_end_next05(st_dt,"iso")
+			delta_distance = velocity * (st_next05_dt - st_dt).seconds
+			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
+			if temp_error_distance is not None:
+				error_distance += temp_error_distance
+			count_list = update_partial_count(judgement,count_list)
+			# nodes = find_correct_nodes(floor,dlist,delta_distance)
+			# correct_count, examine_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count)
+		else:
+			st_next05_dt = st_dt
 
+		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
+			delta_distance += velocity * UPDATE_INTERVAL
+			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
+			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
+			if temp_error_distance is not None:
+				error_distance += temp_error_distance
+			count_list = update_partial_count(judgement,count_list)
+		# nodes = find_correct_nodes(floor,dlist,delta_distance)
+		# correct_count, examine_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count)
+	
+	examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count = count_list
+	# if DEBUG_PRINT:
+	# 	if error_distance != 0:
+	# 		partial_average_error_distance = rounding(error_distance / exist_count , 2)
+	# 		print("average error distance = " + str(partial_average_error_distance))
+	# 	else:
+	# 		print("")
+	total_examine_count += examine_count 
+	total_exist_count += exist_count
+	total_match_count += match_count
+	total_adjacent_count += adjacent_count
+	total_middle_count += middle_count
+	total_wrong_node_count += wrong_node_count
+	total_wrong_floor_count += wrong_floor_count
 
-# judge correct, judge data exists, and insert examine_route  
-def judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count):
-	# is_correct = is_correct_node(mac,floor,st_next05_dt,nodes)
-	is_correct, analyzed_data = is_correct_node(mac,floor,st_next05_dt,nodes)
-	is_exist = is_exist_data(mac,floor,st_next05_dt,nodes)
-	examine_count += 1
-	if is_correct:
-		correct_count += 1
-	if is_exist:
-		exist_count += 1
-	db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
-	if DEBUG_PRINT:
-		print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct)+ " , "+ str(analyzed_data))
-	# print("    analyzed data     " + str(analyzed_data))
-	return correct_count, examine_count, exist_count
+	total_error_distance += error_distance
 
-def get_error_distance(floor,analyzed_node,actual_position_list):
-	prev_node,prev_distance,next_distance,next_node = actual_position_list
-	if analyzed_node == prev_node:
-		return rounding(prev_distance,2)
-	if analyzed_node == next_node:
-		return rounding(next_distance,2)
-
-	via_prev_distance = prev_distance
-	via_next_distance = next_distance
-	via_prev_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : prev_node}]}
-	via_next_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : next_node}]}
-
-	via_prev_distance += db.idealroute.find_one(via_prev_query)["total_distance"]
-	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
-	return rounding(min(via_prev_distance,via_next_distance),2)
-
-def find_analyzed_node(mac,floor,dt):
-	analyzed_data = {}
-	analyzed_node = 0
-	same_floor_query = {"floor":floor,"datetime":dt,"mac":mac}
-	all_floors_query = {"datetime":dt,"mac":mac}
-
-	# 同一フロアのflowに解析データが存在
-	analyzed_data = db.pfvmacinfo.find_one(same_floor_query)
-	if analyzed_data is not None:
-		analyzed_node = analyzed_data["route"][-1][1]
-		return floor,analyzed_node
-
-	# 同一フロアのstayに解析データが存在
-	analyzed_data = db.staymacinfo.find_one(same_floor_query)
-	if analyzed_data is not None:
-		analyzed_node = analyzed_data["pcwl_id"]
-		return floor,analyzed_node
-
-	# 違うフロアのflowに解析データが存在
-	analyzed_data = db.pfvmacinfo.find_one(all_floors_query)
-	if analyzed_data is not None:
-		analyzed_node = analyzed_data["route"][-1][1]
-		floor = analyzed_data["floor"]
-		return floor,analyzed_node
-
-	# 違うフロアのstayに解析データが存在
-	analyzed_data = db.staymacinfo.find_one(all_floors_query)
-	if analyzed_data is not None:
-		analyzed_node = analyzed_data["pcwl_id"]
-		floor = analyzed_data["floor"]
-		return floor,analyzed_node
-
-	return None,None
+	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance]
+	return total_count_list
 
 def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	real_floor = ""
@@ -239,109 +187,14 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 		"correct":correct_nodes,"analyzed":analyzed_node,"error_distance":error_distance})
 
 	if DEBUG_PRINT:
-		print(str(dt) + " : " + judgement,"pos:" + str(actual_position_list),"correct:" + str(correct_nodes),
-			"analyzed:" + str(analyzed_node),"error_distance:" + str(error_distance) + "[px]")
+		print(str(dt) + ":" + judgement,"pos:" + str(actual_position_list),"correct:" + str(correct_nodes),
+			"analyzed:" + str(analyzed_node),"error_distance:" + str(error_distance),end="")
+		if error_distance is not None:
+			print("[px]")
+		else:
+			print("")
 
 	return judgement,error_distance
-
-def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list):
-	
-	ideal_one_route = {}
-	total_distance = 0
-	delta_distance = 0
-	velocity = 0
-	nodes = []
-	tmp_dlist = []
-	dlist = []
-	data = {}
-	is_correct = False
-	is_exist = False
-	judgement = ""
-	examine_count = 0
-	exist_count = 0
-	match_count = 0
-	adjacent_count = 0
-	middle_count = 0
-	none_count = 0
-	wrong_node_count = 0
-	wrong_floor_count = 0
-	error_distance = 0
-	temp_error_distance = 0
-	count_list = [examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count]
-	total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance = total_count_list
-
-	if st_node == ed_node:
-		nodes = add_adjacent_nodes(floor,st_node,ADJACENT_FLAG)
-
-		if db.examine_route.find({"datetime":st_dt}).count() == 0:
-			st_next05_dt = dt_to_end_next05(st_dt,"iso")
-			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
-			if temp_error_distance is not None:
-				error_distance += temp_error_distance
-			count_list = update_partial_count(judgement,count_list)
-
-		else:
-			st_next05_dt = st_dt
-
-		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
-			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
-			if temp_error_distance is not None:
-				error_distance += temp_error_distance
-			count_list = update_partial_count(judgement,count_list)
-		
-		# total_count_list[0] += correct_count
-		# total_count_list[1] += examine_count
-		# total_count_list[2] += exist_count
-		return total_count_list
-
-	ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
-
-	if ideal_one_route["query"][0] != st_node:
-		tmp_dlist = ideal_one_route["dlist"]
-		for i in range(-1,-len(tmp_dlist)-1,-1):
-			dlist.append({"direction":[tmp_dlist[i]["direction"][1],tmp_dlist[i]["direction"][0]],"distance":tmp_dlist[i]["distance"]})
-	else:
-		dlist =  ideal_one_route["dlist"]
-	total_distance = ideal_one_route["total_distance"]
-	velocity = total_distance / (ed_dt - st_dt).seconds
-	if DEBUG_PRINT:
-		print("\n" + "from " + str(st_node) + " to " + str(ed_node) + " : velocity = " + str(rounding(velocity,2)) + " [px/s]")
-	if db.examine_route.find({"datetime":st_dt}).count() == 0:
-		st_next05_dt = dt_to_end_next05(st_dt,"iso")
-		delta_distance = velocity * (st_next05_dt - st_dt).seconds
-		judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
-		if temp_error_distance is not None:
-			error_distance += temp_error_distance
-		count_list = update_partial_count(judgement,count_list)
-		# nodes = find_correct_nodes(floor,dlist,delta_distance)
-		# correct_count, examine_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count)
-	else:
-		st_next05_dt = st_dt
-
-	while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
-		delta_distance += velocity * UPDATE_INTERVAL
-		st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-		judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
-		if temp_error_distance is not None:
-			error_distance += temp_error_distance
-		count_list = update_partial_count(judgement,count_list)
-		# nodes = find_correct_nodes(floor,dlist,delta_distance)
-		# correct_count, examine_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count)
-	examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count = count_list
-	total_examine_count += examine_count 
-	total_exist_count += exist_count
-	total_match_count += match_count
-	total_adjacent_count += adjacent_count
-	total_middle_count += middle_count
-	total_wrong_node_count += wrong_node_count
-	total_wrong_floor_count += wrong_floor_count
-
-	total_error_distance += error_distance
-
-	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,error_distance]
-	print(total_count_list)
-	return total_count_list
 
 def update_partial_count(judgement,count_list):
 	examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count = count_list
@@ -369,9 +222,109 @@ def update_partial_count(judgement,count_list):
 	count_list = [examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count]
 	return count_list
 
-def update_count():
+def find_analyzed_node(mac,floor,dt):
+	analyzed_data = {}
+	analyzed_node = 0
+	same_floor_query = {"floor":floor,"datetime":dt,"mac":mac}
+	all_floors_query = {"datetime":dt,"mac":mac}
 
-	return [total_correct_count, total_examine_count, total_exist_count]
+	# 同一フロアのflowに解析データが存在
+	analyzed_data = db.pfvmacinfo.find_one(same_floor_query)
+	if analyzed_data is not None:
+		analyzed_node = analyzed_data["route"][-1][1]
+		return floor,analyzed_node
+
+	# 同一フロアのstayに解析データが存在
+	analyzed_data = db.staymacinfo.find_one(same_floor_query)
+	if analyzed_data is not None:
+		analyzed_node = analyzed_data["pcwl_id"]
+		return floor,analyzed_node
+
+	# 違うフロアのflowに解析データが存在
+	analyzed_data = db.pfvmacinfo.find_one(all_floors_query)
+	if analyzed_data is not None:
+		analyzed_node = analyzed_data["route"][-1][1]
+		floor = analyzed_data["floor"]
+		return floor,analyzed_node
+
+	# 違うフロアのstayに解析データが存在
+	analyzed_data = db.staymacinfo.find_one(all_floors_query)
+	if analyzed_data is not None:
+		analyzed_node = analyzed_data["pcwl_id"]
+		floor = analyzed_data["floor"]
+		return floor,analyzed_node
+
+	return None,None
+
+def find_correct_nodes_and_position(floor,dlist,delta_distance):
+	tmp_distance = 0 # 一次保存用
+	next_distance = 0 # 計算した場所から次ノードまでの距離
+	prev_distance = 0 # 計算した場所から前ノードまでの距離
+	correct_nodes = []
+	actual_position_list = [0,0,0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])
+	for i in range(len(dlist)):
+		tmp_distance += dlist[i]["distance"]
+		if tmp_distance >= delta_distance:
+			next_distance = tmp_distance - delta_distance
+			prev_distance = dlist[i]["distance"] - next_distance
+			if next_distance < MATCH_NODE_THRESHOLD:
+				correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
+				break
+
+			elif prev_distance < MATCH_NODE_THRESHOLD:
+				correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][0],ADJACENT_FLAG)
+				break
+
+			else:
+				correct_nodes = dlist[i]["direction"]
+				break
+
+	if len(correct_nodes) == 0:
+		if i == len(dlist)- 1:
+			print("reached ed_node!!")	
+			next_distance = 0
+			prev_distance = dlist[i]["distance"]
+			correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
+		else:
+			print("calc. error")
+
+	actual_position_list = [dlist[i]["direction"][0],rounding(prev_distance,2),rounding(next_distance,2),dlist[i]["direction"][1]]
+	return correct_nodes,actual_position_list
+
+def add_adjacent_nodes(floor,node,adjacent_flag):
+	pcwlnode = {}
+	adjacent_nodes = [node]
+
+	pcwlnode = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
+	adjacent_nodes.extend(pcwlnode["next_id"])
+	if len(adjacent_nodes) >= 3:
+		return adjacent_nodes
+	elif adjacent_flag:
+		return adjacent_nodes
+	else:
+		return [node]
+
+def get_error_distance(floor,analyzed_node,actual_position_list):
+	prev_node,prev_distance,next_distance,next_node = actual_position_list
+	if analyzed_node == prev_node:
+		return rounding(prev_distance,2)
+	if analyzed_node == next_node:
+		return rounding(next_distance,2)
+
+	via_prev_distance = prev_distance
+	via_next_distance = next_distance
+	via_prev_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : prev_node}]}
+	via_next_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : next_node}]}
+
+	via_prev_distance += db.idealroute.find_one(via_prev_query)["total_distance"]
+	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
+	return rounding(min(via_prev_distance,via_next_distance),2)
+
+# rounding in specified place
+def rounding(num, round_place):
+	rounded_num = round(num*pow(10, round_place)) / pow(10, round_place)
+	return rounded_num
+
 
 def print_count_result(total_count_list):
 	correct_answer_rate = 0
@@ -458,40 +411,84 @@ def print_count_result(total_count_list):
 		print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
 		 + "( " + str(total_wrong_node_count) + " / " + str(total_false_count) + " )")
 
-	
-def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
-	result = []
-	total_examine_count = 0
-	total_exist_count = 0
-	total_match_count = 0
-	total_adjacent_count = 0
-	total_middle_count = 0
-	total_wrong_node_count = 0
-	total_wrong_floor_count = 0
-	total_error_distance = 0
-	correct_answer_rate = 0
-	correct_answer_rate_alt = 0
-	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance]
+# # DBに入っているデータを出力することも可能(コメント解除)
+# def is_correct_node(mac,floor,dt,nodes):
+# 	# dtにする
+# 	analyze_time = shift_seconds(dt,ANALYZE_LAG)
+# 	analyze_data = {}
+# 	pfv_query  = {"floor":floor,"datetime":analyze_time,"mac":mac}
+# 	stay_query = {"floor":floor,"datetime":analyze_time,"mac":mac}
+# 	# print(pfv_query)
+# 	pfv_query_alt  = {"datetime":analyze_time,"mac":mac}
+# 	stay_query_alt = {"datetime":analyze_time,"mac":mac}
 
-	if len(via_nodes_list)== 0:
-		total_count_list = examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
+# 	for node in nodes:
+# 		analyze_data = db.pfvmacinfo.find_one(pfv_query)
+# 		# print(analyze_data)
+# 		stay_query["pcwl_id"] = node
+# 		if (analyze_data is not None and analyze_data["route"][-1][1] == node):
+# 			return True,analyze_data["route"][-1][1]
+# 			# return True, analyze_data["route"]
+# 		elif (db.staymacinfo.find(stay_query).count() == 1):
+# 			# TODO: ~.count() >= 2 pattern
+# 			return True,db.staymacinfo.find_one(stay_query)["pcwl_id"]
+# 			# return True, node
 
-	else:
-		total_count_list = examine_partial_route(mac,floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0],total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
+# 	# for node in nodes:
+# 	analyze_data = db.pfvmacinfo.find_one(pfv_query)
+# 	# print(analyze_data)
+# 	if (analyze_data is not None):
+# 		return False,analyze_data["route"][-1][1]
+# 	# print(stay_query)
+# 	del(stay_query["pcwl_id"])
+# 	analyze_data = db.staymacinfo.find_one(stay_query)
+# 	# print(analyze_data)
+# 	if (analyze_data is not None):
+# 		return False,analyze_data["pcwl_id"]
+# 		# return False, analyze_data["route"]
 
-		for i in range(len(via_nodes_list) - 1):
-			total_count_list = examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1],total_count_list)
-			# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-			# total_correct_count, total_examine_count, total_exist_count = updated
+# 	for node in nodes:
+# 		analyze_data = db.pfvmacinfo.find_one(pfv_query_alt)
+# 		stay_query_alt["pcwl_id"] = node
+# 		stay_data = db.staymacinfo.find(stay_query_alt)
+# 		if (analyze_data is not None):
+# 			return False
+# 			# return False, analyze_data["route"]
+# 		elif (stay_data.count() == 1):
+# 			# TODO: ~.count() >= 2 pattern
+# 			return False
+# 			# return False, stay_data[0]["floor"]
 
-		total_count_list = examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt,total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
-	print_count_result(total_count_list)
+# 	return False, None
+# 	# return False, None
+
+# # DBにデータが入っているか確認
+# def is_exist_data(mac,floor,dt,nodes):
+# 	analyze_time = shift_seconds(dt,ANALYZE_LAG)
+# 	query = {"floor":floor,"datetime":analyze_time,"mac":mac}
+# 	if(db.pfvmacinfo.find(query).count() != 0):
+# 		return True
+# 	elif(db.staymacinfo.find(query).count() != 0):
+# 		return True
+# 	else:
+# 		return False
+
+
+# # judge correct, judge data exists, and insert examine_route  
+# def judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count):
+# 	# is_correct = is_correct_node(mac,floor,st_next05_dt,nodes)
+# 	is_correct, analyzed_data = is_correct_node(mac,floor,st_next05_dt,nodes)
+# 	is_exist = is_exist_data(mac,floor,st_next05_dt,nodes)
+# 	examine_count += 1
+# 	if is_correct:
+# 		correct_count += 1
+# 	if is_exist:
+# 		exist_count += 1
+# 	db.examine_route.insert({"datetime":st_next05_dt,"nodes":nodes,"is_correct":is_correct})
+# 	if DEBUG_PRINT:
+# 		print(str(st_next05_dt) + " : " + str(nodes) + " , " + str(is_correct)+ " , "+ str(analyzed_data))
+# 	# print("    analyzed data     " + str(analyzed_data))
+# 	return correct_count, examine_count, exist_count
 
 
 
@@ -501,22 +498,23 @@ if __name__ == '__main__':
 	floor = "W2-7F"
 
 	### flow ###
-	# st_node = 1
-	# ed_node = 1
-	# via_nodes_list = [5,21,17,12,9,7,5]
-	# common_dt = str(2016102013) # 測定時刻における先頭の共通部分
-	# st_dt = dt_from_14digits_to_iso(common_dt + str(5500))
-	# ed_dt = dt_from_14digits_to_iso(common_dt + str(5818))
-	# via_dts_list = [5528,5545,5613,5639,5654,5725,5749]
+	st_node = 1
+	ed_node = 1
+	via_nodes_list = [5,21,17,12,9,7,5]
+	common_dt = str(2016102013) # 測定時刻における先頭の共通部分
+	st_dt = dt_from_14digits_to_iso(common_dt + str(5500))
+	ed_dt = dt_from_14digits_to_iso(common_dt + str(5818))
+	via_dts_list = [5528,5545,5613,5639,5654,5725,5749]
 
 	### stay ###
-	st_node = 5
-	ed_node = 5
-	via_nodes_list = []
-	common_dt = str(20161020) # 測定時刻における先頭の共通部分
-	st_dt = dt_from_14digits_to_iso(common_dt + str(115600))
-	ed_dt = dt_from_14digits_to_iso(common_dt + str(120920))
-	via_dts_list = []
+	# mac = "00:11:81:10:01:17"
+	# st_node = 5
+	# ed_node = 5
+	# via_nodes_list = []
+	# common_dt = str(20161020) # 測定時刻における先頭の共通部分
+	# st_dt = dt_from_14digits_to_iso(common_dt + str(115600))
+	# ed_dt = dt_from_14digits_to_iso(common_dt + str(120920))
+	# via_dts_list = []
 
 	# param = sys.argv
 	# floor = param[1]
