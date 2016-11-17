@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../scripts')
 from pfv.models import pcwlroute
-from pfv.get_start_end import get_min_distance
+from get_start_end import *
 
 from pymongo import *
 

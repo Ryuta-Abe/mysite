@@ -2,7 +2,7 @@ import sys
 from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
-from examine_route  import is_correct_node,find_adjacent_nodes,find_ideal_nodes,generate_ideal_nodes,examine_route
+from examine_route  import *
 client = MongoClient()
 db = client.nm4bd
 
@@ -24,41 +24,52 @@ db = client.nm4bd
 # 
 ###################
 
-data = []
-# 解析データ抽出クエリ
-# query = {"exp_id":"161020"}
-query = {"exp_id":{"$regex":"161020_02"}}
-data += db.csvtest.find(query)
-# CONST
-MATCH_NODE_THRESHOLD = 10
-UPDATE_INTERVAL = 5
-ANALYZE_LAG = 0
+query = {"exp_id":{"$regex":"161020_009"}}
 
-for i in range(0,len(data)):
-	mac = data[i]["mac"]
-	floor = data[i]["floor"]
-	st_node = data[i]["st_node"]
-	ed_node = data[i]["ed_node"]
-	exp_id = data[i]["exp_id"]
+def csv_examine_route(query=query):
+	data = []
+	# 解析データ抽出クエリ
+	# query = {"exp_id":"161020"}
+	data += db.csvtest.find(query)
+	# CONST
+	MATCH_NODE_THRESHOLD = 10
+	UPDATE_INTERVAL = 5
+	ANALYZE_LAG = 0
 
-	if len(data[i]["via_nodes_list"]) == 2:
-		via_nodes_list = []
-	else:
-		via_nodes_list = list(map(int,data[i]["via_nodes_list"].split("[")[1].split("]")[0].split(",")))
-	
-	common_dt = str(data[i]["common_dt"]) # 測定時刻における先頭の共通部分
-	st_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["st_dt"]))
-	ed_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["ed_dt"]))
+	for i in range(0,len(data)):
+		mac = data[i]["mac"]
+		floor = data[i]["floor"]
+		st_node = data[i]["st_node"]
+		ed_node = data[i]["ed_node"]
+		exp_id = data[i]["exp_id"]
 
-	if len(data[i]["via_dts_list"]) == 2:
-		via_dts_list = []
-	else:
-		via_dts_list = list(map(int,data[i]["via_dts_list"].split("[")[1].split("]")[0].split(",")))
+		if len(data[i]["via_nodes_list"]) == 2:
+			via_nodes_list = []
+		else:
+			via_nodes_list = list(map(int,data[i]["via_nodes_list"].split("[")[1].split("]")[0].split(",")))
+		
+		common_dt = str(data[i]["common_dt"]) # 測定時刻における先頭の共通部分
+		st_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["st_dt"]))
+		ed_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["ed_dt"]))
 
-	print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
-	if __name__ == '__main__':
-		db.examine_route.remove({})
-		for i in range(len(via_dts_list)):
-			via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
-		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
-		print("---------------------------------------------")
+		if len(data[i]["via_dts_list"]) == 2:
+			via_dts_list = []
+		else:
+			via_dts_list = list(map(int,data[i]["via_dts_list"].split("[")[1].split("]")[0].split(",")))
+
+		print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
+		if __name__ == '__main__':
+			db.examine_route.remove({})
+			for i in range(len(via_dts_list)):
+				via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
+			examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
+			print("---------------------------------------------")
+
+if __name__ == '__main__':
+	for x in range(16,21):
+		query_str = "161020_0"
+		exp_num = ("00" + str(x))[-2:]
+		print(exp_num)
+		exp_id  = query_str + exp_num
+		query = {"exp_id" : exp_id}
+		csv_examine_route(query)
