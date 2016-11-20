@@ -66,7 +66,9 @@ def csv_examine_route(query=query):
 			print("---------------------------------------------")
 
 if __name__ == '__main__':
-	for x in range(17,18):
+	# id_list = [12,16]
+	# for x in id_list:
+	for x in range(9,17):
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
 		print(exp_num)
