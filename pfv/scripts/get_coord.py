@@ -31,8 +31,8 @@ def get_coord_from_info(floor, mac, dt):
 		insert_coord_from_node(floor, node_num, dt)
 		if (CONSIDER_BEFORE and stay_bfr != None):
 			print("aaaaa")
-			node_num_dfr = stay_bfr["pcwl_id"]
-			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_dfr, node_num)
+			node_num_bfr = stay_bfr["pcwl_id"]
+			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
 			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
 								  {"$set": {"pos_x":mid_coord_dict["pos_x"],
 								  			"pos_y":mid_coord_dict["pos_y"],
@@ -46,7 +46,7 @@ def get_coord_from_info(floor, mac, dt):
 	else:
 		pass
 
-def insert_coord_from_node(floor, node_num, dt):
+def insert_coord_from_node(floor, mac, node_num, dt):
 	node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":node_num})
 	next_list = node_info["next_id"]
 	next_num  = next_list[0]
