@@ -2,6 +2,7 @@ import sys
 from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
+from get_coord import *
 client = MongoClient()
 db = client.nm4bd
 
@@ -54,7 +55,7 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list
 	delta_distance = 0
 	velocity = 0
 	nodes = []
-	tmp_dlist = []
+	temp_dlist = []
 	dlist = []
 	data = {}
 	is_correct = False
@@ -94,9 +95,9 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list
 	else:	
 		ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
 		if ideal_one_route["query"][0] != st_node:
-			tmp_dlist = ideal_one_route["dlist"]
-			for i in range(-1,-len(tmp_dlist)-1,-1):
-				dlist.append({"direction":[tmp_dlist[i]["direction"][1],tmp_dlist[i]["direction"][0]],"distance":tmp_dlist[i]["distance"]})
+			temp_dlist = ideal_one_route["dlist"]
+			for i in range(-1,-len(temp_dlist)-1,-1):
+				dlist.append({"direction":[temp_dlist[i]["direction"][1],temp_dlist[i]["direction"][0]],"distance":temp_dlist[i]["distance"]})
 		else:
 			dlist =  ideal_one_route["dlist"]
 		total_distance = ideal_one_route["total_distance"]
@@ -151,38 +152,50 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	correct_nodes = []
 	actual_position_list = [0,0,0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])	
 	judgement = ""
-
-	real_floor,analyzed_node = find_analyzed_node(mac,floor,dt)
-
+	temp_dist = 0
+	min_dist = 9999
+	print(mac)
 	if stay_node is not None:
 		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
 		actual_position_list = [stay_node,0.0,0.0,stay_node]
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
 	
-	
-	if real_floor is None:
+	get_coord_from_info(floor, mac, dt)
+	analyzed_data = db.analy_coord.find_one({"datetime":dt, "mac":mac})
+
+
+	if analyzed_data is None:
 		judgement = "F(None)"
 		error_distance = None
+	else:
+		real_floor = analyzed_data["floor"]
+		if real_floor != floor:
+			judgement = "F("+ real_floor + ")"
+			error_distance = None
+		
+		if real_floor == floor:
+			mlist = analyzed_data["mlist"]
+			for i in range(len(mlist)):
+				temp_dist = get_distance_between_points(floor, actual_position_list, mlist[i]["pos"])
+				temp_dist += mlist[i]["margin"]
+				if temp_dist < min_dist:
+					min_dist = temp_dist
+					min_index = i
+			error_distance = min_dist - mlist[min_index]["margin"] 
+			# error_distance = get_error_distance(floor,analyzed_node,actual_position_list)
 
-	elif real_floor != floor:
-		judgement = "F("+ real_floor + ")"
-		error_distance = None
-	
-	if real_floor == floor:
-		error_distance = get_error_distance(floor,analyzed_node,actual_position_list)
+			if not (analyzed_node in correct_nodes):
+				judgement = "F(Wrong Node)"
 
-		if not (analyzed_node in correct_nodes):
-			judgement = "F(Wrong Node)"
+			elif len(correct_nodes) == 2:
+				judgement = "T(Middle)"
 
-		elif len(correct_nodes) == 2:
-			judgement = "T(Middle)"
+			elif analyzed_node == correct_nodes[0]:
+				judgement = "T(Match)"
 
-		elif analyzed_node == correct_nodes[0]:
-			judgement = "T(Match)"
-
-		else:
-			judgement = "T(Adjacent)"
+			else:
+				judgement = "T(Adjacent)"
 	db.examine_route.insert({"datetime":dt,"judgement":judgement,"position":actual_position_list,
 		"correct":correct_nodes,"analyzed":analyzed_node,"error_distance":error_distance})
 
@@ -257,15 +270,15 @@ def find_analyzed_node(mac,floor,dt):
 	return None,None
 
 def find_correct_nodes_and_position(floor,dlist,delta_distance):
-	tmp_distance = 0 # 一次保存用
+	temp_distance = 0 # 一次保存用
 	next_distance = 0 # 計算した場所から次ノードまでの距離
 	prev_distance = 0 # 計算した場所から前ノードまでの距離
 	correct_nodes = []
 	actual_position_list = [0,0,0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])
 	for i in range(len(dlist)):
-		tmp_distance += dlist[i]["distance"]
-		if tmp_distance >= delta_distance:
-			next_distance = tmp_distance - delta_distance
+		temp_distance += dlist[i]["distance"]
+		if temp_distance >= delta_distance:
+			next_distance = temp_distance - delta_distance
 			prev_distance = dlist[i]["distance"] - next_distance
 			if next_distance < MATCH_NODE_THRESHOLD:
 				correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
@@ -319,6 +332,36 @@ def get_error_distance(floor,analyzed_node,actual_position_list):
 	via_prev_distance += db.idealroute.find_one(via_prev_query)["total_distance"]
 	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
 	return rounding(min(via_prev_distance,via_next_distance),2)
+
+def get_distance_between_points(floor,actual_position_list,margin_position_list):
+	prev_prev = 0
+	next_prev = 0
+	prev_next = 0
+	next_next = 0
+	dist_list = []
+	min_dist = 0
+	min_index = 0
+	actual_prev_node,actual_prev_distance,actual_next_distance,actual_next_node = actual_position_list
+	margin_prev_node,margin_prev_distance,margin_next_distance,margin_next_node = margin_position_list
+	prev_prev = actual_prev_distance + get_distance(floor, actual_prev_node, margin_prev_node) + margin_prev_distance
+	next_prev = actual_next_distance + get_distance(floor, actual_next_node, margin_prev_node) + margin_prev_distance
+	prev_next = actual_prev_distance + get_distance(floor, actual_prev_node, margin_next_node) + margin_next_distance
+	next_next = actual_next_distance + get_distance(floor, actual_next_node, margin_next_node) + margin_next_distance
+	return min(prev_prev, next_prev, prev_next, next_next)
+	# dist_list = [prev_prev, next_prev, prev_next, next_next]
+	# min_dist = min(dist_list)
+	# min_index = dist_list.index(min_dist)
+	# if min_index == 0 or min_index == 1:
+	# 	return min_dist,"prev"
+	# elif min_index == 2 or min_index == 3:
+	# 	return min_dist,"next"
+	# else:
+	# 	print("二点間の距離の計算失敗")
+	# 	return 0,None
+
+
+
+
 
 # rounding in specified place
 def rounding(num, round_place):
