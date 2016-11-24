@@ -159,6 +159,7 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 		actual_position_list = [stay_node,0.0,0.0,stay_node]
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
+		pos_x,pos_y = get_position(floor,actual_position_list)
 	
 	get_coord_from_info(floor, mac, dt)
 	analyzed_data = db.analy_coord.find_one({"datetime":dt, "mac":mac})
@@ -199,7 +200,7 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 			else:
 				judgement = "T(Adjacent)"
 	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
-		"correct":correct_nodes,"analyzed":analyzed_node,"error_distance":error_distance})
+		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"error_distance":error_distance})
 
 	if DEBUG_PRINT:
 		print(str(dt) + ":" + judgement,"pos:" + str(actual_position_list),"correct:" + str(correct_nodes),

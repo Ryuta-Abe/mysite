@@ -139,6 +139,29 @@ def get_distance(floor, node1, node2):
 		distance = route_info["total_distance"]
 	return distance
 
+def get_position(floor,position_list):
+	prev_node,prev_distance,next_distance,next_node = position_list
+	prev_node = db.pcwlnode.find_one({"floor" : floor,"pcwl_id":prev_node})
+	prev_pos_x = prev_node["pos_x"]
+	prev_pos_y = prev_node["pos_y"]
+	next_node = db.pcwlnode.find_one({"floor" : floor,"pcwl_id":next_node})
+	next_pos_x = next_node["pos_x"]
+	next_pos_y = next_node["pos_y"]
+
+	delta_x = abs(prev_pos_x - next_pos_x)
+	if delta_x == 0:
+		pos_x = prev_pos_x
+	else:
+		pos_x = (prev_pos_x * next_distance + next_pos_x * prev_distance) /delta_x
+	
+	delta_y = abs(prev_pos_y - next_pos_y)
+	if delta_y == 0:
+		pos_y = prev_pos_y
+	else:
+		pos_y = (prev_pos_y * next_distance + next_pos_y * prev_distance) /delta_y
+
+	return pos_x, pos_y
+
 
 if __name__ == '__main__':
 	st_dt = dt_from_14digits_to_iso(st_dt)
