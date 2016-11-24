@@ -154,7 +154,6 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	judgement = ""
 	temp_dist = 0
 	min_dist = 9999
-	print(mac)
 	if stay_node is not None:
 		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
 		actual_position_list = [stay_node,0.0,0.0,stay_node]
@@ -169,7 +168,10 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 		judgement = "F(None)"
 		error_distance = None
 	else:
-		real_floor = analyzed_data["floor"]
+		# real_floor = analyzed_data["floor"]
+		# To Do : improve verification process by using analyzed data
+		real_floor, analyzed_node = find_analyzed_node(mac, floor, dt)
+
 		if real_floor != floor:
 			judgement = "F("+ real_floor + ")"
 			error_distance = None
@@ -182,7 +184,7 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 				if temp_dist < min_dist:
 					min_dist = temp_dist
 					min_index = i
-			error_distance = min_dist - mlist[min_index]["margin"] 
+			error_distance = rounding(min_dist - mlist[min_index]["margin"],2)
 			# error_distance = get_error_distance(floor,analyzed_node,actual_position_list)
 
 			if not (analyzed_node in correct_nodes):
@@ -196,7 +198,7 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 
 			else:
 				judgement = "T(Adjacent)"
-	db.examine_route.insert({"datetime":dt,"judgement":judgement,"position":actual_position_list,
+	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
 		"correct":correct_nodes,"analyzed":analyzed_node,"error_distance":error_distance})
 
 	if DEBUG_PRINT:
@@ -317,21 +319,21 @@ def add_adjacent_nodes(floor,node,adjacent_flag):
 	else:
 		return [node]
 
-def get_error_distance(floor,analyzed_node,actual_position_list):
-	prev_node,prev_distance,next_distance,next_node = actual_position_list
-	if analyzed_node == prev_node:
-		return rounding(prev_distance,2)
-	if analyzed_node == next_node:
-		return rounding(next_distance,2)
+# def get_error_distance(floor,analyzed_node,actual_position_list):
+# 	prev_node,prev_distance,next_distance,next_node = actual_position_list
+# 	if analyzed_node == prev_node:
+# 		return rounding(prev_distance,2)
+# 	if analyzed_node == next_node:
+# 		return rounding(next_distance,2)
 
-	via_prev_distance = prev_distance
-	via_next_distance = next_distance
-	via_prev_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : prev_node}]}
-	via_next_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : next_node}]}
+# 	via_prev_distance = prev_distance
+# 	via_next_distance = next_distance
+# 	via_prev_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : prev_node}]}
+# 	via_next_query = {"$and": [{"floor" : floor},{"query" : analyzed_node},{"query" : next_node}]}
 
-	via_prev_distance += db.idealroute.find_one(via_prev_query)["total_distance"]
-	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
-	return rounding(min(via_prev_distance,via_next_distance),2)
+# 	via_prev_distance += db.idealroute.find_one(via_prev_query)["total_distance"]
+# 	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
+# 	return rounding(min(via_prev_distance,via_next_distance),2)
 
 def get_distance_between_points(floor,actual_position_list,margin_position_list):
 	prev_prev = 0

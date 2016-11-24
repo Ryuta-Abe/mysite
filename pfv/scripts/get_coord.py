@@ -28,9 +28,9 @@ def get_coord_from_info(floor, mac, dt):
 
 	if (flowdata != None):
 		node_num = flowdata["route"][-1][1] 
-		insert_coord_from_node(floor, node_num, dt)
+		insert_coord_from_node(floor, mac, node_num, dt)
 		if (CONSIDER_BEFORE and stay_bfr != None):
-			print("aaaaa")
+			# print("aaaaa")
 			node_num_bfr = stay_bfr["pcwl_id"]
 			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
 			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
@@ -42,7 +42,7 @@ def get_coord_from_info(floor, mac, dt):
 
 	elif (staydata != None):
 		node_num = staydata["pcwl_id"]
-		insert_coord_from_node(floor, node_num, dt)
+		insert_coord_from_node(floor, mac, node_num, dt)
 	else:
 		pass
 
@@ -65,7 +65,7 @@ def insert_coord_from_node(floor, mac, node_num, dt):
 
 	coord_data = {"mac":mac,"floor":floor,"datetime":dt,"pos_x":node_info["pos_x"],"pos_y":node_info["pos_y"],
 				"position":position,"mlist":mlist}
-	print(coord_data)
+	# print(coord_data)
 	db.analy_coord.insert(coord_data)
 
 def get_midpoint(floor, st_num, ed_num):
@@ -131,9 +131,12 @@ def get_midpoint(floor, st_num, ed_num):
 	return mid_coord_dict, position, mlist
 
 def get_distance(floor, node1, node2):
-	route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
-										{"query" : node1},{"query" : node2}]})
-	distance = route_info["total_distance"]
+	if node1 == node2:
+		distance = 0
+	else:
+		route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
+											{"query" : node1},{"query" : node2}]})
+		distance = route_info["total_distance"]
 	return distance
 
 
