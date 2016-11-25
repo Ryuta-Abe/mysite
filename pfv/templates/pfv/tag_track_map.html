@@ -155,6 +155,12 @@
   #btn_coordinate{
     float: right;
   }
+  /*.not_select {
+    fill:black;
+  }*/
+  .selected circle{
+    fill: black;
+  }
 </style>
 {% endblock %}
 
@@ -163,7 +169,7 @@
 <form name="Sample_form" action="Sample.html">
   <!--<a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>-->
   <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
-  <a id="btn_realtime" onclick="realtime()" class="btn btn-default btn-sm"></a>
+  <a id="btn_realtime" onclick="realtime()" class="btn btn-default btn-sm">write</a>
   　　<!-- ボタン間にスペースを -->
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
@@ -420,6 +426,7 @@
        transform: function(d) {
          return "translate(" + d.pos_x + "," + d.pos_y + ")";
        },
+       "onclick": function(d){return "select_node('"+ d.pcwl_id +"')";},
       // "transform": "translate(" + 0 + "," + 0 + ")",
     })
 
@@ -428,6 +435,8 @@
     .attr({
       "id": function(d){return "pcwl_circle"+d.pcwl_id;},
       "r": 0.1,
+      "stroke": "red",
+      "stroke-width": 0,
       // "fill": "purple",
       "fill": function(d){
         if(d.state == "timeout"){
@@ -965,6 +974,24 @@
       // }
     }
 
+    //選択ノードのリスト
+     var select_node_list =[];
+
+    //クリックされたノードを選択状態にし、選択ノードのリストに格納
+    function select_node(node_number){
+      var class_name = document.getElementById("pcwl_circle" + node_number);
+      if ($.inArray(node_number, select_node_list) < 0){
+        class_name.setAttribute("stroke-width", 5);
+        select_node_list.push(node_number);
+      }
+      else if ($.inArray(node_number, select_node_list) >= 0){
+        class_name.setAttribute("stroke-width", 0);
+        select_node_list.splice($.inArray(node_number, select_node_list), 1);
+      } else{
+        console.log("miss");
+      }
+    }
+
     // 言語切替
     function change_language(){
       if ("{{ language }}" == "en") {
@@ -1039,7 +1066,7 @@
       }
       var mac = Sample_form.textbox_mac.value;
 
-      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
+      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor + "&selectnode=" + select_node_list;
       return url;
     }
 
@@ -1233,12 +1260,15 @@
         transform: function(d) {
           return "translate(" + d.pos_x + "," + d.pos_y + ")";
         },
+        "onclick": function(d){return "select_node('"+ d.pcwl_id +"')";},
       })
       // 円の描画
       g.append("circle")
       .attr({
         "id": function(d){return "pcwl_circle"+d.pcwl_id;},
         "r": 0.1,
+        "stroke": "red",
+        "stroke-width": 0,
         "fill": function(d){
           if(d.state == "timeout"){
             // return "black";

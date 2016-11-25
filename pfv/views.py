@@ -18,6 +18,7 @@ import datetime
 import locale
 from pfv.scripts.convert_datetime import *
 from pfv.scripts.convert_ip import convert_ip
+from pfv.scripts.pub_web import main
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593
@@ -853,6 +854,7 @@ def tag_track_map_json(request):
   mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
+  selectnode = request.GET.get("selectnode", "")
 
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
@@ -880,6 +882,19 @@ def tag_track_map_json(request):
   mac_num = round(len(mac)/18) # 検索するmac数
   for i in range(0,mac_num):
     mac_query.append(mac[0+i*18:17+i*18].lower())
+
+# 選択ノードよりmqttトリガー
+  if len(selectnode) != 0:
+    selectnode = list(map(int, selectnode.split(",")))
+    print(selectnode)
+    light_list = []
+    for tag in range(3):
+      if (db.staymacinfo.find({"mac":mac_query[tag], "datetime":{"$gt":gt_tag, "$lte":lt}, "pcwl_id": {"$in":selectnode}}).count()!=0):
+        light_list.append(True)
+      else:
+        light_list.append(False)
+    print(light_list)
+    main(light_list)
 
   # macの色づけ
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
