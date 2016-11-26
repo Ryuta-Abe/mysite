@@ -11,9 +11,12 @@ client = MongoClient()
 db = client.nm4bd
 
 ##### hourlytolog 作成手順 #####
-# 0.logを作る日時をiso_st,edに指定
-# 1. mongoimport -d nm4bd -c timeoutlog tolog_hogehoge.json
-# 2. py -3 manage.py make_hourlylog
+# 0. /home/murakami2/tolog/tolog_2016mmdd.json にあるtologデータ回収
+# 1. mongoimport -d nm4bd -c timeoutlog tolog_2016mmdd.json
+# 2. 以下のいづれかを行う
+#    py manage.py make_hourlylog mmdd（解析したい日付を4桁で）
+#    py manage.py make_hourlylog mmddhhmm mmddhhmm(解析したい日時を8桁で、開始・終了の順に)
+#    iso_st,iso_edを設定後、py manage.py make_hourlylog
 
 # ("fields.txt"が存在しない場合は3-5を行う)
 # 3.key一覧取得
@@ -32,10 +35,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # hourly aggregate
         db.hourlytolog.remove({})
-        iso_st = dt_from_14digits_to_iso("20160930000000")
-        iso_ed = dt_from_14digits_to_iso("20161001000000")
-        print(iso_st)
-        print(iso_ed)
+        print(len(args))
+        if(len(args) == 1):
+            iso_st = dt_from_14digits_to_iso("2016" + args[0] + "000000")
+            iso_ed = shift_hours(iso_st,24)
+        elif(len(args) == 2):
+            iso_st = dt_from_14digits_to_iso("2016" + args[0])
+            iso_ed = dt_from_14digits_to_iso("2016" + args[1])
+        else:
+            iso_st = dt_from_14digits_to_iso("20160930000000")
+            iso_ed = dt_from_14digits_to_iso("20161001000000")
+        print("from:" + str(iso_st))
+        print("to  :" + str(iso_ed) + "\n")
         gte = iso_st
         lt  = shift_hours(gte, 1)
         ip_list = []

@@ -36,6 +36,7 @@ def dt_from_str_to_iso(dt):
 # 20141120194030(str) --> isodate形式
 def dt_from_14digits_to_iso(dt):
   from datetime import datetime
+  dt = str(dt)
   dt = str(dt[0:4])+"-"+str("0"+dt[4:6])[-2:]+"-"+str("0"+dt[6:8])[-2:]+" "+str("00"+dt[8:10])[-2:]+":"+str("00"+dt[10:12])[-2:]+":"+str("00"+dt[12:14])[-2:]
   dt = datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
   return dt

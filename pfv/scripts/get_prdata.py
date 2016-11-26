@@ -10,6 +10,7 @@ from multiprocessing import Process
 import os
 from convert_datetime import *
 from analyze import analyze_mod
+import timeout_decorator # cannot use on Windows
 
 # mongoDBに接続
 from pymongo import *
@@ -137,6 +138,8 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 			db.trtmp.insert(data)
 			# print("inserted.")
 
+
+@timeout_decorator.timeout(4.0) # cannot use on Windows
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)
@@ -145,11 +148,17 @@ def multi(pcwliplist):
 	p.join()
 
 if __name__ == "__main__":
-	# print(now)
 	st = time.time()
-	multi(pcwliplist)
+	### can not use on Windows ###
+	try:
+		multi(pcwliplist)
+	except:
+		print ("getPR timed out :(")
+	else:
+		print ("getPR finished successfully :)")
+	##############################
+	# multi(pcwliplist)
 	ed = time.time()
-	# time.sleep(1.5)
 	print("getPR:"+str(ed-st))
 
 	### Check col_name trtmp or trtmp_test ###
