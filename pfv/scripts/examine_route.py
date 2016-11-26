@@ -150,7 +150,8 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	real_floor = ""
 	analyzed_node = 0
 	correct_nodes = []
-	actual_position_list = [0,0,0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])	
+	actual_position_list = [0,0.0,0.0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])	
+	analyzed_position_list = [0,0.0,0.0,0] 
 	judgement = ""
 	temp_dist = 0
 	min_dist = 9999
@@ -179,13 +180,20 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 		
 		if real_floor == floor:
 			mlist = analyzed_data["mlist"]
+			analyzed_position_list = analyzed_data["position"]
+			analyzed_actual_dist = get_distance_between_points(floor,analyzed_position_list,actual_position_list)
 			for i in range(len(mlist)):
-				temp_dist = get_distance_between_points(floor, actual_position_list, mlist[i]["pos"])
-				temp_dist += mlist[i]["margin"]
+				# analyzed_margin_dist = get_distance_between_points(floor,analyzed_position_list,mlist[i]["pos"])
+				if analyzed_actual_dist < mlist[i]["margin"]:
+					error_distance = 0
+					break
+				else:
+					temp_dist = mlist[i]["margin"]
+					temp_dist += get_distance_between_points(floor,mlist[i]["pos"],actual_position_list)
 				if temp_dist < min_dist:
 					min_dist = temp_dist
-					min_index = i
-			error_distance = rounding(min_dist - mlist[min_index]["margin"],2)
+					error_distance = rounding(min_dist - mlist[i]["margin"],2)
+
 			# error_distance = get_error_distance(floor,analyzed_node,actual_position_list)
 
 			if not (analyzed_node in correct_nodes):
@@ -336,21 +344,22 @@ def add_adjacent_nodes(floor,node,adjacent_flag):
 # 	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
 # 	return rounding(min(via_prev_distance,via_next_distance),2)
 
-def get_distance_between_points(floor,actual_position_list,margin_position_list):
-	prev_prev = 0
-	next_prev = 0
-	prev_next = 0
-	next_next = 0
-	dist_list = []
-	min_dist = 0
-	min_index = 0
-	actual_prev_node,actual_prev_distance,actual_next_distance,actual_next_node = actual_position_list
-	margin_prev_node,margin_prev_distance,margin_next_distance,margin_next_node = margin_position_list
-	prev_prev = actual_prev_distance + get_distance(floor, actual_prev_node, margin_prev_node) + margin_prev_distance
-	next_prev = actual_next_distance + get_distance(floor, actual_next_node, margin_prev_node) + margin_prev_distance
-	prev_next = actual_prev_distance + get_distance(floor, actual_prev_node, margin_next_node) + margin_next_distance
-	next_next = actual_next_distance + get_distance(floor, actual_next_node, margin_next_node) + margin_next_distance
-	return min(prev_prev, next_prev, prev_next, next_next)
+def get_distance_between_points(floor,position_list1,position_list2):
+	prev1_prev2 = 0
+	next1_prev2 = 0
+	prev1_next2 = 0
+	next1_next2 = 0
+	prev_node1,prev_distance1,next_distance1,next_node1 = position_list1
+	prev_node2,prev_distance2,next_distance2,next_node2 = position_list2
+	if prev_node1 == prev_node2 and next_node1 == next_node2:
+		return abs(prev_distance1 - prev_distance2)
+	if prev_node1 == next_node2 and prev_node2 == next_node1:
+		return abs(prev_distance1 - next_distance2)
+	prev1_prev2 = prev_distance1 + get_distance(floor, prev_node1, prev_node2) + prev_distance2
+	next1_prev2 = next_distance1 + get_distance(floor, next_node1, prev_node2) + prev_distance2
+	prev1_next2 = prev_distance1 + get_distance(floor, prev_node1, next_node2) + next_distance2
+	next1_next2 = next_distance1 + get_distance(floor, next_node1, next_node2) + next_distance2
+	return min(prev1_prev2, next1_prev2, prev1_next2, next1_next2)
 	# dist_list = [prev_prev, next_prev, prev_next, next_next]
 	# min_dist = min(dist_list)
 	# min_index = dist_list.index(min_dist)
