@@ -937,3 +937,194 @@ def tag_track_map_json(request):
   # dataset = {"pfvinfo":pfvinfo}
 
   return render_json_response(request, dataset) # dataをJSONとして出力
+
+#座標チェック用
+def tag_position_check(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', 'now')
+  timerange = int(request.GET.get('timerange', 5))
+  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-7F')
+
+  if date_time == 'now':
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find({"floor":floor})
+
+  # timeout情報の取り出し
+  timeout = []
+  timeout += db.timeoutlog.find({"datetime":{"$gt":gt_tag, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+
+  for i in pcwlnode:
+    i["state"] = "default"
+    for j in timeout:
+      if j["pcwl_id"] == i["pcwl_id"]:
+        i["state"] = "timeout"
+        break
+
+  # ブックマーク情報の取り出し
+  tagbookmarks = []
+  tagbookmarks += db.tagbookmark.find()
+
+  # mac検索条件
+  mac_query = [] # 検索するmacのリスト
+  mac_num = round(len(mac)/18) # 検索するmac数
+  for i in range(0,mac_num):
+    mac_query.append(mac[0+i*18:17+i*18].lower())
+
+  # macの色づけ
+  color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
+  pfvinfo = []
+  for i in range(0,len(mac_query)):
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+
+  # pfv情報の取り出し
+  tmp_pfvinfo = []
+  tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # 滞留端末情報の取り出し
+  tmp_stayinfo = []
+  tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # pfvinfoにroute情報をひも付け
+  for t_data in tmp_pfvinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append(t_data["route"])
+  for t_data in tmp_stayinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append([[t_data["pcwl_id"]]])
+
+  #pfvinfoに現在のfloor情報を紐付け
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  for i in pfvinfo:
+    for j in floor_list:
+      tmp_count = []
+      tmp_count += db.pfvmacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      tmp_count += db.staymacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      if len(tmp_count) >= 1:
+        i["floor"] = j
+        break
+
+  #解析位置のデータ取り出し
+  analy_coord = []
+  analy_coord += db.analy_coord.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+  examine_coord = []
+  examine_coord += db.examine_route.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+  if len(analy_coord) != 0:
+    del analy_coord[0]["_id"]
+    del analy_coord[0]["datetime"]
+    del examine_coord[0]["_id"]
+    del examine_coord[0]["datetime"]
+  print(analy_coord)
+  print(examine_coord)
+
+  return render_to_response('pfv/tag_position_check.html',  # 使用するテンプレート
+                              {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':tagbookmarks,
+                               'language':language,'timerange':timerange,'mac':mac, 'floor':floor,
+                               'year':lt.year,'month':lt.month,'day':lt.day,
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second,
+                               'analy_coord':analy_coord, 'examine_coord':examine_coord}
+                              )
+
+def tag_position_check_json(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', 'now')
+  timerange = int(request.GET.get('timerange', 5))
+  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-6F')
+  selectnode = request.GET.get("selectnode", "")
+
+  if date_time == 'now':
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find({"floor":floor})
+  # timeout情報の取り出し
+  timeout = []
+  timeout += db.timeoutlog.find({"datetime":{"$gt":gt_tag, "$lte":lt}, "floor":floor}).sort("datetime", ASCENDING)
+  for i in pcwlnode:
+    del i["_id"]
+    i["state"] = "default"
+    for j in timeout:
+      if j["pcwl_id"] == i["pcwl_id"]:
+        i["state"] = "timeout"
+        break
+
+  # mac検索条件
+  mac_query = [] # 検索するmacのリスト
+  mac_num = round(len(mac)/18) # 検索するmac数
+  for i in range(0,mac_num):
+    mac_query.append(mac[0+i*18:17+i*18].lower())
+
+  # macの色づけ
+  color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
+  pfvinfo = []
+  for i in range(0,len(mac_query)):
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+
+  # pfv情報の取り出し
+  tmp_pfvinfo = []
+  tmp_pfvinfo += db.pfvmacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # 滞留端末情報の取り出し
+  tmp_stayinfo = []
+  tmp_stayinfo += db.staymacinfo.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+
+  # pfvinfoにroute情報をひも付け
+  for t_data in tmp_pfvinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append(t_data["route"])
+  for t_data in tmp_stayinfo:
+    for p_data in pfvinfo:
+      if t_data["mac"] == p_data["mac"]:
+        p_data["route"].append([[t_data["pcwl_id"]]])
+
+  #pfvinfoに現在のfloor情報を紐付け
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  for i in pfvinfo:
+    for j in floor_list:
+      tmp_count = []
+      tmp_count += db.pfvmacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      tmp_count += db.staymacinfo.find({"datetime":{"$gt":gt_tag, "$lte":lt},"mac":i["mac"], "floor":j},{"datetime":0,"floor":0,"_id":0}).sort("datetime", ASCENDING)
+      if len(tmp_count) >= 1:
+        i["floor"] = j
+        break
+
+  #解析位置のデータ取り出し
+  analy_coord = []
+  analy_coord += db.analy_coord.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+  examine_coord = []
+  examine_coord += db.examine_route.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
+  if len(analy_coord) != 0:
+    del analy_coord[0]["_id"]
+    del analy_coord[0]["datetime"]
+  if len(examine_coord) != 0:
+    del examine_coord[0]["_id"]
+    del examine_coord[0]["datetime"]
+  print(analy_coord)
+  print(examine_coord)
+
+
+  # 送信するデータセット
+  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode, 'analy_coord':analy_coord, 'examine_coord':examine_coord}
+  # dataset = {"pfvinfo":pfvinfo}
+
+  return render_json_response(request, dataset) # dataをJSONとして出力

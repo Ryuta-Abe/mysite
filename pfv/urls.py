@@ -11,6 +11,8 @@ urlpatterns = patterns('',
     url(r'^pfv_heatmap_json/$', views.pfv_heatmap_json, name='pfv_heatmap_json'), #heatmap用json
     url(r'^tag_track_map/$', views.tag_track_map, name='tag_track_map'), #tag_track用マップ
     url(r'^tag_track_map_json/$', views.tag_track_map_json, name='tag_track_map_json'), #tag_track用マップJSON
+    url(r'^tag_position_check/$', views.tag_position_check, name='tag_position_check'), #tag_position_check用マップ
+    url(r'^tag_position_check_json/$', views.tag_position_check_json, name='tag_position_check_json'), #tag_position_check用マップJSON
 
     url(r'^bookmark_edit/$', bookmark_edit.bookmark_edit, name='bookmark_edit'), # ブックマークの編集
 
