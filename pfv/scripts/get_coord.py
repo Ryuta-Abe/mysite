@@ -2,16 +2,16 @@
 from datetime import datetime
 from convert_datetime import *
 from pymongo import *
-from examine_route import rounding
+from examine_route import *
 client = MongoClient()
 db = client.nm4bd
 
 mac = "00:11:81:10:01:1c"
 floor = "W2-7F"
-# st_dt = 20161020134250
-st_dt = 20161020134325
-ed_dt = 20161020134430
-# ed_dt = 20161020134630
+st_dt = 20161020134250
+# st_dt = 20161020134325
+# ed_dt = 20161020134430
+ed_dt = 20161020134630
 
 db.analy_coord.remove({})
 
@@ -68,16 +68,21 @@ def insert_coord_from_node(floor, mac, node_num, dt):
 	# print(coord_data)
 	db.analy_coord.insert(coord_data)
 
-def get_midpoint(floor, st_num, ed_num):
+def get_midpoint(floor, all_st_num, all_ed_num):
 	route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
-										{"query" : st_num},{"query" : ed_num}]})
+										{"query" : all_st_num},{"query" : all_ed_num}]})
 	total_d = route_info["total_distance"]
 	mid_len = total_d / 2
-	if (route_info["dlist"][0]["direction"][0] != st_num):
+
+	path_list = []
+	if (route_info["dlist"][0]["direction"][0] != all_st_num):
 		route_info["dlist"].reverse()
 		for path in route_info["dlist"]:
 			path["direction"].reverse()
+	for path in route_info["dlist"]:		
+		path_list.append(path["direction"])
 
+	# get midpoint
 	rem_len = mid_len
 	for path in route_info["dlist"]:
 		ref_len = path["distance"]
@@ -99,33 +104,81 @@ def get_midpoint(floor, st_num, ed_num):
 		else:
 			rem_len = rem_len - path["distance"]
 
+	# get quarter-point
 	margin = total_d / 4
+	# quarter 1st and quarter 3rd
 	margin_list = [margin, total_d - margin]
 	mlist = []
 	for mgn_len in margin_list:
+		via_list = []
 		rem_len = mgn_len
 		for path in route_info["dlist"]:
 			ref_len = path["distance"]
 			st_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][0]})
 			ed_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][1]})
+			st_num = st_node["pcwl_id"]
+			ed_num = ed_node["pcwl_id"]
+			if (st_num not in via_list and st_num != all_st_num):
+				via_list.append(st_num)
+			if (ed_num not in via_list and ed_num != all_ed_num):
+				via_list.append(ed_num)
 
 			st_x, st_y = st_node["pos_x"],st_node["pos_y"]
 			ed_x, ed_y = ed_node["pos_x"],ed_node["pos_y"]
 			if (ref_len >= rem_len):
-				mid_coord_dict = {"pos_x":((ref_len - rem_len)*st_x + rem_len*ed_x) / ref_len,
-							 	  "pos_y":((ref_len - rem_len)*st_y + rem_len*ed_y) / ref_len
-							 	 }
+				mag_coord_dict = {"pos_x":((ref_len - rem_len)*st_x + rem_len*ed_x) / ref_len,
+							 	  "pos_y":((ref_len - rem_len)*st_y + rem_len*ed_y) / ref_len}
 
-				mid_coord_dict["pos_x"] = rounding(mid_coord_dict["pos_x"],1)
-				mid_coord_dict["pos_y"] = rounding(mid_coord_dict["pos_y"],1)
+				mag_coord_dict["pos_x"] = rounding(mag_coord_dict["pos_x"],1)
+				mag_coord_dict["pos_y"] = rounding(mag_coord_dict["pos_y"],1)
 				mag_pos = [st_node["pcwl_id"], rounding(rem_len,1), rounding(path["distance"]-rem_len,1), ed_node["pcwl_id"]]
-				# position = [st_node, rem_len, path["distance"]-rem_len, ed_node]
 				break
 			else:
 				rem_len = rem_len - path["distance"]
 
 		margin_dist = {"margin":margin, "pos":mag_pos}
 		mlist.append(margin_dist)
+
+	# print(path_list)
+
+	m_edge_list = []
+	for mag_data in mlist:
+		m_edge_list.append([mag_data["pos"][0], mag_data["pos"][3]])
+	# print(m_edge_list)
+	# print(mlist)
+	if (m_edge_list[0] != m_edge_list[1]):
+		plist = []
+		via_list = [m_edge_list[0][1], m_edge_list[1][0]]
+		if (via_list[0] == via_list[1]):
+			via_list.remove(via_list[1])
+		# print(via_list)
+
+		# get_via_point
+		tmp_path_list = []
+		for via_num in via_list:
+			via_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":via_num})
+			for next_num in via_node["next_id"]:
+				tmp_path_list.append([via_node["pcwl_id"], next_num])
+
+
+
+		# make path_list (移動経路と不一致の経路のみ)
+		for tmp_path in path_list:
+			rev_path = list(tmp_path)
+			rev_path.reverse()
+			if (tmp_path in tmp_path_list):
+				tmp_path_list.remove(tmp_path)
+			if (rev_path in tmp_path_list):
+				tmp_path_list.remove(rev_path)
+
+		for tmp_path in tmp_path_list:
+			distance = get_distance(floor, tmp_path[0], tmp_path[1])
+			mag_pos = [tmp_path[0], 0, distance, tmp_path[1]]
+			margin_dist = {"margin":0, "pos":mag_pos}
+			mlist.append(margin_dist)
+
+	# print(mlist)
+
 
 
 	return mid_coord_dict, position, mlist
