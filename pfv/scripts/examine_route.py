@@ -158,6 +158,7 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	if stay_node is not None:
 		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
 		actual_position_list = [stay_node,0.0,0.0,stay_node]
+		pos_x,pos_y = None, None
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
 		pos_x,pos_y = get_position(floor,actual_position_list)

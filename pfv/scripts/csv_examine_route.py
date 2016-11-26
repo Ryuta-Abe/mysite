@@ -3,6 +3,7 @@ from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
 from examine_route  import *
+from get_coord import *
 client = MongoClient()
 db = client.nm4bd
 
@@ -72,7 +73,8 @@ if __name__ == '__main__':
 	for x in range(9,17):
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
-		print(exp_num)
+		# print(exp_num)
 		exp_id  = query_str + exp_num
 		query = {"exp_id" : exp_id}
+		# get_analy_coord(query)
 		csv_examine_route(query)

@@ -18,6 +18,29 @@ db.analy_coord.remove({})
 # Trueの場合, 1つ前の時刻(stay)を考慮する
 CONSIDER_BEFORE = True
 
+def get_analy_coord(query_id):
+	datas = []
+	# 解析データ抽出クエリ
+	# query = {"exp_id":"161020"}
+	datas += db.csvtest.find(query_id)
+	for data in datas:
+		mac = data["mac"]
+		floor = data["floor"]
+		st_node = data["st_node"]
+		ed_node = data["ed_node"]
+		exp_id = data["exp_id"]
+
+		common_dt = str(data["common_dt"]) # 測定時刻における先頭の共通部分
+		st_dt = dt_from_14digits_to_iso(common_dt + str(data["st_dt"]))
+		tmp_dt = st_dt
+		ed_dt = dt_from_14digits_to_iso(common_dt + str(data["ed_dt"]))
+		# print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
+
+		while (tmp_dt < ed_dt):
+			# print("--- " + str(tmp_dt) + " ---")
+			get_coord_from_info(floor, mac, tmp_dt)
+			tmp_dt = shift_seconds(tmp_dt, 5)
+
 def get_coord_from_info(floor, mac, dt):
 	bfr_5s = shift_seconds(dt, -5)
 	query = {"floor":floor, "mac":mac, "datetime":dt}
@@ -30,7 +53,6 @@ def get_coord_from_info(floor, mac, dt):
 		node_num = flowdata["route"][-1][1] 
 		insert_coord_from_node(floor, mac, node_num, dt)
 		if (CONSIDER_BEFORE and stay_bfr != None):
-			# print("aaaaa")
 			node_num_bfr = stay_bfr["pcwl_id"]
 			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
 			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
@@ -47,6 +69,7 @@ def get_coord_from_info(floor, mac, dt):
 		pass
 
 def insert_coord_from_node(floor, mac, node_num, dt):
+	from examine_route import rounding
 	node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":node_num})
 	next_list = node_info["next_id"]
 	next_num  = next_list[0]
@@ -69,6 +92,7 @@ def insert_coord_from_node(floor, mac, node_num, dt):
 	db.analy_coord.insert(coord_data)
 
 def get_midpoint(floor, all_st_num, all_ed_num):
+	from examine_route import rounding
 	route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
 										{"query" : all_st_num},{"query" : all_ed_num}]})
 	total_d = route_info["total_distance"]
@@ -139,19 +163,14 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 		margin_dist = {"margin":margin, "pos":mag_pos}
 		mlist.append(margin_dist)
 
-	# print(path_list)
-
 	m_edge_list = []
 	for mag_data in mlist:
 		m_edge_list.append([mag_data["pos"][0], mag_data["pos"][3]])
-	# print(m_edge_list)
-	# print(mlist)
 	if (m_edge_list[0] != m_edge_list[1]):
 		plist = []
 		via_list = [m_edge_list[0][1], m_edge_list[1][0]]
 		if (via_list[0] == via_list[1]):
 			via_list.remove(via_list[1])
-		# print(via_list)
 
 		# get_via_point
 		tmp_path_list = []
@@ -177,10 +196,6 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 			margin_dist = {"margin":0, "pos":mag_pos}
 			mlist.append(margin_dist)
 
-	# print(mlist)
-
-
-
 	return mid_coord_dict, position, mlist
 
 def get_distance(floor, node1, node2):
@@ -205,13 +220,13 @@ def get_position(floor,position_list):
 	if delta_x == 0:
 		pos_x = prev_pos_x
 	else:
-		pos_x = (prev_pos_x * next_distance + next_pos_x * prev_distance) /delta_x
+		pos_x = (prev_pos_x * next_distance + next_pos_x * prev_distance) / (prev_distance + next_distance)
 	
 	delta_y = abs(prev_pos_y - next_pos_y)
 	if delta_y == 0:
 		pos_y = prev_pos_y
 	else:
-		pos_y = (prev_pos_y * next_distance + next_pos_y * prev_distance) /delta_y
+		pos_y = (prev_pos_y * next_distance + next_pos_y * prev_distance) / (prev_distance + next_distance)
 
 	return pos_x, pos_y
 
