@@ -1,0 +1,1570 @@
+{% extends "base.html" %}
+
+{% block title %}tag position check{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  *.logbox
+      {
+         border: solid 1px #808080;
+         width: 350px;
+         height: 120px;
+         padding: 0.5em;
+         overflow: auto;
+         display: inline-block;
+         _display: inline;
+         background-color: white;
+      }
+
+  *.logbox2
+      {
+         border: solid 1px #808080;
+         width: 700px;
+         height: 120px;
+         padding: 0.5em;
+         overflow: auto;
+         display: inline-block;
+         _display: inline;
+      }
+
+  p.tabs
+  {
+    margin: 0px;
+    padding: 0px;
+    /*position: absolute;*/
+  }
+  p.tabs a
+  {
+    display: block;
+    width: 13em;
+    float: left;
+    margin: 0px 1px 0px 1px;
+    padding: 8px;
+    text-align: center;
+    border-radius: 15px 15px 0px 0px;
+    cursor: pointer;
+  }
+  p.tabs a.select_tab
+  {
+    background-color: black;
+    color: white;
+    padding: 8px;
+  }
+  p.tabs a.waiting_tab
+  {
+    background-color: black;
+    color: white;
+    opacity: 0.5;
+  }
+  p.tabs a:hover
+  {
+    color: yellow;
+  }
+
+  select {
+    cursor: pointer;
+    padding: 0.3em 0em;
+    /*color: white;*/
+    border: 1px solid black;
+    border-radius: 8px;
+    /*background: black;*/
+    font-weight: bold;
+  }
+
+  .btn{
+    /*color: white;
+    border: 1px solid black;*/
+    border-radius: 8px;
+    /*background: blue;*/
+    font-weight: bold;
+    /*font-size: 15px;*/
+    /*font-family: sans-serif;*/
+  }
+  .page-header{
+    font-weight: bold;
+    font-size: 25px;
+  }
+  .container{
+    width: 1360px;
+    /*background-color: aliceblue;*/
+  }
+  #svg1{
+    float: left;
+    background-color: white;
+    border: 3px solid black;
+    margin: 0px 0px 0px 1px;
+  }
+  #svg2{
+    float: right;
+    position: relative;
+    background-color: white;
+    border: 3px solid black;
+  }
+  body{
+    background-color: snow;
+    /*background-color: cornsilk;*/
+  }
+
+  #tag_list p{
+    /*position: relative;*/
+    float: right;
+    display: block;
+    /*width: 22.3em;*/
+    /*float: left;*/
+    margin: 0px 0px 0px 0px;
+    /*padding: 8px;*/
+    text-align: center;
+    /*border-radius: 0px 0px 0px 0px;*/
+    background-color: black;
+    color: white;
+    width: 300px;
+    height: 30px;
+    font-size: 25px;
+  }
+  #bookmark_list p a, #bookmark_add p a{
+    cursor: pointer;
+  }
+  #btn_analy{
+    float: right;
+  }
+  #btn_examine{
+    float: right;
+  }
+  #btn_node{
+    float: right;
+  }
+  #btn_coordinate{
+    float: right;
+  }
+  .selected circle{
+    fill: black;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 id="header" class="page-header"></h1>
+<form name="Sample_form" action="Sample.html">
+  <!--<a href="javascript:void(0)" id="category_4" onclick="show('4');" class="btn btn-default btn-sm">Floor</a>-->
+  <a href="javascript:void(0)" id="category_2" onclick="show('2');" class="btn btn-default btn-sm">Bookmark</a>
+  <a id="btn_realtime" onclick="realtime()" class="btn btn-default btn-sm">write</a>
+  　　<!-- ボタン間にスペースを -->
+  <text id="datetime_header"></text>
+  <font id="got_datetime" size="4"></font>
+    <a id="btn_coordinate" onclick="coordinate_opacity();" class="btn btn-default btn-sm"></a>
+    <a id="btn_examine" onclick="check_opacity('examine');" class="btn btn-default btn-sm">計算</a>
+    <a id="btn_analy" onclick="check_opacity('analy');" class="btn btn-default btn-sm">解析</a>
+    <a id="btn_node" onclick="check_opacity('node');" class="btn btn-default btn-sm">ノード</a>
+
+  　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
+  <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
+  <span id="selected_datetime">
+  <script type="text/javascript">
+    function make_selectbox(list){
+      var list_id = {"test":99};
+      for (var i = 0; i < list.length; i++) {
+        if (list[i] < 60) {
+          document.write('<option value="sec'+("0"+list[i]).slice(-2)+'"/>'+list[i]+' '+second_text+'</option>');
+        } else if (list[i] < 3600) {
+          document.write('<option value="min'+("0"+(list[i]/60)).slice(-2)+'"/>'+(list[i]/60)+' '+minute_text+'</option>');
+        } else if (list[i] < 43200) {
+          document.write('<option value="hou'+("0"+(list[i]/3600)).slice(-2)+'"/>'+(list[i]/3600)+' '+hour_text2+'</option>');
+        } else if (list[i] < 302400) {
+          document.write('<option value="day'+("0"+(list[i]/43200)).slice(-2)+'"/>'+(list[i]/43200)+' '+day_text+'</option>');
+        };
+        list_id[String(list[i])] = i;
+      };
+      return list_id;
+    }
+
+    if ("{{ language }}" == "en") {
+      var year_text = "year";
+      var month_text = "month";
+      var day_text = "date";
+      var hour_text = "hour";
+      var hour_text2 = "hour";
+      var minute_text = "minute";
+      var second_text = "second";
+    } else {
+      var year_text = "年";
+      var month_text = "月";
+      var day_text = "日";
+      var hour_text = "時";
+      var hour_text2 = "時間";
+      var minute_text = "分";
+      var second_text = "秒";
+    };
+
+    var year_list = [2014,2015,2016,2017,2018];
+
+    document.write('<select name="textbox_year">');
+    for (var i = 0; i < year_list.length; i++) {
+      document.write('<option id="year'+year_list[i]+'" value="'+year_list[i]+'"/>'+year_list[i]+' '+year_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_month">');
+    for (var i = 0; i < 12; i++) {
+      document.write('<option id="month'+("0"+(i+1)).slice(-2)+'" value="'+("0"+(i+1)).slice(-2)+'"/>'+(i+1)+' '+month_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_day">');
+    for (var i = 0; i < 31; i++) {
+      document.write('<option id="day'+("0"+(i+1)).slice(-2)+'" value="'+("0"+(i+1)).slice(-2)+'"/>'+(i+1)+' '+day_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_hour">');
+    for (var i = 0; i < 24; i++) {
+      document.write('<option id="hour'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+hour_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_minute">');
+    for (var i = 0; i < 60; i++) {
+      document.write('<option id="minute'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+minute_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_second">');
+    for (var i = 0; i < 12; i++) {
+      document.write('<option id="second'+("0"+(i*5)).slice(-2)+'" value="'+("0"+(i*5)).slice(-2)+'"/>'+(i*5)+' '+second_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<a type="button" id="btn_reload" onclick="Load_Form()" class="btn btn-default btn-sm"></a>');
+    document.write('</span>');
+    document.write('　　');
+    document.write('<span>');
+
+    document.write('<select name="textbox_interval">');
+    var interval_list = [5,10,20,30,60,120,300,600,1200,1800,3600,7200,10800,21600,43200]
+    make_selectbox(interval_list);
+    document.write('</select>');
+
+    document.write('<a type="button" id="btn_back" onclick="slide_DT(1)" class="btn btn-default btn-sm"></a>');
+    document.write('<a type="button" id="btn_forward" onclick="slide_DT(-1)" class="btn btn-default btn-sm"></a>');
+    // document.write('<a onclick="Auto_Animation()" class="btn btn-default btn-sm" id="btn_Auto">Animation</a>');
+    document.write('<a onclick="Auto_Animation2()" class="btn btn-default btn-sm" id="btn_Auto2">Animation</a>');
+    document.write('</span>');
+    document.write('　　');
+    document.write('<span>');
+
+    document.write('<select name="selectbox_timerange">');
+    timerange_list = [5,10,20,30,60,120,300,600]
+    timerange_list_id = make_selectbox(timerange_list);
+    document.write('</select>');
+
+  </script>
+  <text id="time_interval_text"></text>
+  </span></div>
+  <div id="layer_2" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="bookmark_list" class="logbox"></div>
+  <div id="bookmark_add" class="logbox"></div>
+  </div>
+  <div id="layer_4" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="floor_list" class="logbox"></div>
+  </div>
+  <div id="layer_3" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="filter_list" class="logbox2">
+    <text id="macfilter_text"></text><br>
+    <input type="text" name="textbox_mac" size="80">
+  </div>
+  </div>
+</form>
+<br><!-- ボタンと地図の間にスペースを -->
+<div class="tabbox" id="tabbox"></div>
+<?xml version="1.0" standalone="no"?>
+<svg id="svg1" width="1024" height="560">
+  <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.6"></image>
+</svg>
+<div id="tooltip_div"></div>
+<div id="tag_list">
+    <!-- <p>タグ一覧</p> -->
+    <p>表示タグ / 所在フロア</p>
+</div>
+<svg id="svg2" width="300" height="530"></svg>
+<!-- <br> -->
+<!-- <Div Align="right"><a id="difference_language" onclick="change_language()"></a></Div> -->
+<!-- <br> -->
+
+<script type="text/javascript">
+
+    // ヘッダーやその他文字の表示
+    if ("{{ language }}" == "en") {
+      d3.select("#header").text("{{floor}}People Flow Map");
+      d3.select("#btn_coordinate").text("coordinate");
+      d3.select("#datetime_header").text("datetime : ");
+      d3.select("#category_1").text("adjust");
+      d3.select("#btn_reload").text("Reload");
+      d3.select("#btn_back").text("Back");
+      d3.select("#btn_forward").text("Forward");
+      d3.select("#time_interval_text").text(":Data referenced from this time ago.");
+      d3.select("#difference_language").text("日本語");
+    } else {
+      d3.select("#header").text("{{floor}}人流マップ");
+      d3.select("#btn_coordinate").text("座標");
+      d3.select("#datetime_header").text("取得日時：");
+      d3.select("#category_1").text("時間調整");
+      d3.select("#btn_reload").text("更新");
+      d3.select("#btn_back").text("戻る");
+      d3.select("#btn_forward").text("進む");
+      d3.select("#time_interval_text").text("間の人流データを表示");
+      d3.select("#difference_language").text("English");
+    };
+    d3.select("#btn_realtime").text("RealTime");
+    Sample_form.textbox_mac.value = "{{ mac }}";
+
+    //floorのリストと現在の階を定義
+    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"];
+    var floor = "{{ floor }}";
+
+    //タブ用の枠を作成
+    var tab = d3.select("#tabbox").append("p").attr("class", "tabs");
+    tab.selectAll("p.tab")
+    .data(floor_list)
+    .enter()
+    .append("a")
+    .text(function(d){return d})
+    .attr("onclick",function(d){return "jump_floor('"+d+"')"})
+    .attr("id", function(d){return d})
+    .attr("class", function(d){
+      if(floor == d){
+        return "select_tab"
+      } else{
+        return "waiting_tab"
+      }
+    })
+
+
+    // マップ画像の挿入
+    if ("{{ floor }}" == "W2-6F") {
+      var file_name = "6F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-7F"){
+      var file_name = "7F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-8F"){
+      var file_name = "8F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-9F"){
+      var file_name = "9F_west2.jpg";
+    } else if ("{{ floor }}" == "kaiyo"){
+      var file_name = "kaiyo.jpg";
+    };
+    d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
+
+    // データセットの定義
+    var pcwlnode = [];
+    var bookmarks = [];
+    var pfvinfo = [];
+    {% for s in pcwlnode %}
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},state:"{{ s.state }}"});
+    {% endfor %}
+    {% for s in bookmarks %}
+    bookmarks.push({name:"{{ s.name }}",url:"{{ s.url }}"});
+    {% endfor %}
+    {% for s in pfvinfo %}
+    pfvinfo.push({mac:"{{ s.mac }}",color:"{{ s.color }}",route:{{ s.route }},floor:"{{ s.floor }}"});
+    {% endfor %}
+    var analy_coord = {{analy_coord}};
+    var examine_coord = {{examine_coord}};
+
+    // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+    var pcwlnode_id = [];
+    for (var i = 0; i < pcwlnode.length; i++) {
+      pcwlnode_id[pcwlnode[i].pcwl_id] = i;
+    };
+
+    // 取得時間を表示
+    var year = parseInt({{ year }});
+    var month = parseInt({{ month }})-1;
+    var day = parseInt({{ day }});
+    var hour = parseInt({{ hour }});
+    var minute = parseInt({{ minute }});
+    var second = parseInt({{ second }});
+    var datetime = new Date(year,month,day,hour,minute,second);
+    set_selectbox(); // セレクトボックスにdatetimeをセット
+
+    // セレクトボックスの値をtimerangeに合わせる
+    document.Sample_form.selectbox_timerange.selectedIndex = timerange_list_id["{{ timerange }}"];
+
+    // 時間抽出
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+    // アニメーション時間
+    var animation_time = 500;
+
+    // svgの選択
+    var svg1 = d3.select("#svg1")
+    var svg2 = d3.select("#svg2")
+
+    // staycircleの描画空間
+    var stay_palet = svg1.append("g")
+
+    //pcwlnodeの枠作成
+    var node = svg1.append("g").attr("id", "pcwlnode_area");
+
+    // pcwlnodeのマッピング
+    var g = node.selectAll("g.pcwlnode")
+    .data(pcwlnode)
+    .enter()
+    .append("g")
+    .attr({
+      "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+       transform: function(d) {
+         return "translate(" + d.pos_x + "," + d.pos_y + ")";
+       },
+       "onclick": function(d){return "select_node('"+ d.pcwl_id +"')";},
+      // "transform": "translate(" + 0 + "," + 0 + ")",
+    })
+
+    // 円の描画(ノード)
+    g.append("circle")
+    .attr({
+      "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+      "r": 0.1,
+      "stroke": "red",
+      "stroke-width": 0,
+      // "fill": "purple",
+      "fill": function(d){
+        if(d.state == "timeout"){
+          // return "black";
+          return "darkgray";
+        }
+        else{
+          return "purple";
+        }
+      },
+    })
+    .transition(function(d){return "pcwl_circle"+d.pcwl_id;})
+    .duration(1000)
+    .attr("r",13);
+    // テキストの描画
+    g.append("text")
+    .attr({
+      "id": function(d){return "pcwl_text"+d.pcwl_id;},
+      "text-anchor": "middle",
+      "dy": ".35em",
+      "fill": "white",
+    })
+    .text(function(d) {
+            return d.pcwl_id;
+    });
+
+    //円の描画(解析・計算座標)
+    function make_position_view(){
+      //座標の表示エリアを初期化
+      d3.select("#position_palet").remove();
+      //座標を表示するエリアを確保
+      var position_palet = svg1.append("g").attr("id", "position_palet");
+      var analy = position_palet.append("g").attr("id", "analy_palet");
+      var examine = position_palet.append("g").attr("id", "examine_palet");
+      if (analy_opacity) {
+              d3.select("#analy_palet").attr("visibility", "hidden");
+      }
+      if (examine_opacity) {
+              d3.select("#examine_palet").attr("visibility", "hidden");
+      }
+      if(analy_coord.length != 0){
+        var analy_center = analy.selectAll(g.analy_center).data(analy_coord).enter().append("g")
+        .attr({
+          transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
+        })
+        analy_center.append("circle").attr({
+          "r": 5,
+          "stroke": "red",
+          "stroke-width": 0,
+          "fill": "deeppink",
+        });
+      }
+      if(examine_coord.length != 0){
+        var examine_position = examine.selectAll(g.examine_position).data(examine_coord).enter().append("g")
+        .attr({
+          transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
+        })
+        examine_position.append("circle").attr({
+          "r": 6,
+          "stroke": "royalblue",
+          "stroke-width": 4,
+          "fill": "Transparent",
+        });
+      }
+    }
+    make_position_view();
+
+    // 解析・計算座標の透明度をトグルで切り替える
+    var analy_opacity = false;
+    var examine_opacity = false;
+    var node_opacity = false;
+    function check_opacity(pattern){
+        if (pattern == "analy"){
+            if (analy_opacity) {
+              d3.select("#btn_analy").style("color","black");
+              d3.select("#analy_palet").attr("visibility", "visible");
+            } else {
+              d3.select("#btn_analy").style("color","blue");
+              d3.select("#analy_palet").attr("visibility", "hidden");
+            };
+              analy_opacity = !analy_opacity;
+        } else if (pattern == "examine"){
+            if (examine_opacity) {
+              d3.select("#btn_examine").style("color","black");
+              d3.select("#examine_palet").attr("visibility", "visible");
+            } else {
+              d3.select("#btn_examine").style("color","blue");
+              d3.select("#examine_palet").attr("visibility", "hidden");
+              };
+              examine_opacity = !examine_opacity;
+        } else if (pattern == "node"){
+            if (node_opacity) {
+              d3.select("#btn_node").style("color","black");
+              d3.select("#pcwlnode_area").attr("visibility", "visible");
+            } else {
+              d3.select("#btn_node").style("color","blue");
+              d3.select("#pcwlnode_area").attr("visibility", "hidden");
+              };
+              node_opacity = !node_opacity;
+        }
+    }
+
+
+    // 矢印の描画
+    function make_stable_view(){
+      // pathの計算で使うので、半径と矢印の微調整パラメータを別定義にしている。
+      var r1 = 13;
+      var r2 = 13;
+      var ref1 = 7;
+
+      // defs/markerという構造で、svgの下に矢印を定義
+      var marker = svg1.append("defs").selectAll("g.marker").data(pfvinfo).enter().append("marker")
+          .attr({
+            'id': function(d,i){return "arrowhead"+i;},
+            'refX': ref1,
+            'refY': 2,
+            'markerWidth': 4,
+            'markerHeight': 4,
+            'orient': "auto"
+          });
+      // 矢印の形をpathで定義
+      marker.append("path")
+          .attr({
+            d: "M 2,0.5 V 3.5 L4,2 Z",
+            fill: function(d){return d.color;}
+          });
+
+      // line関数を定義
+      var line = d3.svg.line()
+          .interpolate('basis')
+          .x(function(d) {return d.pos_x;})
+          .y(function(d) {return d.pos_y;});
+
+      // 滞留円の描画領域を作成
+      var stay_palet_g = stay_palet.append("g").attr("id","g_staycircle")
+
+      // path要素を作成
+      svg1.append("g").attr("id","g_arrow").style("opacity",0.8);
+      path = svg1.select("#g_arrow").selectAll("g.arrow")
+      .data(pfvinfo)
+      .enter()
+      .append("g")
+      .attr("id", function(d){return d.color + "path";})
+      .style("opacity", function(d){
+        if ($.inArray(d.color, hidden_color) >= 0){
+          return 0;
+        } else{
+          return 1;
+        }
+      })
+      .each(function(d,i){
+        for (var j = 0; j < d.route.length; j++) { // 各時刻に対して
+          for (var k = 0; k < d.route[j].length; k++) { // 各ルートに対して
+            if (d.route[j][k].length == 2) { // 矢印を記述
+
+              var c1 = pcwlnode[pcwlnode_id[d.route[j][k][0]]];
+              var c2 = pcwlnode[pcwlnode_id[d.route[j][k][1]]];
+              var carray = [c1,c2];
+              var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
+              var t = totalLength - (r1+r2+ref1);
+              var interval = 6; // 2本の矢印間の間隔
+              var trans_x = +1 * interval * (c1.pos_y - c2.pos_y) / totalLength;
+              var trans_y = -1 * interval * (c1.pos_x - c2.pos_x) / totalLength;
+
+              d3.select(this).append("path")
+              .attr({
+                'd': line(carray),
+                'stroke': d.color,
+                'stroke-width': 5,
+                'fill': 'none',
+                // pathの属性として、上で定義した矢印を指定します
+                'marker-end':"url(#arrowhead"+i+")",
+                // 破線の指定を行います。
+                'stroke-dasharray': "0 " + r1 + " " + t + " " + r2,
+                // 破線の開始相対位置を指定します
+                'stroke-dashoffset': 0,
+                transform: "translate("+trans_x+","+trans_y+")",
+              })
+              .style("opacity",0)
+              .transition(function(d){return d.mac+"arrow";}).duration(animation_time)
+              .style("opacity",0.8)
+            } else if (d.route[j][k].length == 1) { // 滞留円を記述
+
+              stay_palet_g.append("circle")
+              .attr({
+                "cx": pcwlnode[pcwlnode_id[d.route[j][k][0]]]["pos_x"],
+                "cy": pcwlnode[pcwlnode_id[d.route[j][k][0]]]["pos_y"],
+                "r": 20,
+                "fill": d.color,
+                'id': d.color + "stay",
+              })
+              .style("opacity",function(){
+                if ($.inArray(d.color, hidden_color) >= 0){
+                  return 0;
+                } else{
+                  return 0.5;
+                }
+              })
+            };
+          };
+        }
+      })
+    }
+    make_stable_view();
+
+    // マップの座標(目盛り)と温度・照度を追加
+    var coordinate_width = 50; // 座標間の幅
+    var coordinate = [];
+    for (var i = 0; i*coordinate_width < 1024; i++) {
+     for (var j = 0; j*coordinate_width < 560; j++) {
+      var x = i*coordinate_width;
+      var y = j*coordinate_width;
+      coordinate.push({x:x, y:y});
+     }
+   }
+
+    // 座標目盛りの透明度をトグルで切り替える
+    var flag_opacity = false;
+    function coordinate_opacity(){
+        if (flag_opacity) {
+          if(!flag_jud_coordinate){
+            d3.select("#btn_coordinate").style("color","black");
+          };
+          svg1.select("#g_coordinate")
+              .transition("coordinate_disappear")
+              .duration(1000)
+              .style("opacity",0);
+        } else {
+          d3.select("#btn_coordinate").style("color","blue");
+          svg1.select("#g_coordinate")
+              .transition("coordinate_appear")
+              .duration(1000)
+              .style("opacity",1);
+          };
+      flag_opacity = !flag_opacity;
+    }
+
+    function make_coordinate() {
+      // 座標目盛り(円)の生成
+      svg1.append("g").attr("id","g_coordinate").style("opacity",0);
+      svg1.select("#g_coordinate").selectAll("g.coordinate")
+      .data(coordinate)
+      .enter()
+      .append("circle")
+      .attr({
+        "cx": function(d) { return d.x;},
+        "cy": function(d) { return d.y;},
+        "r": 3,
+        "fill": "purple",
+      })
+    }
+    make_coordinate();
+
+    // 折りたたみ表示
+    function show(inputData) {
+      var objID=document.getElementById( "layer_" + inputData );
+      var buttonID=document.getElementById( "category_" + inputData );
+      if (inputData == 1){
+        if ("{{ language }}" == "en") {
+          var opentext = "adjust";
+          var closetext = "hide";
+        } else {
+          var opentext = "時間調整";
+          var closetext = "非表示";
+        };
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_"+inputData).text(closetext);
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_"+inputData).text(opentext);
+        }
+      } else if (inputData == 2){
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_2").style("color","blue");
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_2").style("color","black");
+        }
+      } else if (inputData == 3){
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_3").style("color","blue");
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_3").style("color","black");
+        }
+      } else if (inputData == 4){
+        if(objID.className=='close') {
+          objID.style.display='block';
+          objID.className='open';
+          d3.select("#category_4").style("color","blue");
+        }else{
+          objID.style.display='none';
+          objID.className='close';
+          d3.select("#category_4").style("color","black");
+        }
+      }
+    }
+    // // Floor関係の描画
+    for (var i = 0; i < floor_list.length; i++) {
+      add_floor_list(floor_list[i]);
+    };
+    if (floor_list.length < 4) {
+      add_space_floor(4 - floor_list.length);
+    };
+    function add_floor_list(floor_name){ // 1つのフロアを表に書き足す
+      d3.select("#floor_list").append("p")
+      .append("a")
+      .text(floor_name+" ")
+      .attr("onclick","jump_floor('"+floor_name+"')");
+    }
+    function add_space_floor(num){ // 表を整えるためにスペースを作る
+      var book = d3.select("#floor_list");
+      for (var i = 0; i < num; i++) {
+        book.append("p").attr("id","space").text("_"); // 間隔調整
+      };
+    }
+
+    // ブックマーク関係の描画
+    for (var i = 0; i < bookmarks.length; i++) {
+      add_bookmark_list(bookmarks[i]);
+    };
+    if (bookmarks.length < 4) {
+      add_space(4 - bookmarks.length);
+    };
+    var book = d3.select("#bookmark_add");
+    if ("{{ language }}" == "en") {
+      book.append("p").text("Add new Bookmark:");
+    } else {
+      book.append("p").text("新規ブックマーク追加：");
+    };
+    book.append("input")
+    .attr({
+      "type":"text",
+      "name":"textbox_new_bookmark_name",
+      "size":"30",
+    });
+    book.append("input")
+    .attr({
+      "type":"button",
+      "value": function(){
+        if ("{{ language }}" == "en") {
+          return "Add";
+        } else {
+          return "追加";
+        }
+      },
+      "onclick":"add_new_bookmark()",
+      "class":"btn btn-default btn-sm",
+    })
+    book.append("p"); // 間隔調整
+    if ("{{ language }}" == "en") {
+      book.append("p").append("a").style("color","red")
+      .attr("onclick","all_bookmark_delete()").text("All Bookmarks delete");
+    } else {
+      book.append("p").append("a").style("color","red")
+      .attr("onclick","all_bookmark_delete()").text("全ブックマーク削除");
+    };
+    book.append("p").text("_"); // 間隔調整
+
+    function add_bookmark_list(json){ // 1つのブックマークを表に書き足す
+      var book = d3.select("#bookmark_list").append("p").attr("id","name"+json["name"]);
+      book.append("a")
+      .text(json["name"]+" ")
+      .attr("onclick","move_bookmark('"+json["url"]+"')");
+      //.attr("href",json["url"]);
+      if ("{{ language }}" == "en") {
+        book.append("a")
+        .text("delete")
+        .style("color","red")
+        .attr("onclick","delete_bookmark('"+json["name"]+"')");
+      } else {
+        book.append("a")
+        .text("削除")
+        .style("color","red")
+        .attr("onclick","delete_bookmark('"+json["name"]+"')");
+      };
+    }
+    function add_space(num){ // 表を整えるためにスペースを作る
+      var book = d3.select("#bookmark_list");
+      for (var i = 0; i < num; i++) {
+        book.append("p").attr("id","space").text("_"); // 間隔調整
+      };
+    }
+
+    function add_new_bookmark(){ // テキストボックスを読み取り新規ブックマークの作成
+      var name = Sample_form.textbox_new_bookmark_name.value;
+      if (name != "") {
+        var send_url = make_url_query() + "&add=2&name=" + name;
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'pfv:bookmark_edit' %}"+send_url,
+          dataType: 'json',
+          success: function(json){
+            bookmarks.push(json);
+            d3.select("#bookmark_list").selectAll("#space").remove();
+            add_bookmark_list(json);
+            if (bookmarks.length < 4) {
+              add_space(4 - bookmarks.length);
+            };
+            Sample_form.textbox_new_bookmark_name.value = "";
+          }
+        });
+      };
+    }
+    function move_bookmark(url){
+      var mac = Sample_form.textbox_mac.value;
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      }
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:tag_position_check_json' %}"+ "?datetime=" + url + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor,
+        dataType: 'json',
+        success: function(json){
+          set_book_selectbox(url);
+          Load_Form();
+        }
+      });
+    }
+    function delete_bookmark(name){ // 1つのブックマークを削除する
+      if ("{{ language }}" == "en") {
+        var alert = 'delete '+name;
+      } else {
+        var alert = name+'を削除します';
+      };
+      if(window.confirm(alert)){
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'pfv:bookmark_edit' %}"+"?delete=3&name="+name,
+          dataType: 'json',
+          success: function(json){
+            d3.select("#bookmark_list").select("#name"+name).remove();
+            d3.select("#bookmark_list").selectAll("#space").remove();
+            bookmarks.splice(0, 1);
+            if (bookmarks.length < 4) {
+              add_space(4 - bookmarks.length);
+            };
+          }
+        });
+      }
+    }
+    function all_bookmark_delete(){ // すべてのブックマークを削除する
+      if ("{{ language }}" == "en") {
+        var alert1 = 'All Bookmarks will be deleted';
+        var alert2 = 'Really OK?';
+      } else {
+        var alert1 = 'すべてのブックマークを削除します';
+        var alert2 = '本当によろしいですか？';
+      };
+      if(window.confirm(alert1)){
+        if (window.confirm(alert2)) {
+          $.ajax({
+            type: 'GET',
+            url: "{% url 'pfv:bookmark_edit' %}"+"?delete=4",
+            dataType: 'json',
+            success: function(json){
+              d3.select("#bookmark_list").selectAll("p").remove();
+              bookmarks = [];
+              if (bookmarks.length < 4) {
+                add_space(4 - bookmarks.length);
+              };
+            }
+          });
+        };
+      }
+    }
+
+    // 人数参考バーの表示
+    // 幅（Width）と高さ（ height）
+    var w = 1000;
+    var h = 100;
+    var padding = 30;
+    var max = 10; // 最大表示人数
+
+  // 参照画面を描画
+     var g_color_reference = svg2.append("g").attr("id","g_color_reference")
+    .selectAll("g.color_reference")
+    .data(pfvinfo)
+    .enter()
+    .append("g")
+    .attr({
+      transform: function(d,i) {
+        return "translate(" + 30 + "," + (i*85 + padding + 20) + ")";
+        // if (d.color == "blue" || d.color == "red" || d.color == "green"){
+        //   return "translate(" + (i*320 + padding) + "," + 30 + ")";
+        // } else {
+        //   return "translate(" + (i*320 + padding - 960) + "," + 80 + ")";
+        // }
+      },
+    })
+
+    // macに対する色の参照画面を描画
+    function make_color_reference(){
+      // 開始時に前の画面を消去
+      //svg2.select("#g_color_reference").remove();
+
+      // 円の描画
+      g_color_reference.append("circle")
+      .attr({
+        "r": 0.1,
+        "fill": function(d){return d.color;},
+        "stroke": function(d){return d.color;},
+        "id": function(d){return d.color + "circle"},
+        "cursor": "pointer",
+      })
+      .transition(function(d){return d.color+"circle";}).duration(1000)
+      .attr("r", 18)
+      .attr("onclick", function(d){return "mac_color_opacity('"+ d.color +"')"});
+      // テキストの描画
+      g_color_reference.append("text")
+      .attr({
+        "text-anchor": "middle",
+        "dx": "4.35em",
+        "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
+        "fill": function(d){return d.color;},
+      })
+      .text(function(d) {
+              if (d.mac == "00:11:81:10:01:1c") {
+                return "もみだれや";
+              }　else if (d.mac == "00:11:81:10:01:19") {
+                return "あじや";
+              }　else if (d.mac == "00:11:81:10:01:17") {
+                return "さいこんたん";
+              } else if (d.mac == "00:11:81:10:01:1a") {
+                return "予備1";
+              } else if (d.mac == "00:11:81:10:01:23") {
+                return "予備2";
+              } else if (d.mac == "00:11:81:10:01:1b") {
+                return "予備3";
+              } /*else {
+                return d.mac;
+              }*/
+      });
+
+      //現在階の描画
+      g_color_reference.append("text")
+      .attr({
+        "text-anchor": "middle",
+        "dx": "10.85em",
+        "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
+        "fill": function(d){return d.color;},
+      })
+      .text(function(d) {
+                return d.floor;
+              }
+      );
+
+    }
+    make_color_reference();
+
+    //非表示にする色のリスト
+    var hidden_color = [];
+
+    //指定したタグの表示・非表示の切り替え用関数
+    function mac_color_opacity(color) {
+      if ($.inArray(color, hidden_color) >= 0) {
+        svg2.select("#"+color+"circle").attr("fill", color);
+        svg1.select("#"+color+"path").style("opacity", 1);
+        svg1.select("#"+color+"stay").style("opacity", 0.5);
+        svg1.select("#"+color+"anime").style("opacity", 0.8);
+        hidden_color.splice($.inArray(color, hidden_color), 1);
+      } else{
+        hidden_color.push(color);
+        svg2.select("#"+color+"circle").attr("fill", "Transparent");
+        svg1.select("#"+color+"path").style("opacity", 0);
+        svg1.select("#"+color+"stay").style("opacity", 0);
+        svg1.select("#"+color+"anime").style("opacity", 0);
+      }
+      // if(flag_Auto2){
+      //   animate_circle.remove();
+      //   make_animate_circle();
+      // } else{
+      //   d3.select("#g_arrow").remove();
+      //   d3.select("#g_staycircle").remove();
+      //   d3.select("#svg1").select("defs").remove();
+      //   make_stable_view();
+      // }
+    }
+
+    //選択ノードのリスト
+     var select_node_list =[];
+
+    //クリックされたノードを選択状態にし、選択ノードのリストに格納
+    function select_node(node_number){
+      var class_name = document.getElementById("pcwl_circle" + node_number);
+      if ($.inArray(node_number, select_node_list) < 0){
+        class_name.setAttribute("stroke-width", 5);
+        select_node_list.push(node_number);
+      }
+      else if ($.inArray(node_number, select_node_list) >= 0){
+        class_name.setAttribute("stroke-width", 0);
+        select_node_list.splice($.inArray(node_number, select_node_list), 1);
+      } else{
+        console.log("miss");
+      }
+    }
+
+    // 言語切替
+    function change_language(){
+      if ("{{ language }}" == "en") {
+        var language = "jp";
+      } else {
+        var language = "en";
+      }
+      document.location = "{% url 'pfv:tag_position_check' %}"+ make_url_query() + "&language=" + language;
+    }
+
+    // セレクトボックスの値をdatetimeに合わせる
+    function set_selectbox(){
+      var year = datetime.getFullYear() - 2014;
+      var minute = datetime.getMinutes();
+      var second = datetime.getSeconds()/5;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
+      document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
+      document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+      document.Sample_form.textbox_second.selectedIndex = second;
+    }
+
+    function describe_datetime(){
+      if ("{{ language }}" == "en") {
+        d3.select("#got_datetime").text(String(datetime).slice(4,24));
+      } else {
+        d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2)+":"+("0"+datetime.getSeconds()).slice(-2));
+      }
+    }
+    describe_datetime();
+
+    // セレクトボックスの値をbookmarkの時刻に合わせる
+    function set_book_selectbox(book_time){
+      var year = book_time.slice(0,4) - 2014;
+      var month = book_time.slice(4,6) - 1;
+      var day = book_time.slice(6,8) - 1;
+      var hour = book_time.slice(8,10);
+      var minute = book_time.slice(10,12);
+      var second = book_time.slice(12,14)/5;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = month;
+      document.Sample_form.textbox_day.selectedIndex = day;
+      document.Sample_form.textbox_hour.selectedIndex = hour;
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+      document.Sample_form.textbox_second.selectedIndex = second;
+    }
+
+    function describe_book_time(book_time){
+      if ("{{ language }}" == "en") {
+        d3.select("#got_datetime").text(book_time.slice(0,14));
+      } else {
+        d3.select("#got_datetime").text(book_time.slice(0,4)+"年"+book_time.slice(4,6)+"月"+book_time.slice(6,8)+"日"+" "+book_time.slice(8,10)+":"+book_time.slice(10,12)+":"+book_time.slice(12,14));
+      }
+    }
+
+    // datetime,language,floor,mac,timerangeのurlクエリを出力する
+    function make_url_query(){
+      var year = datetime.getFullYear();
+      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+      var day = ("0"+datetime.getDate()).slice(-2);
+      var hour = ("0"+datetime.getHours()).slice(-2);
+      var minute = ("0"+datetime.getMinutes()).slice(-2);
+      var second = ("0"+datetime.getSeconds()).slice(-2);
+
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      }
+      var mac = Sample_form.textbox_mac.value;
+
+      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor + "&selectnode=" + select_node_list;
+      return url;
+    }
+
+    /***********************************
+                Ajax関係
+   ************************************/
+
+   // datetimeに対応したJSONをajaxで読み込む
+    function Load_JSON(datetime){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:tag_position_check_json' %}"+make_url_query(),
+        dataType: 'json',
+        success: function(json){
+          describe_datetime();
+          if ((flag_jud_anime == false) && (flag_jud_real == false)){
+            Reload_timeout(json);
+          }
+          Relod_position(json);
+          Reload_pfvinfo(json);
+          Reload_mac_floor(json);
+        }
+      });
+    }
+    function Load_JSON2(datetime){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:tag_position_check_json' %}"+make_url_query(),
+        dataType: 'json',
+        success: function(json){
+          if ("{{ language }}" == "en") {
+            d3.select("#header").text(floor+"People Flow Map");
+          } else{
+            d3.select("#header").text(floor+"人流マップ");
+          }
+          describe_datetime();
+          make_coordinate();
+          Reload_pcwlnode(json);
+          Relod_position(json);
+          Reload_pfvinfo(json);
+          Reload_mac_floor(json);
+          if(flag_jud_anime){
+            Auto_Animation2();
+            flag_jud_anime = !flag_jud_anime;
+          };
+          if (flag_jud_real) {
+            realtime();
+            flag_jud_real = !flag_jud_real;
+          };
+          if (flag_jud_coordinate){
+            coordinate_opacity();
+            flag_jud_coordinate = !flag_jud_coordinate;
+          }
+        }
+      });
+    }
+
+    // セレクトボックスの日付のJSONをajaxで読み込む
+    function Load_Form(){
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+      datetime.setYear(parseInt(year));
+      datetime.setMonth(parseInt(month)-1);
+      datetime.setDate(parseInt(day));
+      datetime.setHours(parseInt(hour));
+      datetime.setMinutes(parseInt(minute));
+      datetime.setSeconds(parseInt(second));
+      Load_JSON(datetime);
+    }
+
+    function Load_Form2(){
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+      datetime.setYear(parseInt(year));
+      datetime.setMonth(parseInt(month)-1);
+      datetime.setDate(parseInt(day));
+      datetime.setHours(parseInt(hour));
+      datetime.setMinutes(parseInt(minute));
+      datetime.setSeconds(parseInt(second));
+      Load_JSON2(datetime);
+    }
+
+    //別のフロアにジャンプする際の判定用フラグ
+      var flag_jud_anime = false;
+      var flag_jud_real = false;
+      var flag_jud_coordinate = false;
+
+    // 別のフロアへジャンプ
+    function jump_floor(floor_name){
+      for (var i = 0; i < floor_list.length; i++){
+          document.getElementById(floor_list[i]).setAttribute("onclick", "null");
+      }
+      if(flag_Auto2){
+        flag_jud_anime = !flag_jud_anime;
+        Auto_Animation2();
+      };
+      if (flag_realtime) {
+        flag_jud_real = !flag_jud_real;
+        realtime();
+      };
+      if (flag_opacity){
+        flag_jud_coordinate = !flag_jud_coordinate;
+        coordinate_opacity();
+      }
+      d3.select("#svg1").selectAll("g").remove();
+      //変更前のfloorのタブを待機状態に変更
+      var before_floor_ID = document.getElementById(floor);
+      before_floor_ID.className = 'waiting_tab';
+      //階層を変更
+      floor = floor_name;
+      //変更後のfloorのタブを選択状態に変更
+      var after_floor_ID = document.getElementById(floor);
+      after_floor_ID.className = 'select_tab';
+      //リストpcwlnodeを空にする
+      pcwlnode.length = 0;
+      // マップ画像の挿入
+      if (floor == "W2-6F") {
+        var file_name = "6F_west2.jpg";
+      } else if (floor == "W2-7F"){
+        var file_name = "7F_west2.jpg";
+      } else if (floor == "W2-8F"){
+        var file_name = "8F_west2.jpg";
+      } else if (floor == "W2-9F"){
+        var file_name = "9F_west2.jpg";
+      } else if (floor == "kaiyo"){
+        var file_name = "kaiyo.jpg";
+      };
+      d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
+      // staycircleの描画空間
+      stay_palet = svg1.append("g")
+      //データの更新
+      Load_Form2();
+    }
+
+    // xx秒戻るor進む
+    function slide_DT(s){ // s=1なら戻る,s=-1なら進む
+      var value = Sample_form.textbox_interval.value;
+      var num = s * parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        datetime.setSeconds(datetime.getSeconds() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "min"){
+        datetime.setMinutes(datetime.getMinutes() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "hou") {
+        datetime.setHours(datetime.getHours() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "day") {
+        datetime.setDate(datetime.getDate() - num);
+        Load_JSON(datetime);
+      }
+      set_selectbox();
+    }
+
+    function Reload_timeout(json){
+      var to_node;
+      for (var i = 0; i < json["pcwlnode"].length; i++){
+        to_node = document.getElementById('pcwl_circle' + json["pcwlnode"][i]["pcwl_id"]);
+        if(json["pcwlnode"][i]["state"] == "timeout"){
+          to_node.setAttribute("fill", "darkgray");
+        } else{
+          to_node.setAttribute("fill", "purple");
+        }
+      }
+    }
+
+    function Reload_pcwlnode(json){
+
+      // //pcwlnodeの更新
+      for (var i = 0; i < json["pcwlnode"].length; i++){
+        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"],state:json["pcwlnode"][i]["state"]});
+      }
+      // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+      pcwlnode_id.length = 0;
+      for (var i = 0; i < pcwlnode.length; i++) {
+        pcwlnode_id[pcwlnode[i].pcwl_id] = i;
+      };
+      //pcwlnodeの枠作成
+      var node = svg1.append("g").attr("id", "pcwlnode_area");
+      if (node_opacity) {
+              d3.select("#pcwlnode_area").attr("visibility", "hidden");
+      }
+      // pcwlnodeのマッピング
+      var g = node.selectAll("g.pcwlnode")
+      .data(pcwlnode)
+      .enter()
+      .append("g")
+      .attr({
+        "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+        transform: function(d) {
+          return "translate(" + d.pos_x + "," + d.pos_y + ")";
+        },
+        "onclick": function(d){return "select_node('"+ d.pcwl_id +"')";},
+      })
+      // 円の描画
+      g.append("circle")
+      .attr({
+        "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+        "r": 0.1,
+        "stroke": "red",
+        "stroke-width": 0,
+        "fill": function(d){
+          if(d.state == "timeout"){
+            // return "black";
+            return "darkgray";
+          }
+          else{
+            return "purple";
+          }
+        },
+      })
+      .transition(function(d){return "repcwl_circle"+d.pcwl_id;}).duration(1000)
+      .attr("r", 13);
+      // テキストの描画
+      g.append("text")
+      .attr({
+        "id": function(d){return "pcwl_text"+d.pcwl_id;},
+        "text-anchor": "middle",
+        "dy": ".35em",
+        "fill": "white",
+      })
+      .text(function(d) {
+              return d.pcwl_id;
+      });
+      for (var i = 0; i < floor_list.length; i++){
+          document.getElementById(floor_list[i]).setAttribute("onclick", "jump_floor('"+floor_list[i]+"')");
+      }
+    }
+
+    function Reload_pfvinfo(json){
+      // pfvinfoの更新
+      for (var i = 0; i < json["pfvinfo"].length; i++) {
+          pfvinfo[i]["route"] = json["pfvinfo"][i]["route"]
+        };
+
+      // 画面の更新
+      if (flag_Auto2) {
+        move_animate_circle();
+      } else {
+        d3.select("#g_arrow").remove();
+        d3.select("#g_staycircle").remove();
+        d3.select("#svg1").select("defs").remove();
+        make_stable_view();
+      };
+    }
+
+    d3.select("#Auto_Animation").style("color","black");
+    var flag_Auto2 = false;
+    var Timer;
+
+    function Reload_mac_floor(json){
+
+      //svg2.select("#g_color_reference").remove();
+      var node = document.getElementById('g_color_reference');
+
+      // macアドレスの現在のfloorを更新
+      for (var i = 0; i < json["pfvinfo"].length; i++) {
+          pfvinfo[i]["floor"] = json["pfvinfo"][i]["floor"]
+          node.children[i].children[2].remove();
+        };
+
+      //現在階の描画
+      g_color_reference.append("text")
+      .attr({
+        "text-anchor": "middle",
+        "dx": "10.85em",
+        "dy": ".35em",
+        "font-size": "17px",
+        "font-weight": "bold",
+        "fill": function(d){return d.color;},
+      })
+      .text(function(d) {
+                return d.floor;
+              }
+      );
+    }
+
+    function Relod_position(json){
+      analy_coord = json["analy_coord"];
+      examine_coord = json["examine_coord"];
+      make_position_view();
+    }
+
+    function Auto_Ajax(){
+      slide_DT(-1);
+    }
+
+    // 実験中のボールアニメーション
+    var tmp_timerange_order; // ボールアニメーション実行前のtimerange値を記録
+    function Auto_Animation2(){
+      // timerange値を取得
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      }
+      // flagによりアニメーション実行or停止
+      if (flag_Auto2) {
+        flag_Auto2 = !flag_Auto2;
+        if(!flag_jud_anime){
+          d3.select("#btn_Auto2").style("color","black");
+        };
+        if (!flag_realtime) {
+          clearInterval(Timer);
+        };
+        animate_circle.remove();
+        document.Sample_form.selectbox_timerange.selectedIndex = tmp_timerange_order;
+        // stayed_circle.remove();
+        d3.select("#svg1").select("defs").remove();
+        make_stable_view();
+        describe_datetime();
+      } else {
+        flag_Auto2 = !flag_Auto2;
+        d3.select("#g_arrow").remove();
+        d3.select("#g_staycircle").remove();
+        make_animate_circle();
+        document.Sample_form.selectbox_timerange.selectedIndex = 0; // ボールアニメーション中はtimerange=10固定
+        tmp_timerange_order = timerange_list_id[String(timerange)];
+        d3.select("#btn_Auto2").style("color","blue");
+        if (!flag_realtime) {
+          Auto_Ajax();
+          // Timer = setInterval(Auto_Ajax,2000);
+          Timer = setInterval(Auto_Ajax,1500);
+          // Timer = setInterval(Auto_Ajax,5000);
+        };
+      };
+    }
+    function make_animate_circle(){
+      animate_circle = svg1.selectAll("g.pfvcircle")
+      .data(pfvinfo)
+      .enter()
+      .append("circle")
+      .attr({
+        "r": 0,
+        "fill":function(d){return d.color;},
+        "id": function(d){return d.color + "anime";},
+      })
+      .style("opacity", function(d){
+                if ($.inArray(d.color, hidden_color) >= 0){
+                  return 0;
+                } else{
+                  return 0.8;
+                }
+              })
+    }
+    function move_animate_circle(){
+      if (flag_realtime) {
+        var ball_animation_time = 4000; // リアルタイムビューの場合4秒かけてアニメーション
+        var ball_appear_time = 500; // リアルタイムビューの場合の出現・消滅時間
+      } else {
+        var ball_animation_time = 1000; // そうでなければ1秒かけてアニメーション
+        var ball_appear_time = 100;
+        // var ball_animation_time = 4000; //localでのrealtimeデバッグ用
+        // var ball_appear_time = 500;
+      };
+
+      animate_circle
+      .each(function(d){ // 円のそれぞれに対して以下を実行
+        var ball = d3.select(this);
+        if (d.route.length == 0) { // ボールのデータがない場合
+          ball = ball.transition(d.mac+"disappear").duration(ball_appear_time)
+          .attr("r",0)
+        } else { // ボールのデータが有る場合
+          ball = ball.attr({
+            "cx": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_x"],
+            "cy": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_y"],
+          })
+          .transition(d.mac+"appear").duration(ball_appear_time)
+          .attr("r",18)
+          if (d.route[0][0].length == 2) { // ボールが動く場合
+            for (var i = 0; i < d.route[0].length; i++) { // 各ルートに対して
+              ball = ball.transition(d.mac+"move").duration(ball_animation_time/d.route[0].length)
+              .ease("linear")
+              .attr({
+                "cx": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_x"],
+                "cy": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_y"],
+              })
+            }
+          }
+        };
+      })
+    }
+
+   // RealTimeビュー実行
+   var flag_realtime = false;
+   function realtime(){
+    if (flag_realtime) {
+      flag_realtime = !flag_realtime;
+      if(!flag_jud_real){
+        d3.select("#btn_realtime").style("color","black");
+      };
+      clearInterval(RT_Timer);
+      Load_Form();
+      if (flag_Auto2) {
+        // Timer = setInterval(Auto_Ajax,2000);
+        Timer = setInterval(Auto_Ajax,1500);
+        // Timer = setInterval(Auto_Ajax,5000);
+      };
+      describe_datetime();
+    } else {
+      if (flag_Auto2) {
+        clearInterval(Timer);
+      };
+      flag_realtime = !flag_realtime;
+      RT_Auto_Ajax();
+      d3.select("#btn_realtime").style("color","blue");
+      RT_Timer = setInterval(RT_Auto_Ajax,5000);
+    };
+   }
+   function RT_Auto_Ajax(){
+      datetime = new Date();
+      datetime.setSeconds(datetime.getSeconds() - 5); // 現在時刻の5秒前
+      Load_JSON(datetime);
+      set_selectbox();
+    }
+  </script>
+  {% endblock content %}
