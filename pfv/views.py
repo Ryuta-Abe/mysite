@@ -1114,13 +1114,13 @@ def tag_position_check_json(request):
   examine_coord = []
   examine_coord += db.examine_route.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
   if len(analy_coord) != 0:
-    del analy_coord[0]["_id"]
-    del analy_coord[0]["datetime"]
+    for i in range(len(analy_coord)):
+      del analy_coord[i]["_id"]
+      del analy_coord[i]["datetime"]
   if len(examine_coord) != 0:
-    del examine_coord[0]["_id"]
-    del examine_coord[0]["datetime"]
-  print(analy_coord)
-  print(examine_coord)
+    for i in range(len(examine_coord)):
+      del examine_coord[i]["_id"]
+      del examine_coord[i]["datetime"]
 
 
   # 送信するデータセット
