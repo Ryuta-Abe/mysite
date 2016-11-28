@@ -82,8 +82,9 @@ def insert_coord_from_node(floor, mac, node_num, dt):
 	for n_node in next_list:
 		distance = get_distance(floor, node_num, n_node)
 		margin = distance/4
-		margin_dist = {"margin":margin, "pos":[node_num, rounding(margin,1), rounding(distance-margin,1), n_node]}
-		# margin_dist = {"margin":margin, "pos":[node_num, margin, distance-margin, n_node]}
+		mag_pos = [node_num, rounding(margin,1), rounding(distance-margin,1), n_node]
+		p_x, p_y = get_position(floor, mag_pos)
+		margin_dist = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
 		mlist.append(margin_dist)
 
 	coord_data = {"mac":mac,"floor":floor,"datetime":dt,"pos_x":node_info["pos_x"],"pos_y":node_info["pos_y"],
@@ -122,7 +123,6 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 
 			mid_coord_dict["pos_x"] = rounding(mid_coord_dict["pos_x"],1)
 			mid_coord_dict["pos_y"] = rounding(mid_coord_dict["pos_y"],1)
-			# position = [st_node, rem_len, path["distance"]-rem_len, ed_node]
 			position = [st_node["pcwl_id"], rounding(rem_len,1), rounding(path["distance"]-rem_len,1), ed_node["pcwl_id"]]
 			break
 		else:
@@ -160,7 +160,8 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 			else:
 				rem_len = rem_len - path["distance"]
 
-		margin_dist = {"margin":margin, "pos":mag_pos}
+		p_x, p_y = get_position(floor, mag_pos)
+		margin_dist = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
 		mlist.append(margin_dist)
 
 	m_edge_list = []
@@ -193,7 +194,8 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 		for tmp_path in tmp_path_list:
 			distance = get_distance(floor, tmp_path[0], tmp_path[1])
 			mag_pos = [tmp_path[0], 0, distance, tmp_path[1]]
-			margin_dist = {"margin":0, "pos":mag_pos}
+			p_x, p_y = get_position(floor, mag_pos)
+			margin_dist = {"margin":0, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
 			mlist.append(margin_dist)
 
 	return mid_coord_dict, position, mlist

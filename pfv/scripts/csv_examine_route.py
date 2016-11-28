@@ -76,5 +76,7 @@ if __name__ == '__main__':
 		# print(exp_num)
 		exp_id  = query_str + exp_num
 		query = {"exp_id" : exp_id}
-		# get_analy_coord(query)
+		# 解析データによる座標を作る場合は　get_analy_coord　を使う
+		get_analy_coord(query)
+		# 評価のみの場合は下の行のみ実行
 		csv_examine_route(query)
