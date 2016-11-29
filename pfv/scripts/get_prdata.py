@@ -111,32 +111,35 @@ def save_rttmp(ip,floor,pcwl_id):
 		to_data = {"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Normal timeout"}
 		to_list.append(to_data)
 		# print(to_data)
-		print("Timeout "+ip)
+		str_pid = ("  "+ str(pcwl_id))[-3:]
+		print("Timeout : "+floor+str_pid+" "+ ip)
 	except socket.timeout:
 		# add : floor, pcwl_id
 		# db.timeoutlog.insert({"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"})
 		sto_data = {"datetime":now, "timeout_ip":ip, "floor":floor, "pcwl_id":pcwl_id, "TO_type":"Socket timeout"}
 		to_list.append(sto_data)
 		# print(sto_data)
-		print("Socket Timeout "+ip)
+		str_pid = ("  "+ str(pcwl_id))[-3:]
+		print("SocketTO: "+floor+str_pid+" "+ ip)
 	return {"data_list":data_list,"to_list":to_list}
 
 
 def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
-	#print ('process id:' + str(os.getpid())) #プロセス番号の表示（確認用）
-	data_list = save_rttmp(pcwlip["ip"],pcwlip["floor"],pcwlip["pcwl_id"])
-	# print(data_list)
-	if len(data_list["data_list"]) >= 1:
-		db.rttmp.insert(data_list["data_list"])
-		db.rttmp3.insert(data_list["data_list"])
-	if len(data_list["to_list"]) >= 1:
-		db.timeoutlog.insert(data_list["to_list"])
-		# print("-------------------Tolog was inserted----------------------")
-	# return data_list
-	for data in data_list["data_list"]:
-		if data["mac"] in tag_list:
-			db.trtmp.insert(data)
-			# print("inserted.")
+	if (pcwlip != "10.0.11.55"):
+		#print ('process id:' + str(os.getpid())) #プロセス番号の表示（確認用）
+		data_list = save_rttmp(pcwlip["ip"],pcwlip["floor"],pcwlip["pcwl_id"])
+		# print(data_list)
+		if len(data_list["data_list"]) >= 1:
+			db.rttmp.insert(data_list["data_list"])
+			db.rttmp3.insert(data_list["data_list"])
+		if len(data_list["to_list"]) >= 1:
+			db.timeoutlog.insert(data_list["to_list"])
+			# print("-------------------Tolog was inserted----------------------")
+		# return data_list
+		for data in data_list["data_list"]:
+			if data["mac"] in tag_list:
+				db.trtmp.insert(data)
+				# print("inserted.")
 
 
 @timeout_decorator.timeout(4.0) # cannot use on Windows
@@ -147,19 +150,27 @@ def multi(pcwliplist):
 	p.close()
 	p.join()
 
+# rounding in specified place
+def rounding(num, round_place):
+	rounded_num = round(num*pow(10, round_place)) / pow(10, round_place)
+	return rounded_num
+
+
 if __name__ == "__main__":
 	st = time.time()
 	### can not use on Windows ###
 	try:
 		multi(pcwliplist)
 	except:
-		print ("getPR timed out :(")
+		print ("===== getPR timed out :( =====")
 	else:
-		print ("getPR finished successfully :)")
+		pass
+		# print ("getPR finished successfully :)")
 	##############################
+	
 	# multi(pcwliplist)
 	ed = time.time()
-	print("getPR:"+str(ed-st))
+	print("getPR:"+str(rounding(ed-st,3))+"[sec]")
 
 	### Check col_name trtmp or trtmp_test ###
 	### when execute all process, uncomment under 5 lines. ###
@@ -168,5 +179,5 @@ if __name__ == "__main__":
 	st_dt = dt_from_14digits_to_iso(st_dt)
 	ed_dt = shift_seconds(st_dt, 5)
 	analyze_mod(st_dt, ed_dt)
-	print("Total:"+str(time.time()-all_st))
+	print("Total:"+str(rounding(time.time()-all_st,3))+"[sec]")
 	##########################################################
