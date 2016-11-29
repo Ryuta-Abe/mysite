@@ -493,22 +493,35 @@
               d3.select("#examine_palet").attr("visibility", "hidden");
       }
       if(analy_coord.length != 0){
-        var analy_center = analy.selectAll(g.analy_center).data(analy_coord).enter().append("g")
+        var analy_list = [];
+        for (var i = 0; i < analy_coord.length; i++){
+          analy_list.push({pos_x:analy_coord[i].pos_x, pos_y:analy_coord[i].pos_y, mac:analy_coord[i].mac, position:"center"});
+          for (var j = 0; j < analy_coord[i].mlist.length; j++){
+            analy_list.push({pos_x:analy_coord[i].mlist[j].pos_x, pos_y:analy_coord[i].mlist[j].pos_y, mac:analy_coord[i].mac, position:"margin"});
+          }
+        }
+        var analy_position = analy.selectAll(g.analy_position).data(analy_list).enter().append("g")
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
-        })
-        analy_center.append("circle").attr({
+        });
+        analy_position.append("circle").attr({
           "r": 5,
           "stroke": "red",
           "stroke-width": 0,
-          "fill": "deeppink",
+          "fill": function(d){
+            if (d.position == "center"){
+              return "deeppink";
+            } else if (d.position == "margin") {
+              return "black";
+            }
+          },
         });
       }
       if(examine_coord.length != 0){
         var examine_position = examine.selectAll(g.examine_position).data(examine_coord).enter().append("g")
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
-        })
+        });
         examine_position.append("circle").attr({
           "r": 6,
           "stroke": "royalblue",

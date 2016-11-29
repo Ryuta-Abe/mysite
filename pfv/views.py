@@ -886,15 +886,25 @@ def tag_track_map_json(request):
 # 選択ノードよりmqttトリガー
   if len(selectnode) != 0:
     selectnode = list(map(int, selectnode.split(",")))
-    print(selectnode)
     light_list = []
     for tag in range(3):
       if (db.staymacinfo.find({"mac":mac_query[tag], "datetime":{"$gt":gt_tag, "$lte":lt}, "pcwl_id": {"$in":selectnode}}).count()!=0):
         light_list.append(True)
+      elif (db.pfvmacinfo.find({"mac":mac_query[tag], "datetime":{"$gt":gt_tag, "$lte":lt}, "floor": floor}).count()!=0):
+        flow_list = []
+        flow_list += db.pfvmacinfo.find({"mac":mac_query[tag], "datetime":{"$gt":gt_tag, "$lte":lt}, "floor": floor})
+        light_list.append(False)
+        for i in flow_list[0]["route"]:
+          if i[0] in selectnode:
+            light_list.pop()
+            light_list.append(True)
+            break
+          elif i[1] in selectnode:
+            light_list.pop()
+            light_list.append(True)
+            break
       else:
         light_list.append(False)
-    print(light_list)
-    main(light_list)
 
   # macの色づけ
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
@@ -1021,12 +1031,13 @@ def tag_position_check(request):
   examine_coord = []
   examine_coord += db.examine_route.find({"datetime":{"$gt":gt, "$lte":lt},"mac":{"$in":mac_query}, "floor":floor}).sort("datetime", ASCENDING)
   if len(analy_coord) != 0:
-    del analy_coord[0]["_id"]
-    del analy_coord[0]["datetime"]
-    del examine_coord[0]["_id"]
-    del examine_coord[0]["datetime"]
-  print(analy_coord)
-  print(examine_coord)
+    for i in range(len(analy_coord)):
+      del analy_coord[i]["_id"]
+      del analy_coord[i]["datetime"]
+  if len(examine_coord) != 0:
+    for i in range(len(examine_coord)):
+      del examine_coord[i]["_id"]
+      del examine_coord[i]["datetime"]
 
   return render_to_response('pfv/tag_position_check.html',  # 使用するテンプレート
                               {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,'bookmarks':tagbookmarks,
