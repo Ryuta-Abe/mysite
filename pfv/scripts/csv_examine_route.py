@@ -59,18 +59,18 @@ def csv_examine_route(query=query):
 			via_dts_list = list(map(int,data[i]["via_dts_list"].split("[")[1].split("]")[0].split(",")))
 
 		print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
-		if __name__ == '__main__':
-			db.examine_route.remove({})
-			for i in range(len(via_dts_list)):
-				via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
-			examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
-			print("---------------------------------------------")
+		# if __name__ == '__main__':
+			# db.examine_route.remove({})
+		for i in range(len(via_dts_list)):
+			via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
+		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
+		print("---------------------------------------------")
 
 if __name__ == '__main__':
 	# for x in range(17,18):
 	# id_list = [12,16]
 	# for x in id_list:
-	for x in range(9,17):
+	for x in range(17,18):
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
 		# print(exp_num)

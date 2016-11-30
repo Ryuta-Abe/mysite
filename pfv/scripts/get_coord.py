@@ -13,7 +13,7 @@ st_dt = 20161020134250
 # ed_dt = 20161020134430
 ed_dt = 20161020134630
 
-db.analy_coord.remove({})
+# db.analy_coord.remove({})
 
 # Trueの場合, 1つ前の時刻(stay)を考慮する
 CONSIDER_BEFORE = True
