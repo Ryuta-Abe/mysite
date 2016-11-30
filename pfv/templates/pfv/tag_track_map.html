@@ -398,6 +398,10 @@
     var minute = parseInt({{ minute }});
     var second = parseInt({{ second }});
     var datetime = new Date(year,month,day,hour,minute,second);
+    console.log("init");
+    console.log(year);
+    console.log(minute);
+    console.log(second);
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
     // セレクトボックスの値をtimerangeに合わせる
@@ -1007,6 +1011,11 @@
       var year = datetime.getFullYear() - 2014;
       var minute = datetime.getMinutes();
       var second = datetime.getSeconds()/5;
+      console.log("set_selectbox");
+      console.log(year);
+      console.log(minute);
+      console.log(second);
+      console.log(document.Sample_form.textbox_second.selectedIndex);
       document.Sample_form.textbox_year.selectedIndex = year;
       document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
       document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
@@ -1050,6 +1059,7 @@
 
     // datetime,language,floor,mac,timerangeのurlクエリを出力する
     function make_url_query(){
+      console.log(datetime);
       var year = datetime.getFullYear();
       var month = ("0"+(datetime.getMonth()+1)).slice(-2);
       var day = ("0"+datetime.getDate()).slice(-2);
@@ -1475,6 +1485,8 @@
    }
    function RT_Auto_Ajax(){
       datetime = new Date();
+      console.log("realtime");
+      console.log(datetime);
       datetime.setSeconds(datetime.getSeconds() - 5); // 現在時刻の5秒前
       Load_JSON(datetime);
       set_selectbox();

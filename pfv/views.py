@@ -855,12 +855,15 @@ def tag_track_map_json(request):
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
   selectnode = request.GET.get("selectnode", "")
-
+  print(date_time)
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
   else :
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+  print(lt)
+  print(gt)
+
 
   gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
   # pcwl情報の取り出し
