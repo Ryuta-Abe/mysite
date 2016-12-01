@@ -125,7 +125,7 @@ def save_rttmp(ip,floor,pcwl_id):
 
 
 def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
-	if (pcwlip != "10.0.11.55"):
+	if (pcwlip["ip"] != "10.0.11.55"):
 		#print ('process id:' + str(os.getpid())) #プロセス番号の表示（確認用）
 		data_list = save_rttmp(pcwlip["ip"],pcwlip["floor"],pcwlip["pcwl_id"])
 		# print(data_list)

@@ -158,7 +158,8 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	if stay_node is not None:
 		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
 		actual_position_list = [stay_node,0.0,0.0,stay_node]
-		pos_x,pos_y = None, None
+		node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":stay_node})
+		pos_x,pos_y = node_info["pos_x"],node_info["pos_y"]
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
 		pos_x,pos_y = get_position(floor,actual_position_list)
@@ -584,7 +585,7 @@ if __name__ == '__main__':
 	# for i in len(param[6]):
 	# 	via_dts_list.append(dt_from_14digits_to_iso(common_dt+str(param[6][1])))
 
-	db.examine_route.remove({})
+	# db.examine_route.remove({})
 	for i in range(len(via_dts_list)):
 		via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
 	examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
