@@ -11,7 +11,7 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = False
+DEBUG_PRINT = True
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
 def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,query = None):
@@ -433,25 +433,26 @@ def process_count_result(total_count_list):
 		print ("match rate: " + str(match_rate) + "% "
 		 + "( " + str(total_match_count) + " / " + str(total_exist_count) + " )",end="  ")
 
-		match_rate_true = rounding(total_match_count / total_correct_count * 100, 2)
-		print ("match rate(true only): " + str(match_rate_true) + "% "
-		 + "( " + str(total_match_count) + " / " + str(total_correct_count) + " )")
-
 		adjacent_rate = rounding(total_adjacent_count / total_exist_count * 100, 2)
 		print ("adjacent rate: " + str(adjacent_rate) + "% "
 		 + "( " + str(total_adjacent_count) + " / " + str(total_exist_count) + " )",end="  ")
-
-		adjacent_rate_true = rounding(total_adjacent_count / total_correct_count * 100, 2)
-		print ("adjacent rate(true only): " + str(adjacent_rate_true) + "% "
-		 + "( " + str(total_adjacent_count) + " / " + str(total_correct_count) + " )")
 
 		middle_rate = rounding(total_middle_count / total_exist_count * 100, 2)
 		print ("middle rate: " + str(middle_rate) + "% "
 		 + "( " + str(total_middle_count) + " / " + str(total_exist_count) + " )",end="  ")
 
-		middle_rate_true = rounding(total_middle_count / total_correct_count * 100, 2)
-		print ("middle rate(true only): " + str(middle_rate_true) + "% "
-		 + "( " + str(total_middle_count) + " / " + str(total_correct_count) + " )")
+		if total_correct_count != 0:
+			match_rate_true = rounding(total_match_count / total_correct_count * 100, 2)
+			print ("match rate(true only): " + str(match_rate_true) + "% "
+			 + "( " + str(total_match_count) + " / " + str(total_correct_count) + " )")
+
+			adjacent_rate_true = rounding(total_adjacent_count / total_correct_count * 100, 2)
+			print ("adjacent rate(true only): " + str(adjacent_rate_true) + "% "
+			 + "( " + str(total_adjacent_count) + " / " + str(total_correct_count) + " )")
+
+			middle_rate_true = rounding(total_middle_count / total_correct_count * 100, 2)
+			print ("middle rate(true only): " + str(middle_rate_true) + "% "
+			 + "( " + str(total_middle_count) + " / " + str(total_correct_count) + " )")
 
 		print("\n-- detail info of false results --")
 
@@ -459,17 +460,20 @@ def process_count_result(total_count_list):
 		print ("wrong floor rate: " + str(wrong_floor_rate) + "% "
 		 + "( " + str(total_wrong_floor_count) + " / " + str(total_exist_count) + " )",end="  ")
 
-		wrong_floor_rate_false = rounding(total_wrong_floor_count / total_false_count * 100, 2)
-		print ("wrong floor rate(false only): " + str(wrong_floor_rate_false) + "% "
-		 + "( " + str(total_wrong_floor_count) + " / " + str(total_false_count) + " )")
-
 		wrong_node_rate = rounding(total_wrong_node_count / total_exist_count * 100, 2)
 		print ("wrong node rate: " + str(wrong_node_rate) + "% "
 		 + "( " + str(total_wrong_node_count) + " / " + str(total_exist_count) + " )",end="  ")
 
-		wrong_node_rate_false = rounding(total_wrong_node_count / total_false_count * 100, 2)
-		print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
-		 + "( " + str(total_wrong_node_count) + " / " + str(total_false_count) + " )")
+		if total_false_count != 0:
+			wrong_floor_rate_false = rounding(total_wrong_floor_count / total_false_count * 100, 2)
+			print ("wrong floor rate(false only): " + str(wrong_floor_rate_false) + "% "
+			 + "( " + str(total_wrong_floor_count) + " / " + str(total_false_count) + " )")
+			
+			wrong_node_rate_false = rounding(total_wrong_node_count / total_false_count * 100, 2)
+			print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
+			 + "( " + str(total_wrong_node_count) + " / " + str(total_false_count) + " )")
+
+
 	return existing_accuracy,existing_data_rate,average_error_distance
 
 
