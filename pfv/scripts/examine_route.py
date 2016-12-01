@@ -46,6 +46,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	accuracy,existing_data_rate,average_error_distance = process_count_result(total_count_list)
 	if average_error_distance is not None:
 		average_error_distance_m = rounding(average_error_distance * 14.4 / 110,2)
+		average_error_distance = rounding(average_error_distance,2)
 	db.examine_summary.insert({"exp_id":exp_id,"mac":mac,"floor":floor,"st_node":st_node,"ed_node":ed_node,"via_nodes_list":via_nodes_list,"st_dt":st_dt,"ed_dt":ed_dt,"via_dts_list":via_dts_list,
 		"accuracy":accuracy,"existing_rate":existing_data_rate,
 		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m})
