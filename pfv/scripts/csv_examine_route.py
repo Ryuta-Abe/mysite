@@ -28,6 +28,7 @@ db = client.nm4bd
 query = {"exp_id":{"$regex":"161020_009"}}
 
 def csv_examine_route(query=query):
+	db.examine_route.drop()
 	data = []
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
@@ -63,14 +64,14 @@ def csv_examine_route(query=query):
 			# db.examine_route.remove({})
 		for i in range(len(via_dts_list)):
 			via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
-		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
+		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,query)
 		print("---------------------------------------------")
 
 if __name__ == '__main__':
 	# for x in range(17,18):
 	# id_list = [12,16]
 	# for x in id_list:
-	for x in range(17,18):
+	for x in range(17,29):
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
 		# print(exp_num)
@@ -79,4 +80,5 @@ if __name__ == '__main__':
 		# 解析データによる座標を作る場合は　get_analy_coord　を使う
 		get_analy_coord(query)
 		# 評価のみの場合は下の行のみ実行
+
 		csv_examine_route(query)

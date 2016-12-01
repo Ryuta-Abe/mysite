@@ -11,10 +11,10 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = True
+DEBUG_PRINT = False
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
-def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
+def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,query = None):
 	result = []
 	total_examine_count = 0
 	total_exist_count = 0
@@ -27,26 +27,28 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	correct_answer_rate = 0
 	correct_answer_rate_alt = 0
 	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance]
-
+	average_error_distance = None
+	average_error_distance_m = None
+	print(query)
+	if query is None:
+		exp_id = None
+	else:
+		exp_id = query["exp_id"]
 	if len(via_nodes_list)== 0:
 		total_count_list = examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
 
 	else:
 		total_count_list = examine_partial_route(mac,floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0],total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
-
 		for i in range(len(via_nodes_list) - 1):
 			total_count_list = examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1],total_count_list)
-			# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-			# total_correct_count, total_examine_count, total_exist_count = updated
-
 		total_count_list = examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt,total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
-	print_count_result(total_count_list)
+	
+	accuracy,existing_data_rate,average_error_distance = process_count_result(total_count_list)
+	if average_error_distance is not None:
+		average_error_distance_m = rounding(average_error_distance * 14.4 / 110,2)
+	db.examine_summary.insert({"exp_id":exp_id,"mac":mac,"floor":floor,"st_node":st_node,"ed_node":ed_node,"via_nodes_list":via_nodes_list,"st_dt":st_dt,"ed_dt":ed_dt,"via_dts_list":via_dts_list,
+		"accuracy":accuracy,"existing_rate":existing_data_rate,
+		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m})
 
 def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list):
 	
@@ -383,10 +385,10 @@ def rounding(num, round_place):
 	return rounded_num
 
 
-def print_count_result(total_count_list):
-	correct_answer_rate = 0
-	exist_correct_answer_rate = 0
-	existing_data_rate = 0
+def process_count_result(total_count_list):
+	accuracy = None
+	existing_accuracy = None
+	existing_data_rate = None
 	match_rate = 0
 	adjacent_rate = 0
 	middle_rate = 0
@@ -394,7 +396,8 @@ def print_count_result(total_count_list):
 	wrong_node_rate = 0
 	total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance = total_count_list
 	total_correct_count = 0
-	average_error_distance = 0
+	average_error_distance = None
+
 
 	total_correct_count = total_match_count + total_adjacent_count + total_middle_count
 	total_false_count = total_examine_count - total_correct_count
@@ -404,8 +407,8 @@ def print_count_result(total_count_list):
 	if total_examine_count == 0 :
 		print("--- no data!! ---")
 	else:
-		correct_answer_rate = rounding(total_correct_count / total_examine_count * 100, 2)
-		print ("\n" + "accuracy: " + str(correct_answer_rate) + "% "
+		accuracy = rounding(total_correct_count / total_examine_count * 100, 2)
+		print ("\n" + "accuracy: " + str(accuracy) + "% "
 		 + "( " + str(total_correct_count) + " / " + str(total_examine_count) + " )",end="  ")
 
 
@@ -413,9 +416,8 @@ def print_count_result(total_count_list):
 		print("--- info_data does not exist! ---")
 	else:
 		average_error_distance = total_error_distance/total_exist_count
-
-		exist_correct_answer_rate = rounding(total_correct_count / total_exist_count * 100, 2)
-		print ("accuracy(existing only): " + str(exist_correct_answer_rate) + "% "
+		existing_accuracy = rounding(total_correct_count / total_exist_count * 100, 2)
+		print ("accuracy(existing only): " + str(existing_accuracy) + "% "
 		 + "( " + str(total_correct_count) + " / " + str(total_exist_count) + " )",end="  ")
 
 		existing_data_rate = rounding(total_exist_count/total_examine_count * 100, 2)
@@ -467,6 +469,8 @@ def print_count_result(total_count_list):
 		wrong_node_rate_false = rounding(total_wrong_node_count / total_false_count * 100, 2)
 		print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
 		 + "( " + str(total_wrong_node_count) + " / " + str(total_false_count) + " )")
+	return existing_accuracy,existing_data_rate,average_error_distance
+
 
 # # DBに入っているデータを出力することも可能(コメント解除)
 # def is_correct_node(mac,floor,dt,nodes):
