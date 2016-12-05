@@ -11,7 +11,7 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = True
+DEBUG_PRINT = False
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
 # global var.
@@ -23,15 +23,10 @@ middle_count = 0
 wrong_node_count = 0
 wrong_floor_count = 0
 error_distance = 0.0
-<<<<<<< Updated upstream
-
-def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,query = None):
-=======
 # stay_position_list: 移動実験:None,stay実験:position_list
 stay_position_list = None
 
 def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,stay_pos = [],query = None):
->>>>>>> Stashed changes
 	global examine_count
 	global exist_count
 	global match_count
@@ -40,10 +35,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	global wrong_node_count
 	global wrong_floor_count
 	global error_distance
-<<<<<<< Updated upstream
-=======
 	global stay_position_list
->>>>>>> Stashed changes
 	examine_count = 0
 	exist_count = 0
 	match_count = 0
@@ -56,10 +48,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	correct_answer_rate_alt = 0
 	average_error_distance = None
 	average_error_distance_m = None
-<<<<<<< Updated upstream
-	print(query)
-=======
-	
+
 	if len(stay_pos) == 4:
 		stay_position_list = stay_pos
 	elif st_node == ed_node and len(via_dts_list) == 0:
@@ -70,7 +59,6 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	else:
 		stay_position_list = None
 
->>>>>>> Stashed changes
 	if query is None:
 		exp_id = None
 	else:
@@ -108,11 +96,7 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
 	if stay_position_list is not None:
 		if db.examine_route.find({"mac":mac,"datetime":st_dt}).count() == 0:
 			st_next05_dt = dt_to_end_next05(st_dt,"iso")
-<<<<<<< Updated upstream
-			judgement = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
-=======
 			judgement = examine_position(mac,floor,st_next05_dt)
->>>>>>> Stashed changes
 			update_partial_count(judgement)
 
 		else:
@@ -120,11 +104,7 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
 
 		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-<<<<<<< Updated upstream
-			judgement = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
-=======
 			judgement = examine_position(mac,floor,st_next05_dt)
->>>>>>> Stashed changes
 			update_partial_count(judgement)
 
 	else:	
@@ -153,11 +133,7 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
 			judgement = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
 			update_partial_count(judgement)
 
-<<<<<<< Updated upstream
-def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
-=======
 def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
->>>>>>> Stashed changes
 	global error_distance
 	real_floor = ""
 	analyzed_node = 0
@@ -168,21 +144,12 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 	moment_error_dist = 0
 	temp_dist = 0
 	min_dist = 9999
-	if stay_node is not None:
-<<<<<<< Updated upstream
-		node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":stay_node})
-		next_node = node_info["next_id"][0]
-		next_dist = get_distance(floor,stay_node,next_node)
-		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
-		actual_position_list = [stay_node,0.0,next_dist,next_node]
-=======
+	if stay_position_list is not None:
 		actual_position_list = stay_position_list
 		correct_nodes = add_adjacent_nodes(floor,actual_position_list[0],ADJACENT_FLAG)
->>>>>>> Stashed changes
-		pos_x,pos_y = node_info["pos_x"],node_info["pos_y"]
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
-		pos_x,pos_y = get_position(floor,actual_position_list)
+	pos_x,pos_y = get_position(floor,actual_position_list)
 	
 	get_coord_from_info(floor, mac, dt)
 	analyzed_data = db.analy_coord.find_one({"datetime":dt, "mac":mac})
