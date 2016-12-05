@@ -71,10 +71,14 @@ if __name__ == '__main__':
 	# for x in range(17,18):
 	# id_list = [12,16]
 	# for x in id_list:
+<<<<<<< Updated upstream
 	for x in range(17,29):
+=======
+	for x in range(17,28):
+>>>>>>> Stashed changes
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
-		# print(exp_num)
+		# print(exp_nu
 		exp_id  = query_str + exp_num
 		query = {"exp_id" : exp_id}
 		# 解析データによる座標を作る場合は　get_analy_coord　を使う
