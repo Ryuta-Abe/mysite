@@ -132,9 +132,11 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 	temp_dist = 0
 	min_dist = 9999
 	if stay_node is not None:
-		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
-		actual_position_list = [stay_node,0.0,0.0,stay_node]
 		node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":stay_node})
+		next_node = node_info["next_id"][0]
+		next_dist = get_distance(floor,stay_node,next_node)
+		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
+		actual_position_list = [stay_node,0.0,next_dist,next_node]
 		pos_x,pos_y = node_info["pos_x"],node_info["pos_y"]
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
@@ -157,10 +159,13 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 		if real_floor == floor:
 			mlist = analyzed_data["mlist"]
 			analyzed_position_list = analyzed_data["position"]
-			analyzed_actual_dist = get_distance_between_points(floor,analyzed_position_list,actual_position_list)
+			# analyzed_actual_dist = get_distance_between_points(floor,analyzed_position_list,actual_position_list)
 			for i in range(len(mlist)):
 				# analyzed_margin_dist = get_distance_between_points(floor,analyzed_position_list,mlist[i]["pos"])
-				if analyzed_actual_dist < mlist[i]["margin"]:
+				# if analyzed_actual_dist < mlist[i]["margin"]:
+				# 	moment_error_dist = 0
+				# 	break
+				if isinside(analyzed_data["pos_x"],pos_x,mlist[i]["pos_x"]) and isinside(analyzed_data["pos_y"],pos_y,mlist[i]["pos_y"]):
 					moment_error_dist = 0
 					break
 				else:
@@ -225,6 +230,12 @@ def update_partial_count(judgement):
 			wrong_floor_count += 1
 		else:
 			print("unexpected judgement error!")
+
+def isinside(end1_coord,target_coord,end2_coord):
+	if end1_coord <= target_coord <= end2_coord or end1_coord >= target_coord >= end2_coord:
+		return True
+	else:
+		return False
 
 def find_analyzed_node(mac,floor,dt):
 	analyzed_data = {}
@@ -299,8 +310,8 @@ def add_adjacent_nodes(floor,node,adjacent_flag):
 	pcwlnode = {}
 	adjacent_nodes = [node]
 
-	pcwlnode = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
-	adjacent_nodes.extend(pcwlnode["next_id"])
+	node_info = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
+	adjacent_nodes.extend(node_info["next_id"])
 	if len(adjacent_nodes) >= 3:
 		return adjacent_nodes
 	elif adjacent_flag:
