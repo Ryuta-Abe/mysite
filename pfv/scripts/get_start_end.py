@@ -69,6 +69,7 @@ def get_start_end_mod(all_st_time):
         datas[0]["nodelist"] = reverse_list(datas[0]["nodelist"], "dbm")
         for data in datas:
             ins_flag = False
+            intersection_flag = False
             
             remove_list = []
             loop_cnt = 0
@@ -137,26 +138,28 @@ def get_start_end_mod(all_st_time):
                                     velocity = fix_velocity(tmp_floor, interval)
                                     if d_total < interval * velocity:
                                         
+                                        past_ed_node = [pastlist[0]["start_node"]]
+                                        current_node = [tmp_node]
+                                        past_ed_id   = past_ed_node[0]["pcwl_id"]
+                                        current_id   = current_node[0]["pcwl_id"]
+                                        current_st_ed= [past_ed_id, current_id]
+                                        route_info = [] 
+                                        route_info += db.pcwlroute.find({"$and":[{"floor" : tmp_floor},
+                                                                                {"query" : current_st_ed[0]}, 
+                                                                                {"query" : current_st_ed[1]}]})
+
+                                        # 向きの最適化と各経路の重み付けを行う
+                                        route_info = optimize_routeinfo(past_ed_node, current_node, route_info[0]["dlist"])
+                                        if len(route_info) >= 2:
+                                            route_info = select_one_route(route_info) # addが最大の1つの経路のみ取り出す
+
                                         # 行き来をstayに
                                         len_pastlist = len(pastlist)
                                         if (len_pastlist >= 2):
                                             past_st_node = [pastlist[1]["start_node"]]
-                                            past_ed_node = [pastlist[0]["start_node"]]
-                                            current_node = [tmp_node]
                                             past_st_id   = past_st_node[0]["pcwl_id"]
-                                            past_ed_id   = past_ed_node[0]["pcwl_id"]
-                                            current_id   = current_node[0]["pcwl_id"]
-                                            current_st_ed= [past_ed_id, current_id]
 
                                             ### TODO:経路部分一致でstayに ###
-                                            route_info = [] 
-                                            route_info += db.pcwlroute.find({"$and":[{"floor" : tmp_floor},
-                                                                                    {"query" : current_st_ed[0]}, 
-                                                                                    {"query" : current_st_ed[1]}]})
-                                            # 向きの最適化と各経路の重み付けを行う
-                                            route_info = optimize_routeinfo(past_ed_node, current_node, route_info[0]["dlist"])
-                                            if len(route_info) >= 2:
-                                                route_info = select_one_route(route_info) # addが最大の1つの経路のみ取り出す
                                             current_route = []
                                             for route in route_info[0]["route"]:
                                                 current_route.append(route["direction"])
@@ -176,6 +179,24 @@ def get_start_end_mod(all_st_time):
                                                     save_pastd(pastd[0], tmp_enddt)
                                                     ins_flag = True
                                                     break
+
+                                        for route in route_info[0]["route"]:
+                                            after_node_id = route["direction"][1]
+                                            after_node_info = db.pcwlnode.find_one({"floor":tmp_floor,"pcwl_id":after_node_id})
+                                            if (len(after_node_info["next_id"])>=3):
+                                                intersection_flag = True
+                                                break
+
+                                        if intersection_flag:
+                                            se_data = append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists)
+                                            se_data["end_node"] = [{"floor":tmp_floor,"pcwl_id":after_node_id,"rssi":None}]
+                                            # print(se_data)
+                                            data_lists.append(se_data)
+                                            update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], after_node_info)
+                                            save_pastd(pastd[0], tmp_enddt)
+                                            ins_flag = True
+                                            # print("intersection stop")
+                                            break
 
                                         # data_lists append
                                         data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists))
@@ -214,7 +235,7 @@ def get_start_end_mod(all_st_time):
                                     break
                             # other floor
                             else:
-                                print("4:other floor")
+                                # print("4:other floor")
                                 # pastlist update
                                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                 save_pastd(pastd[0], tmp_enddt)
@@ -223,7 +244,7 @@ def get_start_end_mod(all_st_time):
 
                         # RSSI小
                         else:
-                            print("5:low RSSI")
+                            # print("5:low RSSI")
                             break
 
                 # pastlist == []
@@ -259,6 +280,7 @@ def get_start_end_mod(all_st_time):
                     if (node["alive"]):
                         data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
                         update_pastlist_keep_alive(pastmacdata, all_st_time, 0, [], node["start_node"])
+                        # print("keep alive stay")
                         save_pastd(pastmacdata, all_st_time)
                         break
 
@@ -384,6 +406,10 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
 
 def update_pastlist(pastd, get_time_no, num, nodelist):
     past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist, "alive":True} 
+    pastd["pastlist"].append(past_dict)
+
+def update_pastlist_intersection(pastd, get_time_no, num, nodelist, start_node):
+    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True} 
     pastd["pastlist"].append(past_dict)
 
 def update_pastlist_alt(pastd, get_time_no, num, nodelist, start_node):
