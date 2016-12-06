@@ -398,10 +398,6 @@
     var minute = parseInt({{ minute }});
     var second = parseInt({{ second }});
     var datetime = new Date(year,month,day,hour,minute,second);
-    console.log("init");
-    console.log(year);
-    console.log(minute);
-    console.log(second);
     set_selectbox(); // セレクトボックスにdatetimeをセット
 
     // セレクトボックスの値をtimerangeに合わせる
@@ -1011,11 +1007,6 @@
       var year = datetime.getFullYear() - 2014;
       var minute = datetime.getMinutes();
       var second = datetime.getSeconds()/5;
-      console.log("set_selectbox");
-      console.log(year);
-      console.log(minute);
-      console.log(second);
-      console.log(document.Sample_form.textbox_second.selectedIndex);
       document.Sample_form.textbox_year.selectedIndex = year;
       document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
       document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
@@ -1059,7 +1050,6 @@
 
     // datetime,language,floor,mac,timerangeのurlクエリを出力する
     function make_url_query(){
-      console.log(datetime);
       var year = datetime.getFullYear();
       var month = ("0"+(datetime.getMonth()+1)).slice(-2);
       var day = ("0"+datetime.getDate()).slice(-2);
@@ -1198,6 +1188,8 @@
       after_floor_ID.className = 'select_tab';
       //リストpcwlnodeを空にする
       pcwlnode.length = 0;
+      //選択ノードを解除する
+      select_node_list.length = 0;
       // マップ画像の挿入
       if (floor == "W2-6F") {
         var file_name = "6F_west2.jpg";
@@ -1472,24 +1464,54 @@
         Timer = setInterval(Auto_Ajax,1500);
         // Timer = setInterval(Auto_Ajax,5000);
       };
-      describe_datetime();
+      // describe_datetime();
     } else {
       if (flag_Auto2) {
         clearInterval(Timer);
       };
       flag_realtime = !flag_realtime;
-      RT_Auto_Ajax();
+      // RT_Auto_Ajax();
+      Load_JSON_real(datetime);
+      // set_selectbox();
       d3.select("#btn_realtime").style("color","blue");
-      RT_Timer = setInterval(RT_Auto_Ajax,5000);
+      RT_Timer = setInterval(Auto_Ajax,5000);
     };
    }
-   function RT_Auto_Ajax(){
-      datetime = new Date();
-      console.log("realtime");
-      console.log(datetime);
-      datetime.setSeconds(datetime.getSeconds() - 5); // 現在時刻の5秒前
-      Load_JSON(datetime);
-      set_selectbox();
+   function RT_time_set(json){
+    var year = parseInt(json["realtime"]["year"]);
+    var month = parseInt(json["realtime"]["month"])-1;
+    var day = parseInt(json["realtime"]["day"]);
+    var hour = parseInt(json["realtime"]["hour"]);
+    var minute = parseInt(json["realtime"]["minute"]);
+    var second = parseInt(json["realtime"]["second"]);
+    datetime = new Date(year,month,day,hour,minute,second);
+   }
+   // function RT_Auto_Ajax(){
+   //    datetime = new Date();
+   //    console.log("realtime");
+   //    console.log(datetime);
+   //    datetime.setSeconds(datetime.getSeconds() - 5); // 現在時刻の5秒前
+   //    Load_JSON(datetime);
+   //    set_selectbox();
+   //  }
+    // realtimeに対応したJSONをajaxで読み込む
+    function Load_JSON_real(datetime){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:tag_track_map_json' %}"+make_url_query()+"&realtime="+flag_realtime,
+        dataType: 'json',
+        success: function(json){
+          // describe_datetime();
+          RT_time_set(json);
+          describe_datetime();
+          set_selectbox();
+          if ((flag_jud_anime == false) && (flag_jud_real == false)){
+            Reload_timeout(json);
+          }
+          Reload_pfvinfo(json);
+          Reload_mac_floor(json);
+        }
+      });
     }
   </script>
   {% endblock content %}

@@ -180,8 +180,7 @@
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
     <a id="btn_coordinate" onclick="coordinate_opacity();" class="btn btn-default btn-sm"></a>
-    <a id="btn_examine" onclick="check_opacity('examine');" class="btn btn-default btn-sm">計算</a>
-    <a id="btn_analy" onclick="mac_color_opacity('all');" class="btn btn-default btn-sm">解析</a>
+    <a id="btn_analy" onclick="mac_color_opacity('all');" class="btn btn-default btn-sm">全選択</a>
     <a id="btn_node" onclick="check_opacity('node');" class="btn btn-default btn-sm">ノード</a>
 
   　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
@@ -425,6 +424,13 @@
     var svg1 = d3.select("#svg1")
     var svg2 = d3.select("#svg2")
 
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
     // staycircleの描画空間
     var stay_palet = svg1.append("g")
 
@@ -486,9 +492,6 @@
       var position_palet = svg1.append("g").attr("id", "position_palet");
       var analy = position_palet.append("g").attr("id", "analy_palet");
       var examine = position_palet.append("g").attr("id", "examine_palet");
-      if (examine_opacity) {
-              d3.select("#examine_palet").attr("visibility", "hidden");
-      }
       if(analy_coord.length != 0){
         var analy_list = [];
         for (var i = 0; i < analy_coord.length; i++){
@@ -548,22 +551,67 @@
       }
       if(examine_coord.length != 0){
         var examine_position = examine.selectAll(g.examine_position).data(examine_coord).enter().append("g")
+        .on( "mouseover", function(d){
+          div.transition().duration(300)
+          .style("opacity",1)
+          .style("background","purple")
+          .style("height", "35px")
+          .style("width", "150px")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          div.text("誤差距離 : "+d.error_distance);
+        })
+        .on( "mouseout", function(d){
+          div.transition().duration(300)
+          .style("opacity",0)
+        })
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
+          "class": function(d){
+            if (d.mac == "00:11:81:10:01:1c") {
+              return "blue_analy";
+            }　else if (d.mac == "00:11:81:10:01:19") {
+              return "red_analy";
+            }　else if (d.mac == "00:11:81:10:01:17") {
+              return "limegreen_analy";
+            } else if (d.mac == "00:11:81:10:01:1a") {
+              return "orange_analy";
+            } else if (d.mac == "00:11:81:10:01:23") {
+              return "magenta_analy";
+            } else if (d.mac == "00:11:81:10:01:1b") {
+              return "turquoise_analy";
+            }
+          },
+          "visibility": function(d) {
+            if (d.mac == "00:11:81:10:01:1c" && blue_opacity == true) {
+              return "hidden";
+            }　else if (d.mac == "00:11:81:10:01:19" && red_opacity == true) {
+              return "hidden";
+            }　else if (d.mac == "00:11:81:10:01:17" && limegreen_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:1a" && orange_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:23" && magenta_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:1b" && turquoise_opacity == true) {
+              return "hidden";
+            } else{
+                return "visible";
+            }
+          }
         });
         examine_position.append("circle").attr({
           "r": 6,
           "stroke": "royalblue",
           "stroke-width": 4,
           "fill": "Transparent",
-        });
+        })
       }
     }
     make_position_view();
 
     // 解析・計算座標の透明度をトグルで切り替える
     var analy_opacity = false;
-    var examine_opacity = false;
     var node_opacity = false;
     var blue_opacity = false;
     var red_opacity = false;
@@ -603,15 +651,6 @@
               turquoise_opacity = true;
             };
               analy_opacity = !analy_opacity;
-        } else if (pattern == "examine"){
-            if (examine_opacity) {
-              d3.select("#btn_examine").style("color","black");
-              d3.select("#examine_palet").attr("visibility", "visible");
-            } else {
-              d3.select("#btn_examine").style("color","blue");
-              d3.select("#examine_palet").attr("visibility", "hidden");
-              };
-              examine_opacity = !examine_opacity;
         } else if (pattern == "node"){
             if (node_opacity) {
               d3.select("#btn_node").style("color","black");
