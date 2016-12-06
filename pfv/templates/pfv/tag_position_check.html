@@ -180,8 +180,7 @@
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
     <a id="btn_coordinate" onclick="coordinate_opacity();" class="btn btn-default btn-sm"></a>
-    <a id="btn_examine" onclick="check_opacity('examine');" class="btn btn-default btn-sm">計算</a>
-    <a id="btn_analy" onclick="check_opacity('analy');" class="btn btn-default btn-sm">解析</a>
+    <a id="btn_analy" onclick="mac_color_opacity('all');" class="btn btn-default btn-sm">全選択</a>
     <a id="btn_node" onclick="check_opacity('node');" class="btn btn-default btn-sm">ノード</a>
 
   　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
@@ -425,6 +424,13 @@
     var svg1 = d3.select("#svg1")
     var svg2 = d3.select("#svg2")
 
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
     // staycircleの描画空間
     var stay_palet = svg1.append("g")
 
@@ -486,12 +492,6 @@
       var position_palet = svg1.append("g").attr("id", "position_palet");
       var analy = position_palet.append("g").attr("id", "analy_palet");
       var examine = position_palet.append("g").attr("id", "examine_palet");
-      if (analy_opacity) {
-              d3.select("#analy_palet").attr("visibility", "hidden");
-      }
-      if (examine_opacity) {
-              d3.select("#examine_palet").attr("visibility", "hidden");
-      }
       if(analy_coord.length != 0){
         var analy_list = [];
         for (var i = 0; i < analy_coord.length; i++){
@@ -503,6 +503,38 @@
         var analy_position = analy.selectAll(g.analy_position).data(analy_list).enter().append("g")
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
+          "class": function(d){
+            if (d.mac == "00:11:81:10:01:1c") {
+              return "blue_analy";
+            }　else if (d.mac == "00:11:81:10:01:19") {
+              return "red_analy";
+            }　else if (d.mac == "00:11:81:10:01:17") {
+              return "limegreen_analy";
+            } else if (d.mac == "00:11:81:10:01:1a") {
+              return "orange_analy";
+            } else if (d.mac == "00:11:81:10:01:23") {
+              return "magenta_analy";
+            } else if (d.mac == "00:11:81:10:01:1b") {
+              return "turquoise_analy";
+            }
+          },
+          "visibility": function(d) {
+            if (d.mac == "00:11:81:10:01:1c" && blue_opacity == true) {
+              return "hidden";
+            }　else if (d.mac == "00:11:81:10:01:19" && red_opacity == true) {
+              return "hidden";
+            }　else if (d.mac == "00:11:81:10:01:17" && limegreen_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:1a" && orange_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:23" && magenta_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:1b" && turquoise_opacity == true) {
+              return "hidden";
+            } else{
+                return "visible";
+            }
+          }
         });
         analy_position.append("circle").attr({
           "r": 5,
@@ -519,42 +551,106 @@
       }
       if(examine_coord.length != 0){
         var examine_position = examine.selectAll(g.examine_position).data(examine_coord).enter().append("g")
+        .on( "mouseover", function(d){
+          div.transition().duration(300)
+          .style("opacity",1)
+          .style("background","purple")
+          .style("height", "35px")
+          .style("width", "150px")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          div.text("誤差距離 : "+d.error_distance);
+        })
+        .on( "mouseout", function(d){
+          div.transition().duration(300)
+          .style("opacity",0)
+        })
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
+          "class": function(d){
+            if (d.mac == "00:11:81:10:01:1c") {
+              return "blue_analy";
+            }　else if (d.mac == "00:11:81:10:01:19") {
+              return "red_analy";
+            }　else if (d.mac == "00:11:81:10:01:17") {
+              return "limegreen_analy";
+            } else if (d.mac == "00:11:81:10:01:1a") {
+              return "orange_analy";
+            } else if (d.mac == "00:11:81:10:01:23") {
+              return "magenta_analy";
+            } else if (d.mac == "00:11:81:10:01:1b") {
+              return "turquoise_analy";
+            }
+          },
+          "visibility": function(d) {
+            if (d.mac == "00:11:81:10:01:1c" && blue_opacity == true) {
+              return "hidden";
+            }　else if (d.mac == "00:11:81:10:01:19" && red_opacity == true) {
+              return "hidden";
+            }　else if (d.mac == "00:11:81:10:01:17" && limegreen_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:1a" && orange_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:23" && magenta_opacity == true) {
+              return "hidden";
+            } else if (d.mac == "00:11:81:10:01:1b" && turquoise_opacity == true) {
+              return "hidden";
+            } else{
+                return "visible";
+            }
+          }
         });
         examine_position.append("circle").attr({
           "r": 6,
           "stroke": "royalblue",
           "stroke-width": 4,
           "fill": "Transparent",
-        });
+        })
       }
     }
     make_position_view();
 
     // 解析・計算座標の透明度をトグルで切り替える
     var analy_opacity = false;
-    var examine_opacity = false;
     var node_opacity = false;
+    var blue_opacity = false;
+    var red_opacity = false;
+    var limegreen_opacity = false;
+    var orange_opacity = false;
+    var magenta_opacity = false;
+    var turquoise_opacity = false;
     function check_opacity(pattern){
         if (pattern == "analy"){
             if (analy_opacity) {
               d3.select("#btn_analy").style("color","black");
-              d3.select("#analy_palet").attr("visibility", "visible");
+              d3.selectAll(".blue_analy").attr("visibility", "visible");
+              d3.selectAll(".red_analy").attr("visibility", "visible");
+              d3.selectAll(".limegreen_analy").attr("visibility", "visible");
+              d3.selectAll(".orange_analy").attr("visibility", "visible");
+              d3.selectAll(".magenta_analy").attr("visibility", "visible");
+              d3.selectAll(".turquoise_analy").attr("visibility", "visible");
+              blue_opacity = false;
+              red_opacity = false;
+              limegreen_opacity = false;
+              orange_opacity = false;
+              magenta_opacity = false;
+              turquoise_opacity = false;
             } else {
               d3.select("#btn_analy").style("color","blue");
-              d3.select("#analy_palet").attr("visibility", "hidden");
+              d3.selectAll(".blue_analy").attr("visibility", "hidden");
+              d3.selectAll(".red_analy").attr("visibility", "hidden");
+              d3.selectAll(".limegreen_analy").attr("visibility", "hidden");
+              d3.selectAll(".orange_analy").attr("visibility", "hidden");
+              d3.selectAll(".magenta_analy").attr("visibility", "hidden");
+              d3.selectAll(".turquoise_analy").attr("visibility", "hidden");
+              blue_opacity = true;
+              red_opacity = true;
+              limegreen_opacity = true;
+              orange_opacity = true;
+              magenta_opacity = true;
+              turquoise_opacity = true;
             };
               analy_opacity = !analy_opacity;
-        } else if (pattern == "examine"){
-            if (examine_opacity) {
-              d3.select("#btn_examine").style("color","black");
-              d3.select("#examine_palet").attr("visibility", "visible");
-            } else {
-              d3.select("#btn_examine").style("color","blue");
-              d3.select("#examine_palet").attr("visibility", "hidden");
-              };
-              examine_opacity = !examine_opacity;
         } else if (pattern == "node"){
             if (node_opacity) {
               d3.select("#btn_node").style("color","black");
@@ -564,6 +660,48 @@
               d3.select("#pcwlnode_area").attr("visibility", "hidden");
               };
               node_opacity = !node_opacity;
+        } else if (pattern == "blue"){
+            if (blue_opacity) {
+              d3.selectAll(".blue_analy").attr("visibility", "visible");
+            } else {
+              d3.selectAll(".blue_analy").attr("visibility", "hidden");
+              };
+              blue_opacity = !blue_opacity;
+        } else if (pattern == "red"){
+            if (red_opacity) {
+              d3.selectAll(".red_analy").attr("visibility", "visible");
+            } else {
+              d3.selectAll(".red_analy").attr("visibility", "hidden");
+              };
+              red_opacity = !red_opacity;
+        } else if (pattern == "limegreen"){
+            if (limegreen_opacity) {
+              d3.selectAll(".limegreen_analy").attr("visibility", "visible");
+            } else {
+              d3.selectAll(".limegreen_analy").attr("visibility", "hidden");
+              };
+              limegreen_opacity = !limegreen_opacity;
+        } else if (pattern == "orange"){
+            if (orange_opacity) {
+              d3.selectAll(".orange_analy").attr("visibility", "visible");
+            } else {
+              d3.selectAll(".orange_analy").attr("visibility", "hidden");
+              };
+              orange_opacity = !orange_opacity;
+        } else if (pattern == "magenta"){
+            if (magenta_opacity) {
+              d3.selectAll(".magenta_analy").attr("visibility", "visible");
+            } else {
+              d3.selectAll(".magenta_analy").attr("visibility", "hidden");
+              };
+              magenta_opacity = !magenta_opacity;
+        } else if (pattern == "turquoise"){
+            if (turquoise_opacity) {
+              d3.selectAll(".turquoise_analy").attr("visibility", "visible");
+            } else {
+              d3.selectAll(".turquoise_analy").attr("visibility", "hidden");
+              };
+              turquoise_opacity = !turquoise_opacity;
         }
     }
 
@@ -1037,18 +1175,42 @@
 
     //指定したタグの表示・非表示の切り替え用関数
     function mac_color_opacity(color) {
-      if ($.inArray(color, hidden_color) >= 0) {
-        svg2.select("#"+color+"circle").attr("fill", color);
-        svg1.select("#"+color+"path").style("opacity", 1);
-        svg1.select("#"+color+"stay").style("opacity", 0.5);
-        svg1.select("#"+color+"anime").style("opacity", 0.8);
-        hidden_color.splice($.inArray(color, hidden_color), 1);
+      if (color != "all"){
+        check_opacity(color);
+        if ($.inArray(color, hidden_color) >= 0) {
+          svg2.select("#"+color+"circle").attr("fill", color);
+          svg1.select("#"+color+"path").style("opacity", 1);
+          svg1.select("#"+color+"stay").style("opacity", 0.5);
+          svg1.select("#"+color+"anime").style("opacity", 0.8);
+          hidden_color.splice($.inArray(color, hidden_color), 1);
+        } else{
+          hidden_color.push(color);
+          svg2.select("#"+color+"circle").attr("fill", "Transparent");
+          svg1.select("#"+color+"path").style("opacity", 0);
+          svg1.select("#"+color+"stay").style("opacity", 0);
+          svg1.select("#"+color+"anime").style("opacity", 0);
+        }
       } else{
-        hidden_color.push(color);
-        svg2.select("#"+color+"circle").attr("fill", "Transparent");
-        svg1.select("#"+color+"path").style("opacity", 0);
-        svg1.select("#"+color+"stay").style("opacity", 0);
-        svg1.select("#"+color+"anime").style("opacity", 0);
+        if (analy_opacity) {
+          for(var i = 0; i<pfvinfo.length; i++){
+            svg2.select("#"+pfvinfo[i].color+"circle").attr("fill", pfvinfo[i].color);
+            svg1.select("#"+pfvinfo[i].color+"path").style("opacity", 1);
+            svg1.select("#"+pfvinfo[i].color+"stay").style("opacity", 0.5);
+            svg1.select("#"+pfvinfo[i].color+"anime").style("opacity", 0.8);
+          }
+          hidden_color.length = 0;
+          check_opacity("analy");
+        } else{
+          hidden_color.length = 0;
+          for(var i = 0; i<pfvinfo.length; i++){
+            hidden_color.push(pfvinfo[i].color);
+            svg2.select("#"+pfvinfo[i].color+"circle").attr("fill", "Transparent");
+            svg1.select("#"+pfvinfo[i].color+"path").style("opacity", 0);
+            svg1.select("#"+pfvinfo[i].color+"stay").style("opacity", 0);
+            svg1.select("#"+pfvinfo[i].color+"anime").style("opacity", 0);
+          }
+          check_opacity("analy");
+        }
       }
       // if(flag_Auto2){
       //   animate_circle.remove();

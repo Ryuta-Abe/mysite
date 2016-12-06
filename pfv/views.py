@@ -855,12 +855,16 @@ def tag_track_map_json(request):
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
   selectnode = request.GET.get("selectnode", "")
+  realtime = request.GET.get("realtime", "false")
 
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  elif realtime == "true":
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 5) # 現在時刻の5秒前を表示時間に
   else :
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
 
   gt_tag = lt - datetime.timedelta(seconds = 5) # 5秒前までのデータを取得
   # pcwl情報の取り出し
@@ -905,6 +909,7 @@ def tag_track_map_json(request):
             break
       else:
         light_list.append(False)
+    main(light_list)
 
   # macの色づけ
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
@@ -941,9 +946,11 @@ def tag_track_map_json(request):
         i["floor"] = j
         break
 
+  #realtime使用時のみ必要になる
+  realtime = {'year':lt.year,'month':lt.month,'day':lt.day,'hour':lt.hour,'minute':lt.minute,'second':lt.second}
 
   # 送信するデータセット
-  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode}
+  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode,"realtime":realtime}
   # dataset = {"pfvinfo":pfvinfo}
 
   return render_json_response(request, dataset) # dataをJSONとして出力
