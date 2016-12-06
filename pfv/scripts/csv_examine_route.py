@@ -53,19 +53,23 @@ def csv_examine_route(query=query):
 		common_dt = str(data[i]["common_dt"]) # 測定時刻における先頭の共通部分
 		st_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["st_dt"]))
 		ed_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["ed_dt"]))
-
 		if len(data[i]["via_dts_list"]) == 2:
 			via_dts_list = []
 		else:
 			via_dts_list = list(map(int,data[i]["via_dts_list"].split("[")[1].split("]")[0].split(",")))
 
 		print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
-		# if __name__ == '__main__':
-			# db.examine_route.remove({})
-		for i in range(len(via_dts_list)):
-			via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
-			
-		if len(data[i]["stay_pos_list"]) == 2:
+		for j in range(len(via_dts_list)):
+			via_dts_list[j] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[j]))
+
+		if ":" in data[i]["stay_pos_list"]:
+			print(": exists")
+			ratio1 = float(data[i]["stay_pos_list"].split(":")[0])
+			ratio2 = float(data[i]["stay_pos_list"].split(":")[1])
+			print(ratio1)
+			print(ratio2)			
+			stay_pos_list = get_dividing_point(floor,st_node,ed_node,ratio1,ratio2)
+		elif len(data[i]["stay_pos_list"]) == 2:
 			stay_pos_list = []
 		else:
 			temp_list = data[i]["stay_pos_list"].split("[")[1].split("]")[0].split(",")
@@ -73,19 +77,19 @@ def csv_examine_route(query=query):
 			stay_pos_list = [int(temp_list[x]) if x == 0 or x == 3 else float(temp_list[x]) for x in range(len(temp_list))]
 			# for x in range(len(temp_list)):
 			# 	if x == 0 or x == 3:
-			# 		stay_positon_list[x] = int(temp_list[x])
+			# 		stay_pos_list[x] = int(temp_list[x])
 			# 	elif x == 1 or x == 2:
-			# 		stay_positon_list[x] = float(temp_list[x])
-
-		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,stay_pos_list,query)
+			# 		stay_pos_list[x] = float(temp_list[x])
+		print(stay_pos_list)
+		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,stay_pos_list,query)
 		print("---------------------------------------------")
 
 if __name__ == '__main__':
 	# for x in range(17,18):
 	# id_list = [12,16]
 	# for x in id_list:
-	for x in range(15,18):
-		query_str = "161020_0"
+	for x in range(1,9):
+		query_str = "161128_0"
 		exp_num = ("00" + str(x))[-2:]
 		# print(exp_nu
 		exp_id  = query_str + exp_num
