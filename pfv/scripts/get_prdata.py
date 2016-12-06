@@ -99,7 +99,8 @@ def save_rttmp(ip,floor,pcwl_id):
 					# 8fとフォーマットを合わせるためfloor,pcwl_id delete
 					# new_data = {"ip":ip,"get_time_no":now,"mac":mac, "floor":floor, "pcwl_id":pcwl_id, "rssi":rssi,"dbm":rssi - 95}
 					# data_list.append(new_data)
-					data_list.append(new_data)
+					if rssi < 0:
+						data_list.append(new_data)
 					# print(type(data_list))
 				else :
 					break
