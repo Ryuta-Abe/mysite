@@ -28,7 +28,7 @@ db = client.nm4bd
 query = {"exp_id":{"$regex":"161020_009"}}
 
 def csv_examine_route(query=query):
-	db.examine_route.drop()
+	db.examine_route.remove({})
 	data = []
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
@@ -63,11 +63,8 @@ def csv_examine_route(query=query):
 			via_dts_list[j] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[j]))
 
 		if ":" in data[i]["stay_pos_list"]:
-			print(": exists")
 			ratio1 = float(data[i]["stay_pos_list"].split(":")[0])
-			ratio2 = float(data[i]["stay_pos_list"].split(":")[1])
-			print(ratio1)
-			print(ratio2)			
+			ratio2 = float(data[i]["stay_pos_list"].split(":")[1])		
 			stay_pos_list = get_dividing_point(floor,st_node,ed_node,ratio1,ratio2)
 		elif len(data[i]["stay_pos_list"]) == 2:
 			stay_pos_list = []
@@ -80,7 +77,6 @@ def csv_examine_route(query=query):
 			# 		stay_pos_list[x] = int(temp_list[x])
 			# 	elif x == 1 or x == 2:
 			# 		stay_pos_list[x] = float(temp_list[x])
-		print(stay_pos_list)
 		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,stay_pos_list,query)
 		print("---------------------------------------------")
 
@@ -88,10 +84,9 @@ if __name__ == '__main__':
 	# for x in range(17,18):
 	# id_list = [12,16]
 	# for x in id_list:
-	for x in range(1,9):
+	for x in range(2,4):
 		query_str = "161128_0"
 		exp_num = ("00" + str(x))[-2:]
-		# print(exp_nu
 		exp_id  = query_str + exp_num
 		query = {"exp_id" : exp_id}
 		# 解析データによる座標を作る場合は　get_analy_coord　を使う

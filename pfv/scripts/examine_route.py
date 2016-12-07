@@ -25,6 +25,7 @@ wrong_floor_count = 0
 error_distance = 0.0
 # stay_position_list: 移動実験:None,stay実験:position_list
 stay_position_list = None
+stay_correct_nodes = None
 
 def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,stay_pos = [],query = None):
 	global examine_count
@@ -36,6 +37,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	global wrong_floor_count
 	global error_distance
 	global stay_position_list
+	global stay_correct_nodes
 	examine_count = 0
 	exist_count = 0
 	match_count = 0
@@ -48,7 +50,6 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	correct_answer_rate_alt = 0
 	average_error_distance = None
 	average_error_distance_m = None
-
 	if len(stay_pos) == 4:
 		stay_position_list = stay_pos
 	elif st_node == ed_node and len(via_dts_list) == 0:
@@ -58,6 +59,17 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 		stay_position_list = [st_node,0.0,next_dist,next_node]
 	else:
 		stay_position_list = None
+
+	if stay_position_list is not None:
+		prev_node,prev_distance,next_distance,next_node = stay_position_list
+		if prev_distance < MATCH_NODE_THRESHOLD:
+			stay_correct_nodes = add_adjacent_nodes(floor,prev_node,ADJACENT_FLAG)
+		elif next_distance < MATCH_NODE_THRESHOLD:
+			stay_correct_nodes = add_adjacent_nodes(floor,next_node,ADJACENT_FLAG)
+		else:
+			stay_correct_nodes = [prev_node,next_node]
+	else:
+		stay_correct_nodes = None
 
 	if query is None:
 		exp_id = None
@@ -146,7 +158,7 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 	min_dist = 9999
 	if stay_position_list is not None:
 		actual_position_list = stay_position_list
-		correct_nodes = add_adjacent_nodes(floor,actual_position_list[0],ADJACENT_FLAG)
+		correct_nodes = stay_correct_nodes
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
 	pos_x,pos_y = get_position(floor,actual_position_list)
@@ -302,15 +314,11 @@ def find_correct_nodes_and_position(floor,dlist,delta_distance):
 			else:
 				correct_nodes = dlist[i]["direction"]
 				break
-
-	if len(correct_nodes) == 0:
-		if i == len(dlist)- 1:
-			print("reached ed_node!!")	
-			next_distance = 0
-			prev_distance = dlist[i]["distance"]
-			correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
-		else:
-			print("calc. error")
+	else:
+		print("reached ed_node!!")	
+		next_distance = 0
+		prev_distance = dlist[i]["distance"]
+		correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 
 	actual_position_list = [dlist[i]["direction"][0],rounding(prev_distance,2),rounding(next_distance,2),dlist[i]["direction"][1]]
 	return correct_nodes,actual_position_list
