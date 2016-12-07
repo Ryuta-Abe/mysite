@@ -11,45 +11,88 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = True
+DEBUG_PRINT = False
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
-def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list):
-	result = []
-	total_examine_count = 0
-	total_exist_count = 0
-	total_match_count = 0
-	total_adjacent_count = 0
-	total_middle_count = 0
-	total_wrong_node_count = 0
-	total_wrong_floor_count = 0
-	total_error_distance = 0
+# global var.
+examine_count = 0
+exist_count = 0
+match_count = 0
+adjacent_count = 0
+middle_count = 0
+wrong_node_count = 0
+wrong_floor_count = 0
+error_distance = 0.0
+# stay_position_list: 移動実験:None,stay実験:position_list
+stay_position_list = None
+stay_correct_nodes = None
+
+def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,stay_pos = [],query = None):
+	global examine_count
+	global exist_count
+	global match_count
+	global adjacent_count
+	global middle_count
+	global wrong_node_count
+	global wrong_floor_count
+	global error_distance
+	global stay_position_list
+	global stay_correct_nodes
+	examine_count = 0
+	exist_count = 0
+	match_count = 0
+	adjacent_count = 0
+	middle_count = 0
+	wrong_node_count = 0
+	wrong_floor_count = 0
+	error_distance = 0
 	correct_answer_rate = 0
 	correct_answer_rate_alt = 0
-	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance]
+	average_error_distance = None
+	average_error_distance_m = None
+	if len(stay_pos) == 4:
+		stay_position_list = stay_pos
+	elif st_node == ed_node and len(via_dts_list) == 0:
+		node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":st_node})
+		next_node = node_info["next_id"][0]
+		next_dist = get_distance(floor,st_node,next_node)
+		stay_position_list = [st_node,0.0,next_dist,next_node]
+	else:
+		stay_position_list = None
 
+	if stay_position_list is not None:
+		prev_node,prev_distance,next_distance,next_node = stay_position_list
+		if prev_distance < MATCH_NODE_THRESHOLD:
+			stay_correct_nodes = add_adjacent_nodes(floor,prev_node,ADJACENT_FLAG)
+		elif next_distance < MATCH_NODE_THRESHOLD:
+			stay_correct_nodes = add_adjacent_nodes(floor,next_node,ADJACENT_FLAG)
+		else:
+			stay_correct_nodes = [prev_node,next_node]
+	else:
+		stay_correct_nodes = None
+
+	if query is None:
+		exp_id = None
+	else:
+		exp_id = query["exp_id"]
 	if len(via_nodes_list)== 0:
-		total_count_list = examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
+		examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt)
 
 	else:
-		total_count_list = examine_partial_route(mac,floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0],total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
-
+		examine_partial_route(mac,floor,st_node,via_nodes_list[0],st_dt,via_dts_list[0])
 		for i in range(len(via_nodes_list) - 1):
-			total_count_list = examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1],total_count_list)
-			# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-			# total_correct_count, total_examine_count, total_exist_count = updated
-
-		total_count_list = examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt,total_count_list)
-		# updated = update_count(results,total_correct_count,total_examine_count,total_exist_count)
-		# total_correct_count, total_examine_count, total_exist_count = updated
-	print_count_result(total_count_list)
-
-def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list):
+			examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
+		examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
 	
+	accuracy,existing_data_rate,average_error_distance = process_count_result()
+	if average_error_distance is not None:
+		average_error_distance_m = rounding(average_error_distance * 14.4 / 110,2)
+		average_error_distance = rounding(average_error_distance,2)
+	db.examine_summary.insert({"exp_id":exp_id,"mac":mac,"floor":floor,"st_node":st_node,"ed_node":ed_node,"via_nodes_list":via_nodes_list,"st_dt":st_dt,"ed_dt":ed_dt,"via_dts_list":via_dts_list,
+		"accuracy":accuracy,"existing_rate":existing_data_rate,
+		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m})
+
+def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
 	ideal_one_route = {}
 	total_distance = 0
 	delta_distance = 0
@@ -61,36 +104,20 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list
 	is_correct = False
 	is_exist = False
 	judgement = ""
-	examine_count = 0
-	exist_count = 0
-	match_count = 0
-	adjacent_count = 0
-	middle_count = 0
-	none_count = 0
-	wrong_node_count = 0
-	wrong_floor_count = 0
-	error_distance = 0
-	temp_error_distance = 0
-	count_list = [examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count]
-	total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance = total_count_list
 
-	if st_node == ed_node:
-		if db.examine_route.find({"datetime":st_dt}).count() == 0:
+	if stay_position_list is not None:
+		if db.examine_route.find({"mac":mac,"datetime":st_dt}).count() == 0:
 			st_next05_dt = dt_to_end_next05(st_dt,"iso")
-			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
-			if temp_error_distance is not None:
-				error_distance += temp_error_distance
-			count_list = update_partial_count(judgement,count_list)
+			judgement = examine_position(mac,floor,st_next05_dt)
+			update_partial_count(judgement)
 
 		else:
 			st_next05_dt = st_dt
 
 		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance,st_node)
-			if temp_error_distance is not None:
-				error_distance += temp_error_distance
-			count_list = update_partial_count(judgement,count_list)
+			judgement = examine_position(mac,floor,st_next05_dt)
+			update_partial_count(judgement)
 
 	else:	
 		ideal_one_route = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})
@@ -104,73 +131,43 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt,total_count_list
 		velocity = total_distance / (ed_dt - st_dt).seconds
 		if DEBUG_PRINT:
 			print("\n" + "from " + str(st_node) + " to " + str(ed_node) + " : velocity = " + str(rounding(velocity,2)) + " [px/s]")
-		if db.examine_route.find({"datetime":st_dt}).count() == 0:
+		if db.examine_route.find({"mac":mac,"datetime":st_dt}).count() == 0:
 			st_next05_dt = dt_to_end_next05(st_dt,"iso")
 			delta_distance = velocity * (st_next05_dt - st_dt).seconds
-			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
-			if temp_error_distance is not None:
-				error_distance += temp_error_distance
-			count_list = update_partial_count(judgement,count_list)
-			# nodes = find_correct_nodes(floor,dlist,delta_distance)
-			# correct_count, examine_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count)
+			judgement = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
+			update_partial_count(judgement)
 		else:
 			st_next05_dt = st_dt
 
 		while st_next05_dt <= shift_seconds(ed_dt,-UPDATE_INTERVAL):
 			delta_distance += velocity * UPDATE_INTERVAL
 			st_next05_dt = shift_seconds(st_next05_dt,UPDATE_INTERVAL)
-			judgement,temp_error_distance = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
-			if temp_error_distance is not None:
-				error_distance += temp_error_distance
-			count_list = update_partial_count(judgement,count_list)
-		# nodes = find_correct_nodes(floor,dlist,delta_distance)
-		# correct_count, examine_count, exist_count = judge_and_ins_correct_route(mac,floor,nodes,st_dt,st_next05_dt,correct_count,examine_count,exist_count)
-	
-	examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count = count_list
-	# if DEBUG_PRINT:
-	# 	if error_distance != 0:
-	# 		partial_average_error_distance = rounding(error_distance / exist_count , 2)
-	# 		print("average error distance = " + str(partial_average_error_distance))
-	# 	else:
-	# 		print("")
-	total_examine_count += examine_count 
-	total_exist_count += exist_count
-	total_match_count += match_count
-	total_adjacent_count += adjacent_count
-	total_middle_count += middle_count
-	total_wrong_node_count += wrong_node_count
-	total_wrong_floor_count += wrong_floor_count
+			judgement = examine_position(mac,floor,st_next05_dt,dlist,delta_distance)
+			update_partial_count(judgement)
 
-	total_error_distance += error_distance
-
-	total_count_list = [total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance]
-	return total_count_list
-
-def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
+def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
+	global error_distance
 	real_floor = ""
 	analyzed_node = 0
 	correct_nodes = []
 	actual_position_list = [0,0.0,0.0,0] #　計算した場所の格納用([前ノードのid,prev_distance,next_distance,次ノードのid])	
 	analyzed_position_list = [0,0.0,0.0,0] 
 	judgement = ""
+	moment_error_dist = 0
 	temp_dist = 0
 	min_dist = 9999
-	if stay_node is not None:
-		correct_nodes = add_adjacent_nodes(floor,stay_node,ADJACENT_FLAG)
-		actual_position_list = [stay_node,0.0,0.0,stay_node]
-		node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":stay_node})
-		pos_x,pos_y = node_info["pos_x"],node_info["pos_y"]
+	if stay_position_list is not None:
+		actual_position_list = stay_position_list
+		correct_nodes = stay_correct_nodes
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
-		pos_x,pos_y = get_position(floor,actual_position_list)
+	pos_x,pos_y = get_position(floor,actual_position_list)
 	
 	get_coord_from_info(floor, mac, dt)
 	analyzed_data = db.analy_coord.find_one({"datetime":dt, "mac":mac})
-
-
 	if analyzed_data is None:
 		judgement = "F(None)"
-		error_distance = None
+		moment_error_dist = None
 	else:
 		# real_floor = analyzed_data["floor"]
 		# To Do : improve verification process by using analyzed data
@@ -178,25 +175,27 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 
 		if real_floor != floor:
 			judgement = "F("+ real_floor + ")"
-			error_distance = None
+			moment_error_dist = None
 		
 		if real_floor == floor:
 			mlist = analyzed_data["mlist"]
 			analyzed_position_list = analyzed_data["position"]
-			analyzed_actual_dist = get_distance_between_points(floor,analyzed_position_list,actual_position_list)
+			# analyzed_actual_dist = get_distance_between_points(floor,analyzed_position_list,actual_position_list)
 			for i in range(len(mlist)):
 				# analyzed_margin_dist = get_distance_between_points(floor,analyzed_position_list,mlist[i]["pos"])
-				if analyzed_actual_dist < mlist[i]["margin"]:
-					error_distance = 0
+				# if analyzed_actual_dist < mlist[i]["margin"]:
+				# 	moment_error_dist = 0
+				# 	break
+				if isinside(analyzed_data["pos_x"],pos_x,mlist[i]["pos_x"]) and isinside(analyzed_data["pos_y"],pos_y,mlist[i]["pos_y"]):
+					moment_error_dist = 0
 					break
 				else:
 					temp_dist = mlist[i]["margin"]
 					temp_dist += get_distance_between_points(floor,mlist[i]["pos"],actual_position_list)
 				if temp_dist < min_dist:
 					min_dist = temp_dist
-					error_distance = rounding(min_dist - mlist[i]["margin"],2)
-
-			# error_distance = get_error_distance(floor,analyzed_node,actual_position_list)
+					moment_error_dist = rounding(min_dist - mlist[i]["margin"],2)
+			error_distance += moment_error_dist
 
 			if not (analyzed_node in correct_nodes):
 				judgement = "F(Wrong Node)"
@@ -210,20 +209,27 @@ def examine_position(mac,floor,dt,dlist,delta_distance,stay_node = None):
 			else:
 				judgement = "T(Adjacent)"
 	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
-		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"error_distance":error_distance})
+		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"err_dist":moment_error_dist})
 
 	if DEBUG_PRINT:
 		print(str(dt) + ":" + judgement,"pos:" + str(actual_position_list),"correct:" + str(correct_nodes),
-			"analyzed:" + str(analyzed_node),"error_distance:" + str(error_distance),end="")
-		if error_distance is not None:
+			"analyzed:" + str(analyzed_node),"err_dist:" + str(moment_error_dist),end="")
+		if moment_error_dist is not None:
 			print("[px]")
 		else:
 			print("")
 
-	return judgement,error_distance
+	return judgement
 
-def update_partial_count(judgement,count_list):
-	examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count = count_list
+def update_partial_count(judgement):
+	global examine_count
+	global exist_count
+	global match_count
+	global adjacent_count
+	global middle_count
+	global wrong_node_count
+	global wrong_floor_count
+	
 	examine_count += 1 
 	exist_count += 1
 
@@ -245,8 +251,12 @@ def update_partial_count(judgement,count_list):
 			wrong_floor_count += 1
 		else:
 			print("unexpected judgement error!")
-	count_list = [examine_count,exist_count,match_count,adjacent_count,middle_count,wrong_node_count,wrong_floor_count]
-	return count_list
+
+def isinside(end1_coord,target_coord,end2_coord):
+	if end1_coord <= target_coord <= end2_coord or end1_coord >= target_coord >= end2_coord:
+		return True
+	else:
+		return False
 
 def find_analyzed_node(mac,floor,dt):
 	analyzed_data = {}
@@ -304,15 +314,11 @@ def find_correct_nodes_and_position(floor,dlist,delta_distance):
 			else:
 				correct_nodes = dlist[i]["direction"]
 				break
-
-	if len(correct_nodes) == 0:
-		if i == len(dlist)- 1:
-			print("reached ed_node!!")	
-			next_distance = 0
-			prev_distance = dlist[i]["distance"]
-			correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
-		else:
-			print("calc. error")
+	else:
+		print("reached ed_node!!")	
+		next_distance = 0
+		prev_distance = dlist[i]["distance"]
+		correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 
 	actual_position_list = [dlist[i]["direction"][0],rounding(prev_distance,2),rounding(next_distance,2),dlist[i]["direction"][1]]
 	return correct_nodes,actual_position_list
@@ -321,8 +327,8 @@ def add_adjacent_nodes(floor,node,adjacent_flag):
 	pcwlnode = {}
 	adjacent_nodes = [node]
 
-	pcwlnode = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
-	adjacent_nodes.extend(pcwlnode["next_id"])
+	node_info = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
+	adjacent_nodes.extend(node_info["next_id"])
 	if len(adjacent_nodes) >= 3:
 		return adjacent_nodes
 	elif adjacent_flag:
@@ -383,90 +389,95 @@ def rounding(num, round_place):
 	return rounded_num
 
 
-def print_count_result(total_count_list):
-	correct_answer_rate = 0
-	exist_correct_answer_rate = 0
-	existing_data_rate = 0
+def process_count_result():
+	accuracy = None
+	existing_accuracy = None
+	existing_data_rate = None
 	match_rate = 0
 	adjacent_rate = 0
 	middle_rate = 0
 	wrong_floor_rate = 0
 	wrong_node_rate = 0
-	total_examine_count,total_exist_count,total_match_count,total_adjacent_count,total_middle_count,total_wrong_node_count,total_wrong_floor_count,total_error_distance = total_count_list
-	total_correct_count = 0
-	average_error_distance = 0
-
-	total_correct_count = total_match_count + total_adjacent_count + total_middle_count
-	total_false_count = total_examine_count - total_correct_count
+	correct_count = 0
+	average_error_distance = None
 
 
+	correct_count = match_count + adjacent_count + middle_count
+	false_count = examine_count - correct_count
 
-	if total_examine_count == 0 :
+
+
+	if examine_count == 0 :
 		print("--- no data!! ---")
 	else:
-		correct_answer_rate = rounding(total_correct_count / total_examine_count * 100, 2)
-		print ("\n" + "accuracy: " + str(correct_answer_rate) + "% "
-		 + "( " + str(total_correct_count) + " / " + str(total_examine_count) + " )",end="  ")
+		accuracy = rounding(correct_count / examine_count * 100, 2)
+		print ("\n" + "accuracy: " + str(accuracy) + "% "
+		 + "( " + str(correct_count) + " / " + str(examine_count) + " )",end="  ")
 
 
-	if total_exist_count == 0 :
+	if exist_count == 0 :
 		print("--- info_data does not exist! ---")
 	else:
-		average_error_distance = total_error_distance/total_exist_count
+		average_error_distance = error_distance/exist_count
+		existing_accuracy = rounding(correct_count / exist_count * 100, 2)
+		print ("accuracy(existing only): " + str(existing_accuracy) + "% "
+		 + "( " + str(correct_count) + " / " + str(exist_count) + " )",end="  ")
 
-		exist_correct_answer_rate = rounding(total_correct_count / total_exist_count * 100, 2)
-		print ("accuracy(existing only): " + str(exist_correct_answer_rate) + "% "
-		 + "( " + str(total_correct_count) + " / " + str(total_exist_count) + " )",end="  ")
-
-		existing_data_rate = rounding(total_exist_count/total_examine_count * 100, 2)
+		existing_data_rate = rounding(exist_count/examine_count * 100, 2)
 		print("existing data rate: " + str(existing_data_rate) + "% "
-			+ "( " + str(total_exist_count) + " / " + str(total_examine_count) + " )")
+			+ "( " + str(exist_count) + " / " + str(examine_count) + " )")
 
 		print("average error distance: " + str(rounding(average_error_distance,2)) + "[px]")
 
 		print("\n-- detail info of true results --")
 
-		match_rate = rounding(total_match_count / total_exist_count * 100, 2)
+		match_rate = rounding(match_count / exist_count * 100, 2)
 		print ("match rate: " + str(match_rate) + "% "
-		 + "( " + str(total_match_count) + " / " + str(total_exist_count) + " )",end="  ")
+		 + "( " + str(match_count) + " / " + str(exist_count) + " )",end="  ")
 
-		match_rate_true = rounding(total_match_count / total_correct_count * 100, 2)
-		print ("match rate(true only): " + str(match_rate_true) + "% "
-		 + "( " + str(total_match_count) + " / " + str(total_correct_count) + " )")
-
-		adjacent_rate = rounding(total_adjacent_count / total_exist_count * 100, 2)
+		adjacent_rate = rounding(adjacent_count / exist_count * 100, 2)
 		print ("adjacent rate: " + str(adjacent_rate) + "% "
-		 + "( " + str(total_adjacent_count) + " / " + str(total_exist_count) + " )",end="  ")
+		 + "( " + str(adjacent_count) + " / " + str(exist_count) + " )",end="  ")
 
-		adjacent_rate_true = rounding(total_adjacent_count / total_correct_count * 100, 2)
-		print ("adjacent rate(true only): " + str(adjacent_rate_true) + "% "
-		 + "( " + str(total_adjacent_count) + " / " + str(total_correct_count) + " )")
-
-		middle_rate = rounding(total_middle_count / total_exist_count * 100, 2)
+		middle_rate = rounding(middle_count / exist_count * 100, 2)
 		print ("middle rate: " + str(middle_rate) + "% "
-		 + "( " + str(total_middle_count) + " / " + str(total_exist_count) + " )",end="  ")
+		 + "( " + str(middle_count) + " / " + str(exist_count) + " )",end="  ")
 
-		middle_rate_true = rounding(total_middle_count / total_correct_count * 100, 2)
-		print ("middle rate(true only): " + str(middle_rate_true) + "% "
-		 + "( " + str(total_middle_count) + " / " + str(total_correct_count) + " )")
+		if correct_count != 0:
+			match_rate_true = rounding(match_count / correct_count * 100, 2)
+			print ("match rate(true only): " + str(match_rate_true) + "% "
+			 + "( " + str(match_count) + " / " + str(correct_count) + " )")
+
+			adjacent_rate_true = rounding(adjacent_count / correct_count * 100, 2)
+			print ("adjacent rate(true only): " + str(adjacent_rate_true) + "% "
+			 + "( " + str(adjacent_count) + " / " + str(correct_count) + " )")
+
+			middle_rate_true = rounding(middle_count / correct_count * 100, 2)
+			print ("middle rate(true only): " + str(middle_rate_true) + "% "
+			 + "( " + str(middle_count) + " / " + str(correct_count) + " )")
 
 		print("\n-- detail info of false results --")
 
-		wrong_floor_rate = rounding(total_wrong_floor_count / total_exist_count * 100, 2)
+		wrong_floor_rate = rounding(wrong_floor_count / exist_count * 100, 2)
 		print ("wrong floor rate: " + str(wrong_floor_rate) + "% "
-		 + "( " + str(total_wrong_floor_count) + " / " + str(total_exist_count) + " )",end="  ")
+		 + "( " + str(wrong_floor_count) + " / " + str(exist_count) + " )",end="  ")
 
-		wrong_floor_rate_false = rounding(total_wrong_floor_count / total_false_count * 100, 2)
-		print ("wrong floor rate(false only): " + str(wrong_floor_rate_false) + "% "
-		 + "( " + str(total_wrong_floor_count) + " / " + str(total_false_count) + " )")
-
-		wrong_node_rate = rounding(total_wrong_node_count / total_exist_count * 100, 2)
+		wrong_node_rate = rounding(wrong_node_count / exist_count * 100, 2)
 		print ("wrong node rate: " + str(wrong_node_rate) + "% "
-		 + "( " + str(total_wrong_node_count) + " / " + str(total_exist_count) + " )",end="  ")
+		 + "( " + str(wrong_node_count) + " / " + str(exist_count) + " )",end="  ")
 
-		wrong_node_rate_false = rounding(total_wrong_node_count / total_false_count * 100, 2)
-		print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
-		 + "( " + str(total_wrong_node_count) + " / " + str(total_false_count) + " )")
+		if false_count != 0:
+			wrong_floor_rate_false = rounding(wrong_floor_count / false_count * 100, 2)
+			print ("wrong floor rate(false only): " + str(wrong_floor_rate_false) + "% "
+			 + "( " + str(wrong_floor_count) + " / " + str(false_count) + " )")
+			
+			wrong_node_rate_false = rounding(wrong_node_count / false_count * 100, 2)
+			print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
+			 + "( " + str(wrong_node_count) + " / " + str(false_count) + " )")
+
+
+	return existing_accuracy,existing_data_rate,average_error_distance
+
 
 # # DBに入っているデータを出力することも可能(コメント解除)
 # def is_correct_node(mac,floor,dt,nodes):

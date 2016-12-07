@@ -232,6 +232,21 @@ def get_position(floor,position_list):
 
 	return pos_x, pos_y
 
+def get_dividing_point(floor,prev_node,next_node,prev_ratio,next_ratio):
+	# node1_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":node1)
+	# node2_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":node2)
+	# node1_pos_x = node1_info["pos_x"]
+	# node1_pos_y = node1_info["pos_y"]
+	# node2_pos_x = node2_info["pos_x"]
+	# node2_pos_y = node2_info["pos_y"]
+	# pos_x = (node1_pos_x * ratio2 + node2_pos_x * ratio1) / (ratio1 + ratio2)
+	# pos_y = (node1_pos_y * ratio2 + node2_pos_y * ratio1) / (ratio1 + ratio2)
+	# return pos_x,pos_y
+	distance = db.idealroute.find_one({"$and": [{"floor" : floor},
+										{"query" : prev_node}, {"query" : next_node}]})["total_distance"]
+	prev_distance = distance * prev_ratio / (prev_ratio + next_ratio)
+	next_distance = distance * next_ratio / (prev_ratio + next_ratio)
+	return [prev_node,prev_distance,next_distance,next_node]
 
 if __name__ == '__main__':
 	st_dt = dt_from_14digits_to_iso(st_dt)
