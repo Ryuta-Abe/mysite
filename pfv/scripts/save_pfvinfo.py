@@ -356,7 +356,7 @@ def make_staymacinfo(dataset,db_name,min_interval):
         progress += 1
         if ((progress % 1000) == 0) or (progress == len(dataset)):
             pass
-            # print("staymacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
+            print("staymacinfo "+str(progress)+" / "+str(len(dataset))+" ("+str(round(progress/len(dataset)*100,1))+"%)")
         # db_name.create_index([("datetime", ASCENDING)])
         
 # # 出発時刻、出発点、到着時刻、到着点のデータセット
