@@ -27,9 +27,9 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = True
+INTERSECTION_FUNCTION = False
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
-STAY_AFTER_INTERSECTION = True
+STAY_AFTER_INTERSECTION = False
 
 # TODO:add input : all start time
 def get_start_end_mod(all_st_time):
@@ -220,7 +220,7 @@ def get_start_end_mod(all_st_time):
                                             if (len(node_info["next_id"])>=3):
                                                 data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node, data_lists))
                                                 # pastlist update
-                                                update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"])
+                                                update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], tmp_node)
                                             else:
                                                 data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists))
                                                 # pastlist update
