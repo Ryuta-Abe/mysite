@@ -2,6 +2,7 @@
 from pymongo import *
 from convert_ip import *
 from convert_datetime import *
+import os
 
 client = MongoClient()
 db = client.nm4bd
@@ -14,6 +15,8 @@ db = client.nm4bd
 #    py manage.py make_hourlylog mmddhhmm mmddhhmm(解析したい日時を8桁で、開始・終了の順に)
 #    iso_st,iso_edを設定後、py manage.py make_hourlylog
 
+#  mongoimport -d nm4bd -c csvtest --headerline --type csv [CSV_File.csv] (--drop)
+
 # ("fields.txt"が存在しない場合は3-5を行う)
 # 3.key一覧取得
 #   mongo nm4bd --quiet --eval "for (key in db.hourlytolog.findOne()) print(key)" > dbm_field.txt
@@ -24,57 +27,55 @@ db = client.nm4bd
 # 6.mongoexport実行
 #   mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o dbm19_1c.csv --csv --fieldFile dbm_field.txt
 
-db.dbmlog.drop()
-# db.test2.drop()
-# datas = db.test.find({"mac":{"$regex":"00:11:81:10:01:"}})
-# for data in datas:
-#     tmp_dict = convert_ip(data["ip"])
-#     data["floor"], data["pcwl_id"] = tmp_dict["floor"], tmp_dict["pcwl_id"]
-#     print(data)
-#     db.test2.insert(data)
 
-iso_st = dt_from_14digits_to_iso("20161128160100")
-# iso_st = dt_from_14digits_to_iso("20161124175500")
-# iso_ed = dt_from_14digits_to_iso("20161124175530")
-iso_ed = dt_from_14digits_to_iso("20161128162100")
+def make_dbmlog(exp_info):
+    db.dbmlog.drop()
 
-mac = "00:11:81:10:01:17"
-floor = "W2-9F"
+    floor = exp_info["floor"]
+    mac = exp_info["mac"]
+    common_dt = str(exp_info["common_dt"])
+    st_dt = str(exp_info["st_dt"])
+    ed_dt = str(exp_info["ed_dt"])
+    iso_st = dt_from_14digits_to_iso(common_dt + st_dt)
+    iso_ed = dt_from_14digits_to_iso(common_dt + ed_dt)
 
-ip_list = []
-ip_list += db.pcwliplist.find({"floor":floor})
-for ip_data in ip_list:
-    # ip_data = {"floor":ip_data["floor"], "pcwl_id":ip_data["pcwl_id"]}
-    ip_data["log_key"] = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
+    print("from:" + str(iso_st))
+    print("to  :" + str(iso_ed) + "\n")
+    gte = iso_st
+    lt  = shift_seconds(gte, 5)
 
-print("from:" + str(iso_st))
-print("to  :" + str(iso_ed) + "\n")
-gte = iso_st
-lt  = shift_seconds(gte, 5)
-
-while (lt <= iso_ed):
-    print(gte)
-    data_5s = {}
-    data_5s["datetime"] = gte
+    ip_list = []
+    ip_list += db.pcwliplist.find({"floor":floor})
     for ip_data in ip_list:
-        ip = str(ip_data["ip"])
-        # print(ip)
-        dbm_data = db.test2.find_one({"mac":mac, "get_time_no":{"$gte":gte,"$lt":lt},"ip":ip})
-        # print(dbm_data)
-        if (dbm_data != None):
-            data_5s[ip_data["log_key"]] = dbm_data["dbm"]
-        else:
-            data_5s[ip_data["log_key"]] = None
-            
-    db.dbmlog.insert(data_5s)
-    
-    gte = shift_seconds(gte,5)
-    lt  = shift_seconds(gte,5)
+        ip_data["log_key"] = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
 
-# 00:11:81:10:01:1c
-# 00:11:81:10:01:19
-# 00:11:81:10:01:17
-# 00:11:81:10:01:1a
+    # print(lt)
+    while (lt <= iso_ed):
+        # print(gte)
+        data_5s = {}
+        data_5s["datetime"] = gte
+        for ip_data in ip_list:
+            ip = str(ip_data["ip"])
+            # print(ip)
+            dbm_data = db.test2.find_one({"mac":mac, "get_time_no":{"$gte":gte,"$lt":lt},"ip":ip})
+            # print(dbm_data)
+            if (dbm_data != None):
+                data_5s[ip_data["log_key"]] = dbm_data["dbm"]
+            else:
+                data_5s[ip_data["log_key"]] = None
+                
+        db.dbmlog.insert(data_5s)
+        
+        gte = shift_seconds(gte,5)
+        lt  = shift_seconds(gte,5)
 
-
-
+if __name__ == '__main__':
+    common_id_list = ["161207_0", "161208_0"]
+    for common_id in common_id_list:
+        for id_num in range(1,25):
+            id_str = common_id + ("0" + str(id_num))[-2:]
+            exp_info = db.csvtest.find_one({"exp_id":id_str})
+            make_dbmlog(exp_info)
+            # print(exp_info)
+            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o C:/Users/Ryuta/csv/' + id_str +'.csv --csv --fieldFile C:/Users/Ryuta/dbm_field.txt'
+            os.system(command)
