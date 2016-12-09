@@ -38,7 +38,6 @@ def get_analy_coord(query_id):
 
 		while (tmp_dt <= ed_dt):
 			# print("--- " + str(tmp_dt) + " ---")
-			print(tmp_dt)
 			get_coord_from_info(floor, mac, tmp_dt)
 			tmp_dt = shift_seconds(tmp_dt, 5)
 

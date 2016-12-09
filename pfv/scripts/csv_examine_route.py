@@ -28,7 +28,6 @@ db = client.nm4bd
 query = {"exp_id":{"$regex":"161020_009"}}
 
 def csv_examine_route(query=query):
-	db.examine_route.remove({})
 	data = []
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
