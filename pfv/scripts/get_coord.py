@@ -36,8 +36,9 @@ def get_analy_coord(query_id):
 		ed_dt = dt_from_14digits_to_iso(common_dt + str(data["ed_dt"]))
 		# print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
 
-		while (tmp_dt < ed_dt):
+		while (tmp_dt <= ed_dt):
 			# print("--- " + str(tmp_dt) + " ---")
+			print(tmp_dt)
 			get_coord_from_info(floor, mac, tmp_dt)
 			tmp_dt = shift_seconds(tmp_dt, 5)
 
