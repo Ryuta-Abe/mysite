@@ -27,7 +27,7 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = False
+INTERSECTION_FUNCTION = True
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
 STAY_AFTER_INTERSECTION = False
 
@@ -184,10 +184,12 @@ def get_start_end_mod(all_st_time):
                                                 past_route = []
                                                 past_route += db.pfvmacinfo.find({"mac":data["id"]["mac"], "datetime":{"$gte":q_gte,"$lt":q_lt}}).sort("datetime",-1)
                                                 if (len(past_route) == 1):
-                                                
+                                                    # print(current_route, past_route[0]["route"])
+
                                                     if (route_partial_match(current_route, past_route[0]["route"])):
                                                         # data_lists_"stay" append
                                                         data_lists_stay.append(append_data_lists_stay_alt(data["id"]["mac"], tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists_stay))
+                                                        # print("alt_stay")
                                                         # pastlist update
                                                         update_pastlist_alt(pastd[0], tmp_enddt, num, data["nodelist"], pastlist[0]["start_node"])
                                                         save_pastd(pastd[0], tmp_enddt)
@@ -218,10 +220,12 @@ def get_start_end_mod(all_st_time):
                                             node_info = db.pcwlnode.find_one({"floor":tmp_floor, "pcwl_id":current_id})
 
                                             if (len(node_info["next_id"])>=3):
-                                                data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node, data_lists))
+                                                # print("===== at intersection =====")
+                                                data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists))
                                                 # pastlist update
                                                 update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], tmp_node)
                                             else:
+                                                # print("================")
                                                 data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists))
                                                 # pastlist update
                                                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
@@ -309,6 +313,8 @@ def get_start_end_mod(all_st_time):
                         break
 
     # save_pfvinfo.py へ渡す
+    # print(data_lists)
+    # print(data_lists_stay)
     make_pfvinfo(data_lists,db.pfvinfo,min_interval)
     make_stayinfo(data_lists_stay,db.stayinfo,min_interval)
     make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
