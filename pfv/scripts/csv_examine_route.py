@@ -84,7 +84,7 @@ if __name__ == '__main__':
 	# for x in range(17,18):
 	# id_list = [12,16]
 	# for x in id_list:
-	for x in range(17,29):
+	for x in range(9,10):
 		query_str = "161020_0"
 		exp_num = ("00" + str(x))[-2:]
 		exp_id  = query_str + exp_num

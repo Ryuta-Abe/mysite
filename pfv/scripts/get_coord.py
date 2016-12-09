@@ -233,14 +233,15 @@ def get_position(floor,position_list):
 	return pos_x, pos_y
 
 def get_dividing_point(floor,prev_node,next_node,prev_ratio,next_ratio):
-	# node1_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":node1)
-	# node2_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":node2)
-	# node1_pos_x = node1_info["pos_x"]
-	# node1_pos_y = node1_info["pos_y"]
-	# node2_pos_x = node2_info["pos_x"]
-	# node2_pos_y = node2_info["pos_y"]
-	# pos_x = (node1_pos_x * ratio2 + node2_pos_x * ratio1) / (ratio1 + ratio2)
-	# pos_y = (node1_pos_y * ratio2 + node2_pos_y * ratio1) / (ratio1 + ratio2)
+	# below: returns pos_x, pos_y ver.
+	# prev_node_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":prev_node)
+	# next_node_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":next_node)
+	# prev_node_pos_x = prev_node_info["pos_x"]
+	# prev_node_pos_y = prev_node_info["pos_y"]
+	# next_node_pos_x = next_node_info["pos_x"]
+	# next_node_pos_y = next_node_info["pos_y"]
+	# pos_x = (prev_node_pos_x * next_ratio + next_node_pos_x * prev_ratio) / (prev_ratio + next_ratio)
+	# pos_y = (prev_node_pos_y * next_ratio + next_node_pos_y * prev_ratio) / (prev_ratio + next_ratio)
 	# return pos_x,pos_y
 	distance = db.idealroute.find_one({"$and": [{"floor" : floor},
 										{"query" : prev_node}, {"query" : next_node}]})["total_distance"]

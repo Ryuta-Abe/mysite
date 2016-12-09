@@ -11,7 +11,7 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = False
+DEBUG_PRINT = True
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
 # global var.
@@ -584,21 +584,13 @@ if __name__ == '__main__':
 	# ed_dt = dt_from_14digits_to_iso(common_dt + str(120920))
 	# via_dts_list = []
 
-	# param = sys.argv
-	# floor = param[1]
-	# st_node = param[2][0]
-	# ed_node = param[2][1]
-	# via_nodes_list = param[3]
-	# common_dt = str(param[4])
-	# st_dt = dt_from_14digits_to_iso(common_dt + str(param[5][0]))
-	# ed_dt = dt_from_14digits_to_iso(common_dt + str(param[5][1]))
-	# via_dts_list = []
-	# for i in len(param[6]):
-	# 	via_dts_list.append(dt_from_14digits_to_iso(common_dt+str(param[6][1])))
-
 	# db.examine_route.remove({})
 	for i in range(len(via_dts_list)):
 		via_dts_list[i] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[i]))
+	
+	while (st_dt <= ed_dt):
+		get_coord_from_info(floor, mac, st_dt)
+		st_dt = shift_seconds(st_dt, 5)
 	examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list)
 
 
