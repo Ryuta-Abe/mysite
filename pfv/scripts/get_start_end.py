@@ -66,7 +66,7 @@ def get_start_end_mod(all_st_time):
     datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist()
     # print("gse_count:"+str(datas.count()))
-    print("--- "+str(all_st_time)+" ---")
+    # print("--- "+str(all_st_time)+" ---")
 
     if (datas.count() != 0):
         # 1番目の設定
@@ -261,7 +261,7 @@ def get_start_end_mod(all_st_time):
                                         # pastlist update
                                         update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                         save_pastd(pastd[0], tmp_enddt)
-                                        print("stay1")
+                                        # print("stay1")
                                         ins_flag = True
                                         break
                                     else:
@@ -286,7 +286,7 @@ def get_start_end_mod(all_st_time):
 
                 # pastlist == []
                 else:
-                    print("6:not append")
+                    # print("6:not append")
                     for num in range(0, node_cnt):
                         tmp_node   = data["nodelist"][num]
                         if (tmp_node["rssi"] >= TH_RSSI):
@@ -320,13 +320,13 @@ def get_start_end_mod(all_st_time):
                         # print(node)
                         data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
                         update_pastlist_keep_alive(pastmacdata, all_st_time, 0, [], node["start_node"])
-                        print("keep alive stay")
+                        # print("keep alive stay")
                         save_pastd(pastmacdata, all_st_time)
                         break
 
     # save_pfvinfo.py へ渡す
-    print(data_lists)
-    print(data_lists_stay)
+    # print(data_lists)
+    # print(data_lists_stay)
     make_pfvinfo(data_lists,db.pfvinfo,min_interval)
     make_stayinfo(data_lists_stay,db.stayinfo,min_interval)
     make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
