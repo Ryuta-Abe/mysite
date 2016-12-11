@@ -141,6 +141,8 @@ def make_pfvinfo(dataset,db_name,min_interval):
     
     progress = 0
     for data in dataset:
+        if data == None:
+            continue
         interval = round(data["interval"])
         num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
         tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
@@ -230,6 +232,8 @@ def make_pfvmacinfo(dataset,db_name,min_interval):
 
     progress = 0
     for data in dataset:
+        if data == None:
+            continue
         interval = round(data["interval"])
         num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
         tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
@@ -314,6 +318,8 @@ def make_stayinfo(dataset,db_name,min_interval):
 
     progress = 0
     for data in dataset:
+        if data == None:
+            continue
         interval = round(data["interval"])
         num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
         tlist = db.pcwltime.find({"datetime":{"$gt":data["start_time"]}}).sort("datetime", ASCENDING).limit(num)
@@ -342,6 +348,8 @@ def make_staymacinfo(dataset,db_name,min_interval):
 
     progress = 0
     for data in dataset:
+        if data == None:
+            continue
         interval = round(data["interval"])
         num = int(round(interval / min_interval)) # 40秒間隔の場合, num = 4
         # print("interval : "+str(interval))

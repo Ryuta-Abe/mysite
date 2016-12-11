@@ -27,15 +27,15 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = True
+INTERSECTION_FUNCTION = False
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
 STAY_AFTER_INTERSECTION = False
+min_interval = 5
 
 # TODO:add input : all start time
 def get_start_end_mod(all_st_time):
     from datetime import datetime, timedelta
     # dt05
-    min_interval = 5
 
     ### DEBUG用DB初期化 ##############
     DEBUG = False
@@ -66,12 +66,13 @@ def get_start_end_mod(all_st_time):
     datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist()
     # print("gse_count:"+str(datas.count()))
-    # print("--- "+str(all_st_time)+" ---")
+    print("--- "+str(all_st_time)+" ---")
 
     if (datas.count() != 0):
         # 1番目の設定
         datas[0]["nodelist"] = reverse_list(datas[0]["nodelist"], "dbm")
         for data in datas:
+            # print(data)
             ins_flag = False
             intersection_flag = False
             
@@ -99,7 +100,7 @@ def get_start_end_mod(all_st_time):
             # 過去の参照用データ　pastdata取り出し query:mac
             pastd = []
             pastd += db.pastdata.find({"mac":data["id"]["mac"]})
-            
+
             if (pastd != []) and (data["id"]["get_time_no"] <= pastd[0]["update_dt"]):
                 print("0:(dt > update_dt)or(pastd==[])")
                 pass
@@ -122,8 +123,9 @@ def get_start_end_mod(all_st_time):
                 if (pastlist != []):
                     pastlist = reverse_list(pastlist, "dt")
                     tmp_startdt = pastlist[0]["dt"]
-                    # print(pastlist[0])
-                    # 
+                    # print(pastd[0])
+
+                    # stay after intersection
                     if (STAY_AFTER_INTERSECTION and pastlist[0]["arrive_intersection"]):
                         se_data = append_data_lists_stay_alt(data["id"]["mac"], tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists_stay)
                         # print(se_data)
@@ -197,7 +199,7 @@ def get_start_end_mod(all_st_time):
                                                         break
 
                                             # stop once at intersection
-                                            if INTERSECTION_FUNCTION:
+                                            if INTERSECTION_FUNCTION and (interval == 5):
                                                 for route in route_info[0]["route"]:
                                                     after_node_id = route["direction"][1]
                                                     after_node_info = db.pcwlnode.find_one({"floor":tmp_floor,"pcwl_id":after_node_id})
@@ -207,12 +209,17 @@ def get_start_end_mod(all_st_time):
 
                                                 if intersection_flag:
                                                     # data_lists append
+                                                    del(after_node_info["pos_x"],after_node_info["pos_y"],after_node_info["_id"],after_node_info["next_id"])
+                                                    after_node_info["rssi"] = None
                                                     se_data = append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists)
-                                                    se_data["end_node"] = [{"floor":tmp_floor,"pcwl_id":after_node_id,"rssi":None}]
-                                                    data_lists.append(se_data)
-                                                    # pastlist update
-                                                    update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], after_node_info)
+                                                    if se_data != None:
+                                                        se_data["end_node"] = [{"floor":tmp_floor,"pcwl_id":after_node_id,"rssi":None}]
+                                                        data_lists.append(se_data)
+                                                        # pastlist update
+                                                        update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], after_node_info)
                                                     save_pastd(pastd[0], tmp_enddt)
+                                                    # print("======================================")
+                                                    # print(pastd[0])
                                                     ins_flag = True
                                                     break
 
@@ -224,11 +231,13 @@ def get_start_end_mod(all_st_time):
                                                 data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists))
                                                 # pastlist update
                                                 update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], tmp_node)
+                                                # print(pastd[0])
                                             else:
                                                 # print("================")
                                                 data_lists.append(append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists))
                                                 # pastlist update
                                                 update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
+                                                # print(pastd[0])
 
                                             save_pastd(pastd[0], tmp_enddt)
                                             # print("flow1")
@@ -252,7 +261,7 @@ def get_start_end_mod(all_st_time):
                                         # pastlist update
                                         update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                                         save_pastd(pastd[0], tmp_enddt)
-                                        # print("stay1")
+                                        print("stay1")
                                         ins_flag = True
                                         break
                                     else:
@@ -277,7 +286,7 @@ def get_start_end_mod(all_st_time):
 
                 # pastlist == []
                 else:
-                    # print("6:not append")
+                    print("6:not append")
                     for num in range(0, node_cnt):
                         tmp_node   = data["nodelist"][num]
                         if (tmp_node["rssi"] >= TH_RSSI):
@@ -285,14 +294,15 @@ def get_start_end_mod(all_st_time):
                             # pastlist update
                             update_pastlist(pastd[0], tmp_enddt, num, data["nodelist"])
                             save_pastd(pastd[0], tmp_enddt)
+                            ins_flag = True
                             break
 
             count_all += 1
             if (ins_flag):
                 update_maclist(data["id"]["mac"])
 
-        data_lists      = reverse_list(data_lists, "start_time")
-        data_lists_stay = reverse_list(data_lists_stay, "start_time")
+        # data_lists      = reverse_list(data_lists, "start_time")
+        # data_lists_stay = reverse_list(data_lists_stay, "start_time")
 
     # pastdata check　/ dataが取れなかった場合一旦stay
     past_maclist = db.pastmaclist.find()
@@ -300,21 +310,23 @@ def get_start_end_mod(all_st_time):
         mac = data["_id"]["mac"]
         pastmacdata = db.pastdata.find_one({"mac":mac})
         pastmacdata["pastlist"] = reverse_list(pastmacdata["pastlist"], "dt")
+        # print(pastmacdata)
 
         make_nodecnt_dict(pastmacdata["pastlist"], all_st_time, pastmacdata["nodecnt_dict"])
         if (len(pastmacdata["pastlist"]) != 0):
             for node in pastmacdata["pastlist"]:
                 if(all_st_time - node["dt"] <= KEEP_ALIVE):
                     if (node["alive"]):
+                        # print(node)
                         data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
                         update_pastlist_keep_alive(pastmacdata, all_st_time, 0, [], node["start_node"])
-                        # print("keep alive stay")
+                        print("keep alive stay")
                         save_pastd(pastmacdata, all_st_time)
                         break
 
     # save_pfvinfo.py へ渡す
-    # print(data_lists)
-    # print(data_lists_stay)
+    print(data_lists)
+    print(data_lists_stay)
     make_pfvinfo(data_lists,db.pfvinfo,min_interval)
     make_stayinfo(data_lists_stay,db.stayinfo,min_interval)
     make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
@@ -392,6 +404,8 @@ def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
         print("---------! flow ed-st>60 error !---------")
+    if (tmp_enddt - tmp_startdt).seconds > min_interval:
+        return None
     se_data =  {"mac":data["id"]["mac"],
                 "start_time":tmp_startdt,
                 "end_time"  :tmp_enddt,
@@ -407,6 +421,8 @@ def append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
         print("---------! stay ed-st>60 error !---------")
+    if (tmp_enddt - tmp_startdt).seconds > min_interval:
+        return None
     se_data =  {"mac":data["id"]["mac"],
                 "start_time":tmp_startdt,
                 "end_time"  :tmp_enddt,
@@ -423,6 +439,8 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
         print("---------! stay ed-st>60 error !---------")
+    if (tmp_enddt - tmp_startdt).seconds > min_interval:
+        return None
     se_data =  {"mac":mac,
                 "start_time":tmp_startdt,
                 "end_time"  :tmp_enddt,
