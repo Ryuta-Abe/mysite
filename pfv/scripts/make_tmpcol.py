@@ -70,12 +70,15 @@ def make_dbmlog(exp_info):
         lt  = shift_seconds(gte,5)
 
 if __name__ == '__main__':
-    common_id_list = ["161207_0", "161208_0"]
+    # common_id_list = ["161207_0", "161208_0"]
+    common_id_list = ["161020_0"]
     for common_id in common_id_list:
-        for id_num in range(1,25):
+        # for id_num in range(1,25):
+        for id_num in range(17,29):
             id_str = common_id + ("0" + str(id_num))[-2:]
             exp_info = db.csvtest.find_one({"exp_id":id_str})
             make_dbmlog(exp_info)
             # print(exp_info)
-            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o C:/Users/Ryuta/csv/' + id_str +'.csv --csv --fieldFile C:/Users/Ryuta/dbm_field.txt'
+            # command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o C:/Users/Ryuta/csv/' + id_str +'.csv --csv --fieldFile C:/Users/Ryuta/dbm_field9.txt'
+            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o C:/Users/Ryuta/csv/' + id_str +'.csv --csv --fieldFile C:/Users/Ryuta/dbm_field7.txt'
             os.system(command)
