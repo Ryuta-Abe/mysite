@@ -4,6 +4,7 @@ from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
 from examine_route  import *
 from get_coord import *
+from convert_to_mac import convert_to_mac
 client = MongoClient()
 db = client.nm4bd
 
@@ -38,7 +39,10 @@ def csv_examine_route(query=query):
 	ANALYZE_LAG = 0
 
 	for i in range(0,len(data)):
+
 		mac = data[i]["mac"]
+		if isinstance(mac,int):
+			mac = convert_to_mac(mac)
 		floor = data[i]["floor"]
 		st_node = data[i]["st_node"]
 		ed_node = data[i]["ed_node"]
