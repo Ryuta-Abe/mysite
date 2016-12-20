@@ -13,7 +13,7 @@ st_dt = 20161020134250
 # ed_dt = 20161020134430
 ed_dt = 20161020134630
 
-db.analy_coord.remove({})
+# db.analy_coord.remove({})
 
 # Trueの場合, 1つ前の時刻(stay)を考慮する
 CONSIDER_BEFORE = True
@@ -36,7 +36,7 @@ def get_analy_coord(query_id):
 		ed_dt = dt_from_14digits_to_iso(common_dt + str(data["ed_dt"]))
 		# print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
 
-		while (tmp_dt < ed_dt):
+		while (tmp_dt <= ed_dt):
 			# print("--- " + str(tmp_dt) + " ---")
 			get_coord_from_info(floor, mac, tmp_dt)
 			tmp_dt = shift_seconds(tmp_dt, 5)
@@ -232,6 +232,22 @@ def get_position(floor,position_list):
 
 	return pos_x, pos_y
 
+def get_dividing_point(floor,prev_node,next_node,prev_ratio,next_ratio):
+	# below: returns pos_x, pos_y ver.
+	# prev_node_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":prev_node)
+	# next_node_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":next_node)
+	# prev_node_pos_x = prev_node_info["pos_x"]
+	# prev_node_pos_y = prev_node_info["pos_y"]
+	# next_node_pos_x = next_node_info["pos_x"]
+	# next_node_pos_y = next_node_info["pos_y"]
+	# pos_x = (prev_node_pos_x * next_ratio + next_node_pos_x * prev_ratio) / (prev_ratio + next_ratio)
+	# pos_y = (prev_node_pos_y * next_ratio + next_node_pos_y * prev_ratio) / (prev_ratio + next_ratio)
+	# return pos_x,pos_y
+	distance = db.idealroute.find_one({"$and": [{"floor" : floor},
+										{"query" : prev_node}, {"query" : next_node}]})["total_distance"]
+	prev_distance = distance * prev_ratio / (prev_ratio + next_ratio)
+	next_distance = distance * next_ratio / (prev_ratio + next_ratio)
+	return [prev_node,prev_distance,next_distance,next_node]
 
 if __name__ == '__main__':
 	st_dt = dt_from_14digits_to_iso(st_dt)

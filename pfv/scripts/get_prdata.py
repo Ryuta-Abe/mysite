@@ -99,7 +99,8 @@ def save_rttmp(ip,floor,pcwl_id):
 					# 8fとフォーマットを合わせるためfloor,pcwl_id delete
 					# new_data = {"ip":ip,"get_time_no":now,"mac":mac, "floor":floor, "pcwl_id":pcwl_id, "rssi":rssi,"dbm":rssi - 95}
 					# data_list.append(new_data)
-					data_list.append(new_data)
+					if rssi < 0 + 95:
+						data_list.append(new_data)
 					# print(type(data_list))
 				else :
 					break
@@ -125,7 +126,7 @@ def save_rttmp(ip,floor,pcwl_id):
 
 
 def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
-	if (pcwlip != "10.0.11.55"):
+	if (pcwlip["ip"] != "10.0.11.55"):
 		#print ('process id:' + str(os.getpid())) #プロセス番号の表示（確認用）
 		data_list = save_rttmp(pcwlip["ip"],pcwlip["floor"],pcwlip["pcwl_id"])
 		# print(data_list)
