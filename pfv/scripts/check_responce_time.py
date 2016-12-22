@@ -55,7 +55,7 @@ def check_responce_time():
 		for ip_data in ip_list:
 			hourly_responce_time = 0
 			conventional_to_count = 0
-			min_time = 0
+			time_list = []
 
 			if not (ip_data["floor"] == "W2-9F" and ip_data["pcwl_id"] == 10):
 				key = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
@@ -71,12 +71,19 @@ def check_responce_time():
 				for i in range(regular_count):
 				# hourly_time += regular_info[i]["difference"]
 				# hourly_responce_time = hourly_time / regular_count
-					if regular_info[i]["difference"] > hourly_responce_time:
-						hourly_responce_time = regular_info[i]["difference"]
-						if hourly_responce_time > 0.5:
-							print("over!")
+					# if regular_info[i]["difference"] > hourly_responce_time:
+					# 	hourly_responce_time = regular_info[i]["difference"]
+					# 	if hourly_responce_time > 0.5:
+					# 		print("over!")
+					time_list.append(regular_info[i]["difference"])
+				time_list.sort()
+				# print(time_list)
+				count = round(regular_count / 100 * 95)
+				hourly_responce_time = time_list[count]
 			else:
 				hourly_responce_time = None
+
+
 			
 			# hourly_count_data[key] = irregular_count
 			hourly_time_data[key] = hourly_responce_time
