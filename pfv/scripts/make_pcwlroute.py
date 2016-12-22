@@ -92,7 +92,7 @@ def make_pcwlroute():
 		floor_nodes = [0]*99 # nodes in the certain floor
 		for i in range(0,len(tmp_nodes)):
 			floor_nodes[tmp_nodes[i]["pcwl_id"]] = tmp_nodes[i]
-		print(floor_nodes)
+		# print(floor_nodes)
 
 		# pcwl_idからfloor_nodesでのインデックスを求められるように
 		# (register_order[pcwl_id] = floor_nodesでのインデックス)
