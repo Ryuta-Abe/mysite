@@ -57,9 +57,7 @@ def check_responce_time():
 			conventional_to_count = 0
 			time_list = []
 
-			if not (ip_data["floor"] == "W2-9F" and ip_data["pcwl_id"] == 10):
-				key = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
-
+			key = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
 			ip = str(ip_data["ip"])
 			regular_info = []
 			regular_info += db.to_check.find({"get_time_no":{"$gte":gte,"$lt":lt},"ip":ip})
@@ -69,6 +67,7 @@ def check_responce_time():
 			#     print(str(gte) + str(ip_data["log_key"]))
 			if regular_count != 0:
 				for i in range(regular_count):
+
 				# hourly_time += regular_info[i]["difference"]
 				# hourly_responce_time = hourly_time / regular_count
 					# if regular_info[i]["difference"] > hourly_responce_time:
@@ -76,14 +75,13 @@ def check_responce_time():
 					# 	if hourly_responce_time > 0.5:
 					# 		print("over!")
 					time_list.append(regular_info[i]["difference"])
+
 				time_list.sort()
 				# print(time_list)
-				count = round(regular_count / 100 * 95)
+				count = round(regular_count / 100 * 70)
 				hourly_responce_time = time_list[count]
 			else:
 				hourly_responce_time = None
-
-
 			
 			# hourly_count_data[key] = irregular_count
 			hourly_time_data[key] = hourly_responce_time

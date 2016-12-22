@@ -107,7 +107,7 @@ def make_pcwliplist():
     db.pcwliplist.insert({"ip":"10.0.11.75","parallel_num":44,"floor":"W2-9F","pcwl_id":7 }) # 7
     db.pcwliplist.insert({"ip":"10.0.11.71","parallel_num":26,"floor":"W2-9F","pcwl_id":8 }) # 8
     db.pcwliplist.insert({"ip":"10.0.11.63","parallel_num":8,"floor":"W2-9F","pcwl_id":9 }) # 9
-    db.pcwliplist.insert({"ip":"10.0.11.55","parallel_num":54,"floor":"W2-9F","pcwl_id":10}) # 10
+    # db.pcwliplist.insert({"ip":"10.0.11.55","parallel_num":54,"floor":"W2-9F","pcwl_id":10}) # 10
     db.pcwliplist.insert({"ip":"10.0.11.119","parallel_num":25,"floor":"W2-9F","pcwl_id":11}) # 11
     db.pcwliplist.insert({"ip":"10.0.11.105","parallel_num":61,"floor":"W2-9F","pcwl_id":12}) # 12
     db.pcwliplist.insert({"ip":"10.0.11.107","parallel_num":43,"floor":"W2-9F","pcwl_id":13}) # 13
