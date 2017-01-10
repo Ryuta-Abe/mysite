@@ -24,13 +24,12 @@ db = client.nm4bd
 
 
 def check_responce_time():
-	# db.hourly_irregular_count.drop()
-	db.hourly_responce_time.drop()
-	# db.hourly_conventional_to.drop()
-	iso_st = dt_from_14digits_to_iso("20161209160000")
-	iso_ed = dt_from_14digits_to_iso("20161213160000")
+	db.hourly_irregular_count.remove()
+	db.hourly_responce_time.remove()
+	db.hourly_conventional_to.remove()
+	iso_st = dt_from_14digits_to_iso("20170106160000")
+	iso_ed = dt_from_14digits_to_iso("20170107000000")
 	print("from:" + str(iso_st))
-	# print("to  :" + str(iso_ed) + "\n")
 	print("to  :" + str(iso_ed))
 	gte = iso_st
 	lt  = shift_hours(gte, 1)
@@ -43,12 +42,12 @@ def check_responce_time():
 
 	while (lt <= iso_ed):
 		print(gte)
-		# hourly_count_data = {}
-		# hourly_count_data["datetime"] = gte
+		hourly_count_data = {}
+		hourly_count_data["datetime"] = gte
 		hourly_time_data = {}
 		hourly_time_data["datetime"] = gte
-		# conventional_to_data = {}
-		# conventional_to_data["datetime"] = gte
+		conventional_to_data = {}
+		conventional_to_data["datetime"] = gte
 
 
 
@@ -62,8 +61,8 @@ def check_responce_time():
 			regular_info = []
 			regular_info += db.to_check.find({"get_time_no":{"$gte":gte,"$lt":lt},"ip":ip})
 			regular_count = len(regular_info)
-			# irregular_count = db.to_check_err.find({"datetime":{"$gte":gte,"$lt":lt},"timeout_ip":ip}).count()
-			# conventional_to_count = db.to_check.find({"get_time_no":{"$gte":gte,"$lt":lt},"ip":ip,"difference":{"$gte":0.5}}).count()
+			irregular_count = db.to_check_err.find({"datetime":{"$gte":gte,"$lt":lt},"timeout_ip":ip}).count()
+			conventional_to_count = db.to_check.find({"get_time_no":{"$gte":gte,"$lt":lt},"ip":ip,"difference":{"$gte":0.5}}).count()
 			#     print(str(gte) + str(ip_data["log_key"]))
 			if regular_count != 0:
 				for i in range(regular_count):
@@ -83,14 +82,14 @@ def check_responce_time():
 			else:
 				hourly_responce_time = None
 			
-			# hourly_count_data[key] = irregular_count
+			hourly_count_data[key] = irregular_count
 			hourly_time_data[key] = hourly_responce_time
-			# conventional_to_data[key] = conventional_to_count
+			conventional_to_data[key] = conventional_to_count
 
 
-		# db.hourly_irregular_count.insert(hourly_count_data)
+		db.hourly_irregular_count.insert(hourly_count_data)
 		db.hourly_responce_time.insert(hourly_time_data)
-		# db.hourly_conventional_to.insert(conventional_to_data)
+		db.hourly_conventional_to.insert(conventional_to_data)
 
 		gte = shift_hours(gte,1)
 		lt  = shift_hours(lt,1)
