@@ -6,8 +6,9 @@ import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
 
-# MODEL_DIR = "C:/Users/Ryuta/Desktop/sklearn/"
-MODEL_DIR = "/home/murakami2/mlmodel/"
+
+MODEL_DIR = "../../mlmodel/"
+# MODEL_DIR = "/home/murakami2/mlmodel/"
 
 def classify(floor, rssi_list):
     # import model

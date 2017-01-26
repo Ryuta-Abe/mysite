@@ -14,7 +14,7 @@ db = client.nm4bd
 # 2. 実験の条件をformatに従って "CSV形式" で作成する 
 #    (exp_id, mac, floor, st_node, ed_node, common_dt, st_dt, ed_dt, via_nodes_list, via_dts_list)
 # 
-# 3. mongoimport -d nm4bd -c csvtest --headerline --type csv [CSV_File.csv] (--drop)
+# 3. mongoimport -d nm4bd -c csvtest --headerline --type csv exp_param.csv --drop
 #    上記コマンドでCSVファイルをDBに取り込む。 (--dropオプションを利用可)
 # 
 # 4. 全データを解析すると時間がかかるので、 query に条件を入れて件数を絞ると良い
@@ -25,10 +25,29 @@ db = client.nm4bd
 # 　　　examine_route.py の DEBUG_PRINT = True とすると使える)
 # 
 ###################
+query_list = []
 
-query = {"exp_id":{"$regex":"161020_009"}}
+## 実行前に指定 ##
+common_exp_id = "161221_0"
+st_exp_id = 1
+ed_exp_id = 8
+#################
 
-def csv_examine_route(query=query):
+for i in range(st_exp_id,ed_exp_id + 1):
+	exp_num = ("00" + str(i))[-2:]
+	exp_id  = common_exp_id + exp_num
+	query = {"exp_id" : exp_id}
+	query_list.append(query)
+
+def csv_examine_route(query_list = query_list):
+	for query in query_list:
+		# 解析データによる座標を作る場合は　get_analy_coord　を使う
+		get_analy_coord(query)
+
+		# 評価のみの場合は下の行のみ実行
+		query_examine_route(query)
+
+def query_examine_route(query=query):
 	data = []
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
@@ -84,16 +103,4 @@ def csv_examine_route(query=query):
 		print("---------------------------------------------")
 
 if __name__ == '__main__':
-	# for x in range(17,18):
-	# id_list = [12,16]
-	# for x in id_list:
-	for x in range(9,10):
-		query_str = "161020_0"
-		exp_num = ("00" + str(x))[-2:]
-		exp_id  = query_str + exp_num
-		query = {"exp_id" : exp_id}
-		# 解析データによる座標を作る場合は　get_analy_coord　を使う
-		get_analy_coord(query)
-		# 評価のみの場合は下の行のみ実行
-
-		csv_examine_route(query)
+	csv_examine_route()

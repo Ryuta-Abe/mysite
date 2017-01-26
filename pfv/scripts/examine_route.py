@@ -11,7 +11,8 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = True
+# DEBUG_PRINT = True
+DEBUG_PRINT = False
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
 # global var.
