@@ -129,9 +129,9 @@ def append_train(input_file, train_file):
 
 if __name__ == '__main__':
     # common_id_list = ["161207_0", "161208_0"]
-    common_id_list = ["161219_"]
+    common_id_list = ["161221_"]
     for common_id in common_id_list:
-        for id_num in range(83,137):
+        for id_num in range(5,9):
             id_str = common_id + ("00" + str(id_num))[-3:]
             exp_info = db.csvtest.find_one({"exp_id":id_str})
             print("\n=== " + id_str + " ===")
@@ -155,7 +155,7 @@ if __name__ == '__main__':
             os.system(command)
 
             # 1行目削除 & ラベルデータ作成
-            replace_and_make_label(file_name, label_file, exp_info["st_node"])
+            # replace_and_make_label(file_name, label_file, exp_info["st_node"])
             
             # trainデータ作成
-            append_train(file_name, train_file)
+            # append_train(file_name, train_file)
