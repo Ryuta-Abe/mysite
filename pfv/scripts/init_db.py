@@ -4,9 +4,12 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
+REMOVE_RAWDATA = True
+
 def init_db():
-	db.rttmp.drop()
-	db.trtmp.drop()
+	if REMOVE_RAWDATA:
+		db.rttmp.drop()
+		db.trtmp.drop()
 	db.pfvinfo.drop()
 	db.pfvmacinfo.drop()
 	db.stayinfo.drop()

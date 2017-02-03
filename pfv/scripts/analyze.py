@@ -14,9 +14,10 @@ db = client.nm4bd
 # input:iso datetime
 def analyze_mod(st_dt, ed_dt):
     datas = db.trtmp.find()
-    for data in datas:
-        data["dt_end05"] = data["get_time_no"]
-        db.trtmp.save(data)
+    db.trtmp.create_index([("get_time_no", ASCENDING)])
+    # for data in datas:
+    #     data["dt_end05"] = data["get_time_no"]
+    #     db.trtmp.save(data)
 
     # st_dt  = dt_from_iso_to_str(st_dt)
     tmp_st = st_dt  # for debug

@@ -28,9 +28,9 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = False
+INTERSECTION_FUNCTION = True
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
-STAY_AFTER_INTERSECTION = False
+STAY_AFTER_INTERSECTION = True
 min_interval = 5
 
 # use Machine-Learning
@@ -66,8 +66,8 @@ def get_start_end_mod(all_st_time):
 
     # data取り出し
     mac_query = ""
-    datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:0e"}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
-    # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
+    # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:0e"}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
+    datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist()
     print("--- "+str(all_st_time)+" ---")
 
@@ -121,9 +121,9 @@ def get_start_end_mod(all_st_time):
                 for x in range(0,3):
                     predict_dict = {"floor":largest_floor, "pcwl_id":floor_node_list[desc_index[x]], "rssi":-60-x*10}
                     tmp_list.append(predict_dict)
-                print("1st : "+str(floor_node_list[desc_index[0]]))
-                print("2nd : "+str(floor_node_list[desc_index[1]]))
-                print("3rd : "+str(floor_node_list[desc_index[2]]))
+                # print("1st : "+str(floor_node_list[desc_index[0]]))
+                # print("2nd : "+str(floor_node_list[desc_index[1]]))
+                # print("3rd : "+str(floor_node_list[desc_index[2]]))
                 data["nodelist"] = tmp_list
 
             # RSSI上位3つまで参照
