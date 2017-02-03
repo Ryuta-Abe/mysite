@@ -25,19 +25,23 @@ db = client.nm4bd
 # 　　　examine_route.py の DEBUG_PRINT = True とすると使える)
 # 
 ###################
+
+def make_exp_id(common_exp_id, st_exp_id, ed_exp_id):
+	query_list = []
+	for i in range(st_exp_id,ed_exp_id + 1):
+		exp_num = ("000" + str(i))[-3:]
+		exp_id  = common_exp_id + exp_num
+		query = {"exp_id" : exp_id}
+		query_list.append(query)
+	return query_list
+
 query_list = []
-
 ## 実行前に指定 ##
-common_exp_id = "161221_0"
+common_exp_id = "170127_"
 st_exp_id = 1
-ed_exp_id = 8
+ed_exp_id = 75
+query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
 #################
-
-for i in range(st_exp_id,ed_exp_id + 1):
-	exp_num = ("00" + str(i))[-2:]
-	exp_id  = common_exp_id + exp_num
-	query = {"exp_id" : exp_id}
-	query_list.append(query)
 
 def csv_examine_route(query_list = query_list):
 	for query in query_list:
@@ -47,7 +51,7 @@ def csv_examine_route(query_list = query_list):
 		# 評価のみの場合は下の行のみ実行
 		query_examine_route(query)
 
-def query_examine_route(query=query):
+def query_examine_route(query):
 	data = []
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
