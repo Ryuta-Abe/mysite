@@ -339,7 +339,7 @@
     Sample_form.textbox_mac.value = "{{ mac }}";
 
     //floorのリストと現在の階を定義
-    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"];
+    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"];
     var floor = "{{ floor }}";
 
     //タブ用の枠を作成
@@ -369,8 +369,6 @@
       var file_name = "8F_west2.jpg";
     } else if ("{{ floor }}" == "W2-9F"){
       var file_name = "9F_west2.jpg";
-    } else if ("{{ floor }}" == "kaiyo"){
-      var file_name = "kaiyo.jpg";
     };
     d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
 
@@ -918,7 +916,7 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "4.35em",
+        "dx": "5.35em",
         "dy": ".35em",
         "font-size": "17px",
         "font-weight": "bold",
@@ -946,7 +944,7 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "10.85em",
+        "dx": "11.85em",
         "dy": ".35em",
         "font-size": "17px",
         "font-weight": "bold",
@@ -1217,8 +1215,6 @@
         var file_name = "8F_west2.jpg";
       } else if (floor == "W2-9F"){
         var file_name = "9F_west2.jpg";
-      } else if (floor == "kaiyo"){
-        var file_name = "kaiyo.jpg";
       };
       d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
       // staycircleの描画空間
@@ -1353,7 +1349,7 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "10.85em",
+        "dx": "11.85em",
         "dy": ".35em",
         "font-size": "17px",
         "font-weight": "bold",

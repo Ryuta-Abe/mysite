@@ -806,7 +806,7 @@ def tag_track_map(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -827,7 +827,7 @@ def tag_track_map(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -915,7 +915,7 @@ def tag_track_map_json(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -936,7 +936,7 @@ def tag_track_map_json(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
 #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -1001,7 +1001,7 @@ def tag_position_check(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -1022,7 +1022,7 @@ def tag_position_check(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -1095,7 +1095,7 @@ def tag_position_check_json(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -1116,7 +1116,7 @@ def tag_position_check_json(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
