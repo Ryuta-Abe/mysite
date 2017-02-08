@@ -15,9 +15,9 @@ db = client.nm4bd
 
 def aggregate_mod(startdt_iso, enddt_iso):
     # cond = {"$limit":1000000}
-    cond = {"$match": {"dt_end05": {"$gte":startdt_iso, "$lt":enddt_iso} } }
-    # cond = {"$match": {"dt_end05": {"$gte":startdt_iso, "$lt":enddt_iso},"mac":"00:11:81:10:01:17" } } # tag
-    dt_end = "$dt_end05"
+    cond = {"$match": {"get_time_no": {"$gte":startdt_iso, "$lt":enddt_iso} } }
+    # cond = {"$match": {"get_time_no": {"$gte":startdt_iso, "$lt":enddt_iso},"mac":"00:11:81:10:01:17" } } # tag
+    dt_end = "$get_time_no"
     min_interval = 5
     ag = db.trtmp.aggregate([
                                 cond,
