@@ -155,6 +155,9 @@
   #btn_coordinate{
     float: right;
   }
+  #btn_mqtt{
+    float: right;
+  }
   /*.not_select {
     fill:black;
   }*/
@@ -174,6 +177,7 @@
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
   <a id="btn_coordinate" onclick="coordinate_opacity()" class="btn btn-default btn-sm"></a>
+  <a id="btn_mqtt" onclick="mqtt()" class="btn btn-default btn-sm">mqtt</a>
   　<!--(<a href="javascript:void(0)" id="category_1" onclick="show('1');"></a>)-->
   <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
   <span id="selected_datetime">
@@ -631,6 +635,17 @@
     }
     make_coordinate();
 
+    var flag_mqtt = false;
+    //mqtt切り替え用
+    function mqtt() {
+      if(flag_mqtt){
+        d3.select("#btn_mqtt").style("color","black");
+      } else {
+        d3.select("#btn_mqtt").style("color","blue");
+      }
+      flag_mqtt = !flag_mqtt;
+    }
+
     // 折りたたみ表示
     function show(inputData) {
       var objID=document.getElementById( "layer_" + inputData );
@@ -1065,8 +1080,11 @@
         var timerange = num*60;
       }
       var mac = Sample_form.textbox_mac.value;
-
-      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor + "&selectnode=" + select_node_list;
+      if (flag_mqtt) {
+        var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor + "&selectnode=" + select_node_list;
+      } else {
+        var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
+      }
       return url;
     }
 
