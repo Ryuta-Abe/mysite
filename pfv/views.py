@@ -766,7 +766,7 @@ def tag_track_map(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
 
@@ -851,7 +851,7 @@ def tag_track_map_json(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
   selectnode = request.GET.get("selectnode", "")
@@ -961,7 +961,7 @@ def tag_position_check(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-7F')
 
@@ -1059,7 +1059,7 @@ def tag_position_check_json(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
   selectnode = request.GET.get("selectnode", "")
