@@ -8,7 +8,7 @@ client = MongoClient()
 db = client.nm4bd
 
 # DB初期化
-db.pcwlroute_test.remove()
+db.pcwlroute.remove()
 db.idealroute.remove()
 
 # CONST
@@ -92,7 +92,7 @@ def make_pcwlroute():
 		floor_nodes = [0]*99 # nodes in the certain floor
 		for i in range(0,len(tmp_nodes)):
 			floor_nodes[tmp_nodes[i]["pcwl_id"]] = tmp_nodes[i]
-		print(floor_nodes)
+		# print(floor_nodes)
 
 		# pcwl_idからfloor_nodesでのインデックスを求められるように
 		# (register_order[pcwl_id] = floor_nodesでのインデックス)
@@ -108,13 +108,13 @@ def make_pcwlroute():
 					# 出発点と到着点が隣接ならばそれらの間のルートを登録
 					if ed_id in floor_nodes[i]["next_id"]:
 						next_distance = sqrt(pow(floor_nodes[i]["pos_x"]-floor_nodes[j]["pos_x"],2)+pow(floor_nodes[i]["pos_y"]-floor_nodes[j]["pos_y"],2))
-						db.pcwlroute_test.insert({"query":[st_id,ed_id],"dlist":[[{"direction":[st_id,ed_id],"distance":next_distance}]],"floor":floor})
+						db.pcwlroute.insert({"query":[st_id,ed_id],"dlist":[[{"direction":[st_id,ed_id],"distance":next_distance}]],"floor":floor})
 						db.idealroute.insert({"query":[st_id,ed_id],"dlist":[{"direction":[st_id,ed_id],"distance":next_distance}],"total_distance":next_distance,"floor":floor})
 					# 隣接ではない場合
 					else :
 						all_route_list = search_route(floor_nodes,[st_id],ed_id,[])
 						dlist = distance_filtering(floor_nodes,all_route_list,DISTANCE_THRESHOULD)
-						db.pcwlroute_test.insert({"query":[st_id,ed_id],"dlist":dlist,"floor":floor})
+						db.pcwlroute.insert({"query":[st_id,ed_id],"dlist":dlist,"floor":floor})
 
 						ddict = find_ideal_route(floor_nodes,all_route_list)
 						db.idealroute.insert({"query":[st_id,ed_id],"dlist":ddict["dlist"],"total_distance":ddict["total_distance"],"floor":floor})

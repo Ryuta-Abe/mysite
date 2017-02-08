@@ -26,7 +26,7 @@ def main(light_list):
   client.on_disconnect = on_disconnect
   client.on_publish = on_publish
   client.username_pw_set("spark","hogehoge")
-  client.connect("192.168.95.245", 1883, 60)
+  client.connect("localhost", 1883, 60)
 
   client.loop_start()
   msg = ""

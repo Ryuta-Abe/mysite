@@ -5,10 +5,10 @@ client = MongoClient()
 db = client.nm4bd
 
 def save_node(id,x,y,n,f):
-    db.pcwlnode_test.insert({"pcwl_id" : id, "pos_x" : x, "pos_y" : y, "next_id" : n, "floor" : f}) 
+    db.pcwlnode.insert({"pcwl_id" : id, "pos_x" : x, "pos_y" : y, "next_id" : n, "floor" : f}) 
 
 def make_pcwlnode():
-    db.pcwlnode_test.drop()
+    db.pcwlnode.drop()
     # W2-6F nodes
     save_node(1,990,130,[2],"W2-6F")
     save_node(2,920,150,[1,3],"W2-6F")
@@ -119,11 +119,11 @@ def make_pcwlnode():
     save_node(3,915,225,[2,4],"W2-9F")
     save_node(4,840,200,[3,5],"W2-9F")
     save_node(5,785,200,[4,6,24],"W2-9F")
-    save_node(6,710,190,[5,7,10],"W2-9F")
+    save_node(6,710,190,[5,7],"W2-9F")
     save_node(7,600,185,[6,8],"W2-9F")
     save_node(8,525,180,[7,9,27],"W2-9F")
     save_node(9,450,180,[8,25],"W2-9F")#室内（925号室）?
-    save_node(10,700,250,[6],"W2-9F")
+    # save_node(10,700,250,[6],"W2-9F")
     save_node(11,295,190,[12,25],"W2-9F")
     save_node(12,240,195,[11,13,26],"W2-9F")
     save_node(13,140,195,[12],"W2-9F")

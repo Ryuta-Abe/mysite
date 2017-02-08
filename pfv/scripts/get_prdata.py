@@ -143,7 +143,7 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 				# print("inserted.")
 
 
-@timeout_decorator.timeout(4.0) # cannot use on Windows
+@timeout_decorator.timeout(3.5) # cannot use on Windows
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)

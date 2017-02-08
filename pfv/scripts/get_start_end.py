@@ -3,6 +3,7 @@ from save_pfvinfo import *
 from convert_ip import convert_ip
 from convert_nodeid import convert_nodeid
 from convert_datetime import shift_seconds
+from classify import classify
 from mongoengine import *
 from pymongo import *
 
@@ -27,10 +28,13 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = False
+INTERSECTION_FUNCTION = True
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
-STAY_AFTER_INTERSECTION = False
+STAY_AFTER_INTERSECTION = True
 min_interval = 5
+
+# use Machine-Learning
+USE_ML = True
 
 # TODO:add input : all start time
 def get_start_end_mod(all_st_time):
@@ -62,21 +66,32 @@ def get_start_end_mod(all_st_time):
 
     # data取り出し
     mac_query = ""
-    # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
+    # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:0e"}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist()
-    # print("gse_count:"+str(datas.count()))
-    # print("--- "+str(all_st_time)+" ---")
+    print("--- "+str(all_st_time)+" ---")
 
     if (datas.count() != 0):
         # 1番目の設定
         datas[0]["nodelist"] = reverse_list(datas[0]["nodelist"], "dbm")
         for data in datas:
-            # print(data)
             ins_flag = False
             intersection_flag = False
+            data["nodelist"] = reverse_list(data["nodelist"], "dbm")
             
-            remove_list = []
+            # RSSI最大のノードがあるfloorの必要データ作成
+            for list_data in data["nodelist"]:
+                largest_floor = convert_ip(list_data["ip"])["floor"]
+                if largest_floor != "Unknown":
+                    break
+                
+            floor_node_list = []
+            floor_node_col = db.pcwlnode.find({"floor":largest_floor}).sort("pcwl_id",ASCENDING)
+            for node in floor_node_col:
+                floor_node_list.append(node["pcwl_id"])
+            floor_rssi_list = [-99] * len(floor_node_list)
+            
+            # nodelistデータ(floor,pcwl_id,rssi) reform
             loop_cnt = 0
             for list_data in data["nodelist"][:]:
                 list_data["floor"]   = convert_ip(list_data["ip"])["floor"]
@@ -84,16 +99,33 @@ def get_start_end_mod(all_st_time):
                 list_data["rssi"] = list_data["dbm"]
                 del(list_data["ip"])
                 del(list_data["dbm"])
+                # floor error
                 if list_data["floor"] == "Unknown":
                     data["nodelist"].remove(list_data)
+
+                # RSSIが最大のfloorのデータか否かで分岐
+                if list_data["floor"] == largest_floor:
+                    if list_data["pcwl_id"] in floor_node_list:
+                        index = floor_node_list.index(list_data["pcwl_id"])
+                        floor_rssi_list[index] = list_data["rssi"]
                 loop_cnt += 1
             
-            db.tmpcol_backup.insert(data)
             data["id"] = data["_id"]
             del(data["_id"])
+            db.tmpcol_backup.insert(data)
 
-            data["nodelist"] = reverse_list(data["nodelist"], "rssi")
-            
+            # 機械学習を使う場合
+            if USE_ML and largest_floor != "Unknown":
+                desc_index = classify(largest_floor, floor_rssi_list)
+                tmp_list = []
+                for x in range(0,3):
+                    predict_dict = {"floor":largest_floor, "pcwl_id":floor_node_list[desc_index[x]], "rssi":-60-x*10}
+                    tmp_list.append(predict_dict)
+                # print("1st : "+str(floor_node_list[desc_index[0]]))
+                # print("2nd : "+str(floor_node_list[desc_index[1]]))
+                # print("3rd : "+str(floor_node_list[desc_index[2]]))
+                data["nodelist"] = tmp_list
+
             # RSSI上位3つまで参照
             node_cnt = min(len(data["nodelist"]), 3)
 
@@ -101,6 +133,7 @@ def get_start_end_mod(all_st_time):
             pastd = []
             pastd += db.pastdata.find({"mac":data["id"]["mac"]})
 
+            # update_dtを下回る以上データがいるか確認
             if (pastd != []) and (data["id"]["get_time_no"] <= pastd[0]["update_dt"]):
                 print("0:(dt > update_dt)or(pastd==[])")
                 pass
@@ -123,7 +156,6 @@ def get_start_end_mod(all_st_time):
                 if (pastlist != []):
                     pastlist = reverse_list(pastlist, "dt")
                     tmp_startdt = pastlist[0]["dt"]
-                    # print(pastd[0])
 
                     # stay after intersection
                     if (STAY_AFTER_INTERSECTION and pastlist[0]["arrive_intersection"]):
@@ -219,7 +251,6 @@ def get_start_end_mod(all_st_time):
                                                         update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], after_node_info)
                                                     save_pastd(pastd[0], tmp_enddt)
                                                     # print("======================================")
-                                                    # print(pastd[0])
                                                     ins_flag = True
                                                     break
 

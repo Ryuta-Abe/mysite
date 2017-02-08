@@ -11,7 +11,8 @@ MATCH_NODE_THRESHOLD = 10
 UPDATE_INTERVAL = 5
 ANALYZE_LAG = 0
 ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
-DEBUG_PRINT = True
+# DEBUG_PRINT = True
+DEBUG_PRINT = False
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
 
 # global var.
@@ -84,13 +85,14 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 			examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
 		examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
 	
-	accuracy,existing_data_rate,average_error_distance = process_count_result()
+	accuracy,existing_data_rate,average_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate  = process_count_result()
 	if average_error_distance is not None:
 		average_error_distance_m = rounding(average_error_distance * 14.4 / 110,2)
 		average_error_distance = rounding(average_error_distance,2)
 	db.examine_summary.insert({"exp_id":exp_id,"mac":mac,"floor":floor,"st_node":st_node,"ed_node":ed_node,"via_nodes_list":via_nodes_list,"st_dt":st_dt,"ed_dt":ed_dt,"via_dts_list":via_dts_list,
 		"accuracy":accuracy,"existing_rate":existing_data_rate,
-		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m})
+		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m,
+		"match_rate":match_rate, "adjacent_rate":adjacent_rate, "middle_rate":middle_rate, "wrong_node_rate":wrong_node_rate})
 
 def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
 	ideal_one_route = {}
@@ -476,7 +478,7 @@ def process_count_result():
 			 + "( " + str(wrong_node_count) + " / " + str(false_count) + " )")
 
 
-	return existing_accuracy,existing_data_rate,average_error_distance
+	return existing_accuracy,existing_data_rate,average_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate
 
 
 # # DBに入っているデータを出力することも可能(コメント解除)
