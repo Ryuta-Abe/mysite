@@ -860,7 +860,7 @@ def tag_track_map_json(request):
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
   elif realtime == "true":
-    lt = datetime.datetime.today() - datetime.timedelta(seconds = 5) # 現在時刻の5秒前を表示時間に
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 10) # 現在時刻の5秒前を表示時間に
   else :
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
