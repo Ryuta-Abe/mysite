@@ -33,6 +33,7 @@ class Command(BaseCommand):
     help = u'aggregate timeout-logs'
 
     def handle(self, *args, **options):
+        interval = 1 ## (h)
         # hourly aggregate
         db.hourlytolog.remove({})
         print(len(args))
@@ -43,12 +44,14 @@ class Command(BaseCommand):
             iso_st = dt_from_14digits_to_iso("2016" + args[0])
             iso_ed = dt_from_14digits_to_iso("2016" + args[1])
         else:
-            iso_st = dt_from_14digits_to_iso("20160930000000")
-            iso_ed = dt_from_14digits_to_iso("20161001000000")
+            iso_st = dt_from_14digits_to_iso("20161012000000")
+            iso_ed = dt_from_14digits_to_iso("20161014000000")
+            # iso_st = dt_from_14digits_to_iso("20161219160000")
+            # iso_ed = dt_from_14digits_to_iso("20161221180000")
         print("from:" + str(iso_st))
         print("to  :" + str(iso_ed) + "\n")
         gte = iso_st
-        lt  = shift_hours(gte, 1)
+        lt  = shift_hours(gte, interval)
         ip_list = []
         ip_list += db.pcwliplist.find()
         for ip_data in ip_list:
@@ -66,5 +69,5 @@ class Command(BaseCommand):
 
             db.hourlytolog.insert(hourly_data)
             
-            gte = shift_hours(gte,1)
-            lt  = shift_hours(gte,1)
+            gte = shift_hours(gte,interval)
+            lt  = shift_hours(gte,interval)
