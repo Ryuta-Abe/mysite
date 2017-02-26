@@ -766,7 +766,7 @@ def tag_track_map(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
 
@@ -806,7 +806,7 @@ def tag_track_map(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -827,7 +827,7 @@ def tag_track_map(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -851,7 +851,7 @@ def tag_track_map_json(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
   selectnode = request.GET.get("selectnode", "")
@@ -860,7 +860,7 @@ def tag_track_map_json(request):
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
   elif realtime == "true":
-    lt = datetime.datetime.today() - datetime.timedelta(seconds = 5) # 現在時刻の5秒前を表示時間に
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 10) # 現在時刻の5秒前を表示時間に
   else :
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
@@ -915,7 +915,7 @@ def tag_track_map_json(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -936,7 +936,7 @@ def tag_track_map_json(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
 #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -961,7 +961,7 @@ def tag_position_check(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-7F')
 
@@ -1001,7 +1001,7 @@ def tag_position_check(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -1022,7 +1022,7 @@ def tag_position_check(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []
@@ -1059,7 +1059,7 @@ def tag_position_check_json(request):
   # urlからクエリの取り出し
   date_time = request.GET.get('datetime', 'now')
   timerange = int(request.GET.get('timerange', 5))
-  mac = request.GET.get('mac', '00:11:81:10:01:1c,00:11:81:10:01:19,00:11:81:10:01:17,00:11:81:10:01:1a,00:11:81:10:01:23,00:11:81:10:01:1b')
+  mac = request.GET.get('mac', '00:11:81:10:01:1b,00:11:81:10:01:00,00:11:81:10:01:0d,00:11:81:10:01:0c,00:11:81:10:01:0e,00:11:81:10:01:3d')
   language = request.GET.get('language', 'jp')
   floor = request.GET.get('floor', 'W2-6F')
   selectnode = request.GET.get("selectnode", "")
@@ -1095,7 +1095,7 @@ def tag_position_check_json(request):
   color_list = ["blue","red","limegreen","orange","magenta","turquoise"]
   pfvinfo = []
   for i in range(0,len(mac_query)):
-    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"unknown"})
+    pfvinfo.append({"mac":mac_query[i],"color":color_list[i],"route":[],"floor":"×"})
 
   # pfv情報の取り出し
   tmp_pfvinfo = []
@@ -1116,7 +1116,7 @@ def tag_position_check_json(request):
         p_data["route"].append([[t_data["pcwl_id"]]])
 
   #pfvinfoに現在のfloor情報を紐付け
-  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+  floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
   for i in pfvinfo:
     for j in floor_list:
       tmp_count = []

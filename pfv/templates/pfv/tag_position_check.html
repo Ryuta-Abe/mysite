@@ -344,7 +344,7 @@
     Sample_form.textbox_mac.value = "{{ mac }}";
 
     //floorのリストと現在の階を定義
-    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"];
+    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"];
     var floor = "{{ floor }}";
 
     //タブ用の枠を作成
@@ -374,8 +374,6 @@
       var file_name = "8F_west2.jpg";
     } else if ("{{ floor }}" == "W2-9F"){
       var file_name = "9F_west2.jpg";
-    } else if ("{{ floor }}" == "kaiyo"){
-      var file_name = "kaiyo.jpg";
     };
     d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
 
@@ -504,32 +502,32 @@
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
           "class": function(d){
-            if (d.mac == "00:11:81:10:01:1c") {
+            if (d.mac == "00:11:81:10:01:1b") {
               return "blue_analy";
-            }　else if (d.mac == "00:11:81:10:01:19") {
+            }　else if (d.mac == "00:11:81:10:01:00") {
               return "red_analy";
-            }　else if (d.mac == "00:11:81:10:01:17") {
+            }　else if (d.mac == "00:11:81:10:01:0d") {
               return "limegreen_analy";
-            } else if (d.mac == "00:11:81:10:01:1a") {
+            } else if (d.mac == "00:11:81:10:01:0c") {
               return "orange_analy";
-            } else if (d.mac == "00:11:81:10:01:23") {
+            } else if (d.mac == "00:11:81:10:01:0e") {
               return "magenta_analy";
-            } else if (d.mac == "00:11:81:10:01:1b") {
+            } else if (d.mac == "00:11:81:10:01:3d") {
               return "turquoise_analy";
             }
           },
           "visibility": function(d) {
-            if (d.mac == "00:11:81:10:01:1c" && blue_opacity == true) {
+            if (d.mac == "00:11:81:10:01:1b" && blue_opacity == true) {
               return "hidden";
-            }　else if (d.mac == "00:11:81:10:01:19" && red_opacity == true) {
+            }　else if (d.mac == "00:11:81:10:01:00" && red_opacity == true) {
               return "hidden";
-            }　else if (d.mac == "00:11:81:10:01:17" && limegreen_opacity == true) {
+            }　else if (d.mac == "00:11:81:10:01:0d" && limegreen_opacity == true) {
               return "hidden";
-            } else if (d.mac == "00:11:81:10:01:1a" && orange_opacity == true) {
+            } else if (d.mac == "00:11:81:10:01:0c" && orange_opacity == true) {
               return "hidden";
-            } else if (d.mac == "00:11:81:10:01:23" && magenta_opacity == true) {
+            } else if (d.mac == "00:11:81:10:01:0e" && magenta_opacity == true) {
               return "hidden";
-            } else if (d.mac == "00:11:81:10:01:1b" && turquoise_opacity == true) {
+            } else if (d.mac == "00:11:81:10:01:3d" && turquoise_opacity == true) {
               return "hidden";
             } else{
                 return "visible";
@@ -568,32 +566,32 @@
         .attr({
           transform: function(d){return "translate(" + d.pos_x + "," + d.pos_y + ")";},
           "class": function(d){
-            if (d.mac == "00:11:81:10:01:1c") {
+            if (d.mac == "00:11:81:10:01:1b") {
               return "blue_analy";
-            }　else if (d.mac == "00:11:81:10:01:19") {
+            }　else if (d.mac == "00:11:81:10:01:00") {
               return "red_analy";
-            }　else if (d.mac == "00:11:81:10:01:17") {
+            }　else if (d.mac == "00:11:81:10:01:0d") {
               return "limegreen_analy";
-            } else if (d.mac == "00:11:81:10:01:1a") {
+            } else if (d.mac == "00:11:81:10:01:0c") {
               return "orange_analy";
-            } else if (d.mac == "00:11:81:10:01:23") {
+            } else if (d.mac == "00:11:81:10:01:0e") {
               return "magenta_analy";
-            } else if (d.mac == "00:11:81:10:01:1b") {
+            } else if (d.mac == "00:11:81:10:01:3d") {
               return "turquoise_analy";
             }
           },
           "visibility": function(d) {
-            if (d.mac == "00:11:81:10:01:1c" && blue_opacity == true) {
+            if (d.mac == "00:11:81:10:01:1b" && blue_opacity == true) {
               return "hidden";
-            }　else if (d.mac == "00:11:81:10:01:19" && red_opacity == true) {
+            }　else if (d.mac == "00:11:81:10:01:00" && red_opacity == true) {
               return "hidden";
-            }　else if (d.mac == "00:11:81:10:01:17" && limegreen_opacity == true) {
+            }　else if (d.mac == "00:11:81:10:01:0d" && limegreen_opacity == true) {
               return "hidden";
-            } else if (d.mac == "00:11:81:10:01:1a" && orange_opacity == true) {
+            } else if (d.mac == "00:11:81:10:01:0c" && orange_opacity == true) {
               return "hidden";
-            } else if (d.mac == "00:11:81:10:01:23" && magenta_opacity == true) {
+            } else if (d.mac == "00:11:81:10:01:0e" && magenta_opacity == true) {
               return "hidden";
-            } else if (d.mac == "00:11:81:10:01:1b" && turquoise_opacity == true) {
+            } else if (d.mac == "00:11:81:10:01:3d" && turquoise_opacity == true) {
               return "hidden";
             } else{
                 return "visible";
@@ -1128,25 +1126,25 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "4.35em",
+        "dx": "5.35em",
         "dy": ".35em",
         "font-size": "17px",
         "font-weight": "bold",
         "fill": function(d){return d.color;},
       })
       .text(function(d) {
-              if (d.mac == "00:11:81:10:01:1c") {
+              if (d.mac == "00:11:81:10:01:1b") {
                 return "もみだれや";
-              }　else if (d.mac == "00:11:81:10:01:19") {
+              }　else if (d.mac == "00:11:81:10:01:00") {
                 return "あじや";
-              }　else if (d.mac == "00:11:81:10:01:17") {
+              }　else if (d.mac == "00:11:81:10:01:0d") {
                 return "さいこんたん";
-              } else if (d.mac == "00:11:81:10:01:1a") {
-                return "予備1";
-              } else if (d.mac == "00:11:81:10:01:23") {
-                return "予備2";
-              } else if (d.mac == "00:11:81:10:01:1b") {
-                return "予備3";
+              } else if (d.mac == "00:11:81:10:01:0c") {
+                return "もみだれや予備";
+              } else if (d.mac == "00:11:81:10:01:0e") {
+                return "あじや予備";
+              } else if (d.mac == "00:11:81:10:01:3d") {
+                return "さいこんたん予備";
               } /*else {
                 return d.mac;
               }*/
@@ -1156,7 +1154,7 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "10.85em",
+        "dx": "11.85em",
         "dy": ".35em",
         "font-size": "17px",
         "font-weight": "bold",
@@ -1448,8 +1446,6 @@
         var file_name = "8F_west2.jpg";
       } else if (floor == "W2-9F"){
         var file_name = "9F_west2.jpg";
-      } else if (floor == "kaiyo"){
-        var file_name = "kaiyo.jpg";
       };
       d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
       // staycircleの描画空間
@@ -1589,7 +1585,7 @@
       g_color_reference.append("text")
       .attr({
         "text-anchor": "middle",
-        "dx": "10.85em",
+        "dx": "11.85em",
         "dy": ".35em",
         "font-size": "17px",
         "font-weight": "bold",
