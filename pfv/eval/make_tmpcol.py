@@ -3,7 +3,11 @@ from pymongo import *
 from convert_ip import *
 from convert_datetime import *
 import csv
-import os
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 
 client = MongoClient()
 db = client.nm4bd

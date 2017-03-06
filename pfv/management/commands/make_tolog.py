@@ -3,8 +3,11 @@ from django.core.management.base import BaseCommand
 
 from pymongo import *
 from mongoengine import *
-from pfv.models import timeoutlog, pcwliplist, tmptolog, hourlytolog
-from pfv.convert_datetime import *
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 
 # mongoDBに接続
 client = MongoClient()

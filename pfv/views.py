@@ -16,9 +16,15 @@ import json
 import math
 import datetime
 import locale
-from pfv.scripts.convert_datetime import *
-from pfv.scripts.convert_ip import convert_ip
-from pfv.scripts.pub_web import main
+# dir_ref
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/util/")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/etc/")
+
+from convert_datetime import *
+from convert_ip import convert_ip
+from pub_web import main
 
 # 今日の日付
 d = datetime.datetime.today() # 2014-11-20 19:41:51.011593

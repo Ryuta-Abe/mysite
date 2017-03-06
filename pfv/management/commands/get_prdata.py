@@ -8,8 +8,11 @@ st = time.time()
 import socket
 from multiprocessing import Pool
 from multiprocessing import Process
-import os
-from pfv.convert_datetime import dt_from_14digits_to_iso, dt_from_iso_to_numlong
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 
 # mongoDBに接続
 from pymongo import *

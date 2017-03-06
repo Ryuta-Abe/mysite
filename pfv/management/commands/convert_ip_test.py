@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
-from pfv.convert_nodeid import *
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 # mongoDBに接続
 from pymongo import *
 import time

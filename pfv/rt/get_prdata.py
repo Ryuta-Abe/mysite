@@ -3,11 +3,16 @@ import time
 all_st = time.time()
 import urllib.request
 import datetime
-import sys
 import socket
+
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
+
 from multiprocessing import Pool
 from multiprocessing import Process
-import os
 from convert_datetime import *
 from analyze import analyze_mod
 import timeout_decorator # cannot use on Windows

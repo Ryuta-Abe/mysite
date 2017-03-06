@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-import os
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
+
 from make_pcwliplist import *
 from make_pcwlnode import *
 from make_pcwlroute import *

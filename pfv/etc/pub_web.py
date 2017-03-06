@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-import sys
 import paho.mqtt.client as mqtt
 from time import sleep
 import random
-# from pfv.scripts.convert_datetime import *
+
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 
 # mongoDBに接続
 from pymongo import *

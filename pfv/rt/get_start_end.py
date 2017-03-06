@@ -36,8 +36,11 @@ min_interval = 5
 # use Machine-Learning
 USE_ML = True
 
-# TODO:add input : all start time
 def get_start_end_mod(all_st_time):
+    """
+    開始・終了の時刻・地点を決定するモジュール
+    @param  all_st_time : datetime 開始時刻
+    """
     from datetime import datetime, timedelta
     # dt05
 
@@ -363,7 +366,6 @@ def get_start_end_mod(all_st_time):
     make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
     make_staymacinfo(data_lists_stay,db.staymacinfo,min_interval)
 
-# 実験用 mac→name フィルタ
 def name_filter(mac):
     if mac == "90:b6:86:52:77:2a":
         name = "Galaxy(S)"

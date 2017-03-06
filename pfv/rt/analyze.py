@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 import time
-all_st =time.time()
-import sys
+all_st = time.time()
+
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
+
 from convert_datetime import *
 from aggregate import *
 from get_start_end import get_start_end_mod
@@ -13,15 +19,16 @@ db = client.nm4bd
 
 # input:iso datetime
 def analyze_mod(st_dt, ed_dt):
+    """
+    解析処理の開始・終了時刻を管理
+    @param  st_dt : datetime
+    @param  ed_dt : datetime
+    """
     datas = db.trtmp.find()
+    # 高速化のためのindex
     db.trtmp.create_index([("get_time_no", ASCENDING)])
-    # for data in datas:
-    #     data["dt_end05"] = data["get_time_no"]
-    #     db.trtmp.save(data)
 
-    # st_dt  = dt_from_iso_to_str(st_dt)
     tmp_st = st_dt  # for debug
-
     while(tmp_st < ed_dt):
         # loop_st = time.time()
         after_5s = shift_seconds(tmp_st, 5)

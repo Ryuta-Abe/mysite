@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
 
-from pfv.aggregate import *
-from pfv.models import raw100
-from pfv.convert_datetime import dt_from_14digits_to_iso, shift_seconds
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 
 import json
 import math

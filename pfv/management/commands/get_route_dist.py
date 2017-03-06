@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
-import sys, os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../scripts')
-from pfv.models import pcwlroute
-from get_start_end import *
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
 
 from pymongo import *
 

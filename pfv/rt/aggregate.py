@@ -14,17 +14,19 @@ client = MongoClient()
 db = client.nm4bd
 
 def aggregate_mod(startdt_iso, enddt_iso):
-    # cond = {"$limit":1000000}
+    """
+    PRデータ集計モジュール
+    "5秒毎"のPRデータを集計することを想定
+    @param  startdt_iso : datetime
+    @param  enddt_iso   : datetime
+    """
     cond = {"$match": {"get_time_no": {"$gte":startdt_iso, "$lt":enddt_iso} } }
-    # cond = {"$match": {"get_time_no": {"$gte":startdt_iso, "$lt":enddt_iso},"mac":"00:11:81:10:01:17" } } # tag
-    dt_end = "$get_time_no"
-    min_interval = 5
     ag = db.trtmp.aggregate([
                                 cond,
                                 {"$group":
                                     {"_id":
                                         {"mac":"$mac", 
-                                         "get_time_no":dt_end,
+                                         "get_time_no":"$get_time_no",
                                         },
                                      "nodelist":{"$push":{"dbm":"$dbm", "ip":"$ip"}},
                                     },
@@ -34,4 +36,4 @@ def aggregate_mod(startdt_iso, enddt_iso):
                             allowDiskUse=True,
                             )
 
-    make_pcwltime_test(startdt_iso)
+    make_pcwltime(startdt_iso)

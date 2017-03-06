@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
+# import Env
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
+
 from pymongo import *
 from convert_datetime import *
-import os
 
 # mongoDBに接続
 client = MongoClient()
