@@ -218,6 +218,7 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 				judgement = "T(Adjacent)"
 	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
 		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"err_dist":moment_error_dist})
+	db.actual_position.insert({"floor": floor, "mac": mac, "datetime":dt,"pos_x":pos_x,"pos_y":pos_y})
 
 	if DEBUG_PRINT:
 		print(str(dt) + ":" + judgement,"pos:" + str(actual_position_list),"correct:" + str(correct_nodes),

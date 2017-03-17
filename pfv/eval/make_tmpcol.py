@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-from pymongo import *
-from convert_ip import *
-from convert_datetime import *
-import csv
 # import Env
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
 from env import Env
 Env()
 
+from convert_ip import *
+from convert_datetime import *
+import csv
+
+from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
@@ -68,10 +69,12 @@ def make_dbmlog(exp_info):
             else:
                 data_5s[ip_data["log_key"]] = -99
                 
-        if exist_flag:
-            db.dbmlog.insert(data_5s)
-        else:
-            print("None data : "+str(gte))
+        db.dbmlog.insert(data_5s)
+
+        # if exist_flag:
+        #     db.dbmlog.insert(data_5s)
+        # else:
+        #     print("None data : "+str(gte))
         
         gte = shift_seconds(gte,5)
         lt  = shift_seconds(gte,5)
@@ -133,9 +136,9 @@ def append_train(input_file, train_file):
 
 if __name__ == '__main__':
     # common_id_list = ["161207_0", "161208_0"]
-    common_id_list = ["161221_"]
+    common_id_list = ["170127_"]
     for common_id in common_id_list:
-        for id_num in range(5,9):
+        for id_num in range(1,76):
             id_str = common_id + ("00" + str(id_num))[-3:]
             exp_info = db.csvtest.find_one({"exp_id":id_str})
             print("\n=== " + id_str + " ===")
@@ -150,14 +153,29 @@ if __name__ == '__main__':
             # 実験データ一回分まとめ
             make_dbmlog(exp_info)
 
-            file_name = 'C:/Users/Ryuta/csv/' + id_str +'.csv'
+            tmp_file_name = 'C:/Users/Ryuta/csv/tmp_' + id_str +'.csv'
+            out_file_name = 'C:/Users/Ryuta/csv/' + id_str +'.csv'
             label_file = 'C:/Users/Ryuta/csv/' + common_id + floor +'_label.csv'
             train_file = 'C:/Users/Ryuta/csv/' + common_id + floor +'_train.csv'
-            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ file_name +' --csv --fieldFile C:/Users/Ryuta/dbm_field'+ floor_num +'.txt'
+            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ tmp_file_name +' --csv --fieldFile C:/Users/Ryuta/dbm_field'+ floor_num +'.txt'
 
             # RSSIデータCSV出力
             os.system(command)
 
+            # 1行目削除
+            with open(tmp_file_name, 'r') as f:
+                doc = [row for row in csv.reader(f, delimiter='\t')]
+
+            # print(doc)
+            # for row in doc:
+            #     row.pop(0)  #削除したい列が2列目(bの列)なので、1を指定
+            del doc[0]
+
+            with open(out_file_name, 'w') as f:
+                w = csv.writer(f, delimiter='\t', lineterminator='\n')  #列区切りと行区切りの文字を指定
+                w.writerows(doc)
+
+            os.remove(tmp_file_name)
             # 1行目削除 & ラベルデータ作成
             # replace_and_make_label(file_name, label_file, exp_info["st_node"])
             

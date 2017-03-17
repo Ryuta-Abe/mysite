@@ -124,6 +124,7 @@ def get_start_end_mod(all_st_time):
                 for x in range(0,3):
                     predict_dict = {"floor":largest_floor, "pcwl_id":floor_node_list[desc_index[x]], "rssi":-60-x*10}
                     tmp_list.append(predict_dict)
+                # 判定されたノード候補を表示
                 # print("1st : "+str(floor_node_list[desc_index[0]]))
                 # print("2nd : "+str(floor_node_list[desc_index[1]]))
                 # print("3rd : "+str(floor_node_list[desc_index[2]]))
