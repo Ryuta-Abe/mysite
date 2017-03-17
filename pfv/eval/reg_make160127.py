@@ -12,6 +12,8 @@ from sklearn.neural_network import MLPRegressor
 print("mod_import:"+str(time.time()-st))
 
 floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"]
+
+# 回帰分析モデルのパラメータ
 activation_list = ["relu"]
 solver_list = ["adam"]
 prm_list = []
@@ -20,7 +22,7 @@ for act in activation_list:
     for solver in solver_list:
         prm_list.append([act,solver])
 
-
+# 各フロアのモデル作成
 for floor in floor_list:
     for prm in prm_list:
         # make model

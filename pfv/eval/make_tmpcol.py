@@ -32,6 +32,11 @@ db = client.nm4bd
 
 
 def make_dbmlog(exp_info):
+    """
+    test2コレクション(仮)に入れた、PRデータから
+    各時刻におけるRSSIパターンデータが入ったコレクション(dbmlog)を作成する
+    @param  exp_info:dict
+    """
     db.dbmlog.drop()
 
     floor = exp_info["floor"]
@@ -52,17 +57,13 @@ def make_dbmlog(exp_info):
     for ip_data in ip_list:
         ip_data["log_key"] = str(ip_data["floor"]) + "-" + str(ip_data["pcwl_id"])
 
-    # print(lt)
     while (lt <= iso_ed):
-        # print(gte)
         data_5s = {}
         data_5s["datetime"] = gte
         exist_flag = False
         for ip_data in ip_list:
             ip = str(ip_data["ip"])
-            # print(ip)
             dbm_data = db.test2.find_one({"mac":mac, "get_time_no":{"$gte":gte,"$lt":lt},"ip":ip})
-            # print(dbm_data)
             if (dbm_data != None):
                 data_5s[ip_data["log_key"]] = dbm_data["dbm"]
                 exist_flag = True
@@ -79,7 +80,7 @@ def make_dbmlog(exp_info):
         gte = shift_seconds(gte,5)
         lt  = shift_seconds(gte,5)
 
-
+# ラベルデータを作成する
 def replace_and_make_label(input_file, label_file, node_id):
     '''
     テキストファイルの全ての行に共通の置換処理を行う．
@@ -89,8 +90,6 @@ def replace_and_make_label(input_file, label_file, node_id):
     if os.path.exists(output_file):
         os.remove(output_file)
 
-    # f_output_file = open(output_file, "a")
-    # f_input_file = open(input_file, 'r')
     f_label = open(label_file, "a",newline='')
     label_writer = csv.writer(f_label)
     with open(input_file, "r") as f_in:
@@ -118,7 +117,7 @@ def replace_and_make_label(input_file, label_file, node_id):
     os.remove(input_file)
     os.rename(output_file, input_file)
 
-
+# 学習用データCSVファイルに追記
 def append_train(input_file, train_file):
     f_train = open(train_file, "a",newline='')
     train_writer = csv.writer(f_train)
@@ -165,10 +164,6 @@ if __name__ == '__main__':
             # 1行目削除
             with open(tmp_file_name, 'r') as f:
                 doc = [row for row in csv.reader(f, delimiter='\t')]
-
-            # print(doc)
-            # for row in doc:
-            #     row.pop(0)  #削除したい列が2列目(bの列)なので、1を指定
             del doc[0]
 
             with open(out_file_name, 'w') as f:

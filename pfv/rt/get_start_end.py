@@ -367,22 +367,14 @@ def get_start_end_mod(all_st_time):
     make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
     make_staymacinfo(data_lists_stay,db.staymacinfo,min_interval)
 
-def name_filter(mac):
-    if mac == "90:b6:86:52:77:2a":
-        name = "Galaxy(S)"
-    elif mac == "80:be:05:6c:6b:2b":
-        name = "iPhone6Plus(Y)"
-    elif mac == "98:e0:d9:35:92:4d":
-        name = "iPhone6(A)"
-    elif mac == "18:cf:5e:4a:3a:17":
-        name = "Dynabook(A)"
-    elif mac == "18:00:2d:62:6c:d1":
-        name = "XperiaVL(A)"
-    else:
-        name = mac
-    return name
-
 def get_min_distance(floor, node1, node2):
+    """
+    2AP間の最小距離を返す関数
+    @param  floor:str
+    @param  node1:int
+    @param  node2:int
+    @return d_total:float
+    """
     d_total = 0
     # 経路情報の取り出し
     route_info = [] 
@@ -401,6 +393,11 @@ def get_min_distance(floor, node1, node2):
     return d_total
 
 def init_nodecnt_dict():
+    """
+    nodecnt_dictの初期化
+    @return nodecnt_dict:dict
+        (ex: {"W2-6F":{1:0,2:0,...},...})
+    """
     nodecnt_dict = {}
     for floor in FLOOR_LIST:
         nodecnt_dict.update({floor:{}})
@@ -410,6 +407,10 @@ def init_nodecnt_dict():
     return nodecnt_dict
 
 def make_nodecnt_dict(node_history, get_time_no, nodecnt_dict):
+    """
+    nodecnt_dictを更新
+    (過去のデータ[node_history]から、過去1分間に入っていないデータ分のカウントを減らす)
+    """
     remove_list = []
     loop_cnt = 0
     for history in node_history[:]:
@@ -425,6 +426,10 @@ def make_nodecnt_dict(node_history, get_time_no, nodecnt_dict):
             node_history.remove(history)
 
 def update_nodecnt_dict(node_cnt, min_interval, data, nodecnt_dict):
+    """
+    nodecnt_dictを更新
+    (最新時刻のデータ中に含まれるデータ分nodecnt_dictのカウントを増やす)
+    """
     for num in range(0, node_cnt):
         tmp_id   = data["nodelist"][num]["pcwl_id"]
         tmp_floor = data["nodelist"][num]["floor"]
@@ -434,6 +439,11 @@ def update_nodecnt_dict(node_cnt, min_interval, data, nodecnt_dict):
             pass
 
 def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists):
+    """
+    data_lists(移動データ保存リスト)にse_data[Start and End data]を追加するために
+    se_dataを作成する関数
+    @return se_data:dict
+    """
     if tmp_enddt < tmp_startdt:
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
@@ -451,6 +461,11 @@ def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists
     return se_data
 
 def append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists_stay):
+    """
+    data_lists_stay(静止データ保存リスト)にse_data[Start and End data]を追加するために
+    se_dataを作成する関数
+    @return se_data:dict
+    """
     if tmp_enddt < tmp_startdt:
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
@@ -467,8 +482,13 @@ def append_data_lists_stay(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_
                 }
     return se_data
 
-# 行き来した場合stayに
 def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_lists_stay):
+    """
+    data_lists(移動データ保存リスト)にse_data[Start and End data]を追加するために
+    se_dataを作成する関数
+    [行き来した場合をstayにするときに使用]
+    @return se_data:dict
+    """
     if tmp_enddt < tmp_startdt:
         print("---------! ed > st error !---------")
     if (tmp_enddt - tmp_startdt).seconds > int_time_range:
@@ -483,9 +503,9 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
                 "end_node"  :tmp_node_id["pcwl_id"],
                 "floor"     :tmp_node_id["floor"],
                 }
-    # print(se_data)
     return se_data
 
+# pastlistの更新用関数
 def update_pastlist(pastd, get_time_no, num, nodelist):
     past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist, "alive":True, "arrive_intersection":False} 
     pastd["pastlist"].append(past_dict)
@@ -494,15 +514,23 @@ def update_pastlist_intersection(pastd, get_time_no, num, nodelist, start_node):
     past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":True} 
     pastd["pastlist"].append(past_dict)
 
+# 逆経路と部分一致 or 分岐点到着後のstay用
 def update_pastlist_alt(pastd, get_time_no, num, nodelist, start_node):
     past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":False} 
     pastd["pastlist"].append(past_dict)
 
+# データ欠落時、一旦stayで残しておく用
 def update_pastlist_keep_alive(pastd, get_time_no, num, nodelist, start_node):
     past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":False, "arrive_intersection":False}
     pastd["pastlist"].append(past_dict)
 
 def save_pastd(pastd,update_dt):
+    """
+    pastd(過去データ)更新用
+    各macに対する最終更新時刻を保存しておく
+    @param  pastd:dict
+    @param  update_dt:datetime
+    """
     pastd = {"mac":pastd["mac"],
              "update_dt":update_dt,
              "nodecnt_dict":pastd["nodecnt_dict"],
@@ -512,7 +540,15 @@ def save_pastd(pastd,update_dt):
     db.pastdata.save(pastd)
 
 def fix_velocity(floor, interval):
-    # 各floor速度対応
+    """
+    各フロアでの移動速度制限を設定
+    110[px] = 14.4[m] に相当
+    5sec or 10sec over で分けているが、現状5secしか機能していない...
+    6,7,9Fに関しては170px/5secが最大なので、v_W2_nF = 17 としておけばよい(マージンも要るか...)
+    @param  floor:str
+    @param  interval:int
+    @return velocity:float
+    """
     v_W2_6F = 30
     v_W2_7F = 30
     v_W2_8F = 30
@@ -531,6 +567,12 @@ def fix_velocity(floor, interval):
     return velocity
 
 def route_partial_match(current_route, past_route):
+    """
+    逆経路と部分一致しているかの判定をする関数
+    @param  current_route:list
+    @param  past_route:list
+    @return stay_flag:Boolean
+    """
     current_len = len(current_route)
     past_len    = len(past_route)
     if (current_len <= past_len):
@@ -550,10 +592,20 @@ def route_partial_match(current_route, past_route):
     return stay_flag
 
 def reverse_list(data_list, sort_key):
+    """
+    特定のkeyに関して、listを逆順にする関数
+    @param  data_list:list
+    @param  sort_key:str
+    @return data_list:list
+    """
     data_list = sorted(data_list, key=lambda x:x[str(sort_key)], reverse=True)
     return data_list
     
 def make_pastmaclist():
+    """
+    pastdataコレクションから過去データ(1min)に含まれるmacアドレスを抽出した
+    pastmaclistコレクションを作成する
+    """
     db.pastdata.aggregate([
                             {"$group":
                                 {"_id":
@@ -563,8 +615,13 @@ def make_pastmaclist():
                             {"$out": "pastmaclist"},
                         ],
                         allowDiskUse=True,
-                        )
+                    )
 
 def update_maclist(mac):
+    """
+    pastmaclistから現在参照している時刻のデータに含まれる
+    macアドレスと一致するものを除外する
+    @param  mac:str
+    """
     if (db.pastmaclist.find({"_id.mac":mac}).count() == 1):
         db.pastmaclist.remove({"_id.mac":mac})

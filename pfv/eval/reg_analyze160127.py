@@ -37,7 +37,7 @@ V_LIMIT = 75
 DIST_TH = 65 #使わないときは999(適当に大きい数)にする
 FIG_SAVE_DIR = "C:/Users/Ryuta/Desktop/sklearn/perp/"
 common_exp_id = "170127_"
-st_exp_id = 1
+st_exp_id = 75
 ed_exp_id = 75
 
 def rounding(num, round_place):
@@ -60,14 +60,13 @@ def csv_exam_reg_route(query_list = query_list):
         # 評価のみの場合は下の行のみ実行
         # query_exam_reg_route(query)
 
-# clf = joblib.load('1213_fp.pkl') 
-
-
 def reg_analy_coord(query_id):
+    """
+    回帰分析を行う(query_idに対応するデータを解析する)
+    @param  query_id:str
+    """
     db.reg_analy_coord.drop()
     datas = []
-    # 解析データ抽出クエリ
-    # query = {"exp_id":"161020"}
     datas += db.csvtest.find(query_id)
     for data in datas:
         mac = data["mac"]
@@ -229,8 +228,17 @@ def reg_analy_coord(query_id):
         db.reg_result.insert(data)
 
 
-# 距離短縮
 def reduction_length(v_limit, current_x, current_y, past_x, past_y):
+    """
+    移動距離制限を設ける関数[辺をv_limitまで短縮する]
+    @param  v_limit:float [速度制限]
+    @param  current_x:float [最新のx座標]
+    @param  current_y:float [y]
+    @param  past_x:float [過去のx座標]
+    @param  past_y:float　[y]
+    @return new_x:float　　[速度制限を掛けたあとのx]
+    @return new_y:float　　[速度制限を掛けたあとのy]
+    """
     x_dist = current_x - past_x
     y_dist = current_y - past_y
     square_coord = math.sqrt(pow(x_dist,2) + pow(y_dist,2))
@@ -243,8 +251,15 @@ def reduction_length(v_limit, current_x, current_y, past_x, past_y):
 
     return new_x, new_y
 
-# 垂線の足の座標、長さを求める
 def get_perp(current_x, current_y, edge_datas):
+    """
+    垂線の足の座標、長さを求める
+    @param  current_x:float
+    @param  current_y:float
+    @param  edge_datas:list
+    @return min_d:float [最小距離]
+    @return min_pos:tuple -> (float, float) [最小距離になる座標]
+    """
     min_d = 9999
     min_pos = (0, 0)
     p = current_x + current_y * 1j
@@ -261,8 +276,10 @@ def get_perp(current_x, current_y, edge_datas):
 
 
 # 垂線の足を求めるときに使う
+# 内積
 def dot(p1, p2):
     return p1.real*p2.real + p1.imag*p2.imag
+# 外積
 def cross(p1, p2):
     return p1.real*p2.imag - p1.imag*p2.real
 

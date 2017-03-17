@@ -42,6 +42,8 @@ def analyze_mod(st_dt, ed_dt):
         # print(time.time()-loop_st)
 
 
+# PR取得をせず、ローカルで解析のみを行う場合mainで実行
+# python analyze.py 20170123012345 20170123123456
 if __name__ == "__main__":
 
     param = sys.argv

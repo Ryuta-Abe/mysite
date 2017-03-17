@@ -14,9 +14,11 @@ def exec_argparse():
 
 
 def replace(input_file):
-    '''
-    テキストファイルの全ての行に共通の置換処理を行う．
-    '''
+    """
+    JSONの入力ファイル中の"_id"要素を削除する
+    [複数のJSONファイルをmongoimportした時にduplicate key errorを吐くため]
+    @param  input_file:str[File PATH]
+    """
     output_file = input_file + "_replace.json"
 
     # 出力ファイルの初期化（削除）
@@ -41,6 +43,7 @@ def replace(input_file):
     os.remove(input_file)
     os.rename(output_file, input_file)
 
+# python ./del_id.py [File PATH]
 if __name__ == "__main__":
     args = exec_argparse()
     replace(args.input_file)
