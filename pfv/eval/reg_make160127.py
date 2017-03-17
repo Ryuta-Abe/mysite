@@ -22,7 +22,7 @@ for act in activation_list:
     for solver in solver_list:
         prm_list.append([act,solver])
 
-# 各フロアのモデル作成
+# 各フロアの"回帰"モデル作成
 for floor in floor_list:
     for prm in prm_list:
         # make model

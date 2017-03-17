@@ -298,7 +298,7 @@ def dotLineDist(p, line):
     p_vec = norm_vec * distance_h
     return (p + p_vec, abs(distance_h))
 
-
+# python ./reg_analyze160127.py で実行
 if __name__ == '__main__':
     query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
     csv_exam_reg_route(query_list)
