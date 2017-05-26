@@ -69,14 +69,14 @@ def make_dbmlog(exp_info):
                 exist_flag = True
             else:
                 data_5s[ip_data["log_key"]] = -99
-                
+
         db.dbmlog.insert(data_5s)
 
         # if exist_flag:
         #     db.dbmlog.insert(data_5s)
         # else:
         #     print("None data : "+str(gte))
-        
+
         gte = shift_seconds(gte,5)
         lt  = shift_seconds(gte,5)
 
@@ -148,15 +148,15 @@ if __name__ == '__main__':
             #     continue
             floor_num = floor[3:4]
             ##########################
-
+            print(exp_info)
             # 実験データ一回分まとめ
             make_dbmlog(exp_info)
 
-            tmp_file_name = 'C:/Users/Ryuta/csv/tmp_' + id_str +'.csv'
-            out_file_name = 'C:/Users/Ryuta/csv/' + id_str +'.csv'
-            label_file = 'C:/Users/Ryuta/csv/' + common_id + floor +'_label.csv'
-            train_file = 'C:/Users/Ryuta/csv/' + common_id + floor +'_train.csv'
-            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ tmp_file_name +' --csv --fieldFile C:/Users/Ryuta/dbm_field'+ floor_num +'.txt'
+            tmp_file_name = './../../mlfile/csv/tmp_' + id_str +'.csv'
+            out_file_name = './../../mlfile/csv/' + id_str +'.csv'
+            label_file = './../../mlfile/csv/' + common_id + floor +'_label.csv'
+            train_file = './../../mlfile/csv/' + common_id + floor +'_train.csv'
+            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ tmp_file_name +' --csv --fieldFile ./../../mlfile/txt/dbm_field'+ floor_num +'.txt'
 
             # RSSIデータCSV出力
             os.system(command)
@@ -173,6 +173,6 @@ if __name__ == '__main__':
             os.remove(tmp_file_name)
             # 1行目削除 & ラベルデータ作成
             # replace_and_make_label(file_name, label_file, exp_info["st_node"])
-            
+
             # trainデータ作成
             # append_train(file_name, train_file)
