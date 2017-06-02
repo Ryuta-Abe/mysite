@@ -28,9 +28,9 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = True
+INTERSECTION_FUNCTION = False
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
-STAY_AFTER_INTERSECTION = True
+STAY_AFTER_INTERSECTION = False
 min_interval = 5
 
 # use Machine-Learning

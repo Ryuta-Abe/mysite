@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # import Env
-import os, sys
+import os, sys,math
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
 from env import Env
 Env()
@@ -30,6 +30,7 @@ middle_count = 0
 wrong_node_count = 0
 wrong_floor_count = 0
 error_distance = 0.0
+direct_error_distance = 0.0
 # stay_position_list: 移動実験:None,stay実験:position_list
 stay_position_list = None
 stay_correct_nodes = None
@@ -43,6 +44,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	global wrong_node_count
 	global wrong_floor_count
 	global error_distance
+	global direct_error_distance
 	global stay_position_list
 	global stay_correct_nodes
 	examine_count = 0
@@ -53,10 +55,13 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	wrong_node_count = 0
 	wrong_floor_count = 0
 	error_distance = 0
+	direct_error_distance = 0
 	correct_answer_rate = 0
 	correct_answer_rate_alt = 0
 	average_error_distance = None
 	average_error_distance_m = None
+	average_direct_error_distance = None
+	average_direct_error_distance_m = None
 	if len(stay_pos) == 4:
 		stay_position_list = stay_pos
 	elif st_node == ed_node and len(via_dts_list) == 0:
@@ -91,13 +96,15 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 			examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
 		examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
 	
-	accuracy,existing_data_rate,average_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate  = process_count_result()
+	accuracy,existing_data_rate,average_error_distance,average_direct_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate  = process_count_result()
 	if average_error_distance is not None:
 		average_error_distance_m = rounding(average_error_distance * 14.4 / 110,2)
 		average_error_distance = rounding(average_error_distance,2)
+	if average_direct_error_distance is not None:
+		average_direct_error_distance_m = rounding(average_direct_error_distance * 14.4 / 110,2)
 	db.examine_summary.insert({"exp_id":exp_id,"mac":mac,"floor":floor,"st_node":st_node,"ed_node":ed_node,"via_nodes_list":via_nodes_list,"st_dt":st_dt,"ed_dt":ed_dt,"via_dts_list":via_dts_list,
 		"accuracy":accuracy,"existing_rate":existing_data_rate,
-		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m,
+		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m,"avg_direct_err_dist[m]":average_direct_error_distance_m,
 		"match_rate":match_rate, "adjacent_rate":adjacent_rate, "middle_rate":middle_rate, "wrong_node_rate":wrong_node_rate})
 
 def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
@@ -155,6 +162,8 @@ def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
 
 def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 	global error_distance
+	global direct_error_distance
+	moment_direct_error_distance = 0
 	real_floor = ""
 	analyzed_node = 0
 	correct_nodes = []
@@ -179,6 +188,9 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 	else:
 		# real_floor = analyzed_data["floor"]
 		# To Do : improve verification process by using analyzed data
+		analyzed_pos_x = analyzed_data["pos_x"]
+		analyzed_pos_y = analyzed_data["pos_y"]
+
 		real_floor, analyzed_node = find_analyzed_node(mac, floor, dt)
 
 		if real_floor != floor:
@@ -205,6 +217,9 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 					moment_error_dist = rounding(min_dist - mlist[i]["margin"],2)
 			error_distance += moment_error_dist
 
+			moment_direct_error_distance = math.sqrt(pow((pos_x - analyzed_pos_x),2) + pow((pos_y - analyzed_pos_y),2))
+			direct_error_distance += moment_direct_error_distance
+
 			if not (analyzed_node in correct_nodes):
 				judgement = "F(Wrong Node)"
 
@@ -217,7 +232,7 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 			else:
 				judgement = "T(Adjacent)"
 	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
-		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"err_dist":moment_error_dist})
+		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"err_dist":moment_error_dist,"direct_err_dist":moment_direct_error_distance})
 	db.actual_position.insert({"floor": floor, "mac": mac, "datetime":dt,"pos_x":pos_x,"pos_y":pos_y})
 
 	if DEBUG_PRINT:
@@ -388,6 +403,9 @@ def get_distance_between_points(floor,position_list1,position_list2):
 	# 	print("二点間の距離の計算失敗")
 	# 	return 0,None
 
+def get_direct_distance_between_points(pos_x1,pos_y1,pos_x2,pos_y2):
+	return (pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)
+
 
 
 
@@ -409,7 +427,7 @@ def process_count_result():
 	wrong_node_rate = 0
 	correct_count = 0
 	average_error_distance = None
-
+	average_direct_error_distance = None
 
 	correct_count = match_count + adjacent_count + middle_count
 	false_count = examine_count - correct_count
@@ -427,7 +445,6 @@ def process_count_result():
 	if exist_count == 0 :
 		print("--- info_data does not exist! ---")
 	else:
-		average_error_distance = error_distance/exist_count
 		existing_accuracy = rounding(correct_count / exist_count * 100, 2)
 		print ("accuracy(existing only): " + str(existing_accuracy) + "% "
 		 + "( " + str(correct_count) + " / " + str(exist_count) + " )",end="  ")
@@ -435,8 +452,12 @@ def process_count_result():
 		existing_data_rate = rounding(exist_count/examine_count * 100, 2)
 		print("existing data rate: " + str(existing_data_rate) + "% "
 			+ "( " + str(exist_count) + " / " + str(examine_count) + " )")
-
+		
+		average_error_distance = error_distance/exist_count
 		print("average error distance: " + str(rounding(average_error_distance,2)) + "[px]")
+		average_direct_error_distance = direct_error_distance / exist_count
+		print("average direct error distance: " + str(rounding(average_direct_error_distance,2)) + "[px]")
+
 
 		print("\n-- detail info of true results --")
 
@@ -485,7 +506,7 @@ def process_count_result():
 			 + "( " + str(wrong_node_count) + " / " + str(false_count) + " )")
 
 
-	return existing_accuracy,existing_data_rate,average_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate
+	return existing_accuracy,existing_data_rate,average_error_distance, average_direct_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate
 
 
 # # DBに入っているデータを出力することも可能(コメント解除)
