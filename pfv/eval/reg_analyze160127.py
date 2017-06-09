@@ -35,9 +35,10 @@ query_list = []
 USE_PERP = True
 V_LIMIT = 75
 DIST_TH = 65 #使わないときは999(適当に大きい数)にする
-FIG_SAVE_DIR = "C:/Users/Ryuta/Desktop/sklearn/perp/"
+# FIG_SAVE_DIR = "C:/Users/Ryuta/Desktop/sklearn/perp/"
+FIG_SAVE_DIR = "../../mlfile/figure/regression(fitting_past)/"
 common_exp_id = "170127_"
-st_exp_id = 75
+st_exp_id = 1
 ed_exp_id = 75
 
 def rounding(num, round_place):
@@ -75,7 +76,7 @@ def reg_analy_coord(query_id):
         ed_node = data["ed_node"]
         exp_id = data["exp_id"]
         
-        clf = joblib.load('C:/Users/Ryuta/Desktop/sklearn/'+floor+'_regmodel.pkl')
+        clf = joblib.load('../../mlmodel/'+floor+'_regmodel.pkl')
         
         common_dt = str(data["common_dt"]) # 測定時刻における先頭の共通部分
         st_dt = dt_from_14digits_to_iso(common_dt + str(data["st_dt"]))
@@ -86,7 +87,7 @@ def reg_analy_coord(query_id):
         ed_dt = iso_to_end05iso(ed_dt)
         print("\n== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
 
-        testFeature = np.genfromtxt("C:/Users/Ryuta/csv/" + query_id["exp_id"] + ".csv", delimiter = ',')
+        testFeature = np.genfromtxt("../../mlfile/csv/" + query_id["exp_id"] + ".csv", delimiter = ',')
         result = clf.predict(testFeature)
         cnt = 0
         d = 0
