@@ -19,27 +19,26 @@ ed_dt = 20161020134630
 CONSIDER_BEFORE = True
 
 def get_analy_coord(query_id):
-	datas = []
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
-	datas += db.csvtest.find(query_id)
-	for data in datas:
-		mac = data["mac"]
-		floor = data["floor"]
-		st_node = data["st_node"]
-		ed_node = data["ed_node"]
-		exp_id = data["exp_id"]
+	data = db.csvtest.find_one(query_id)
+	mac = data["mac"]
+	floor = data["floor"]
+	st_node = data["st_node"]
+	ed_node = data["ed_node"]
+	exp_id = data["exp_id"]
 
-		common_dt = str(data["common_dt"]) # 測定時刻における先頭の共通部分
-		st_dt = dt_from_14digits_to_iso(common_dt + str(data["st_dt"]))
-		tmp_dt = st_dt
-		ed_dt = dt_from_14digits_to_iso(common_dt + str(data["ed_dt"]))
-		# print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
+	common_dt = str(data["common_dt"]) # 測定時刻における先頭の共通部分
+	st_dt = dt_from_14digits_to_iso(common_dt + str(data["st_dt"]))
+	if not (str(data["st_dt"])[-1] == "0" or str(data["st_dt"])[-1] == "5"): # 測定開始時刻が5sおきの時刻でない場合
+		st_dt = dt_to_end_next05(st_dt,"iso") # 今度現れる5sおきの時刻を用いる
+	ed_dt = dt_from_14digits_to_iso(common_dt + str(data["ed_dt"]))
+	# print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
 
-		while (tmp_dt <= ed_dt):
-			# print("--- " + str(tmp_dt) + " ---")
-			get_coord_from_info(floor, mac, tmp_dt)
-			tmp_dt = shift_seconds(tmp_dt, 5)
+	while (st_dt <= ed_dt):
+		# print("--- " + str(st_dt) + " ---")
+		get_coord_from_info(floor, mac, st_dt)
+		st_dt = shift_seconds(st_dt, 5)
 
 def get_coord_from_info(floor, mac, dt):
 	bfr_5s = shift_seconds(dt, -5)

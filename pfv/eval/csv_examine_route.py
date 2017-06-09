@@ -18,7 +18,7 @@ db = client.nm4bd
 # 1. pfvmacinfo, staymacinfoデータをDBに入れる
 # 
 # 2. 実験の条件をformatに従って "CSV形式" で作成する 
-#    (exp_id, mac, floor, st_node, ed_node, common_dt, st_dt, ed_dt, via_nodes_list, via_dts_list)
+#    (exp_id, mac, floor, st_node, ed_node, common_dt, st_dt, ed_dt, via_nodes_list, via_dts_list, stay_pos_list)
 # 
 # 3. mongoimport -d nm4bd -c csvtest --headerline --type csv exp_param.csv --drop
 #    上記コマンドでCSVファイルをDBに取り込む。 (--dropオプションを利用可)
@@ -32,6 +32,17 @@ db = client.nm4bd
 # 
 ###################
 
+## 直接実行前に指定 ##
+DROP_DP = True # 過去の結果を削除するか
+common_exp_id = "170127_"
+st_exp_id = 1
+ed_exp_id = 75
+####################
+if DROP_DP:
+	db.examine_summary.drop()
+	db.examine_route.drop()
+	db.analy_coord.drop()
+
 def make_exp_id(common_exp_id, st_exp_id, ed_exp_id):
 	query_list = []
 	for i in range(st_exp_id,ed_exp_id + 1):
@@ -41,15 +52,7 @@ def make_exp_id(common_exp_id, st_exp_id, ed_exp_id):
 		query_list.append(query)
 	return query_list
 
-query_list = []
-## 実行前に指定 ##
-common_exp_id = "170127_"
-st_exp_id = 1
-ed_exp_id = 75
-query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
-#################
-
-def csv_examine_route(query_list = query_list):
+def csv_examine_route(query_list):
 	for query in query_list:
 		# 解析データによる座標を作る場合は　get_analy_coord　を使う
 		get_analy_coord(query)
@@ -113,4 +116,5 @@ def query_examine_route(query):
 		print("---------------------------------------------")
 
 if __name__ == '__main__':
-	csv_examine_route()
+	query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
+	csv_examine_route(query_list)

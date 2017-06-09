@@ -36,7 +36,7 @@ USE_PERP = True
 V_LIMIT = 75
 DIST_TH = 65 #使わないときは999(適当に大きい数)にする
 # FIG_SAVE_DIR = "C:/Users/Ryuta/Desktop/sklearn/perp/"
-FIG_SAVE_DIR = "../../mlfile/figure"
+FIG_SAVE_DIR = "../../mlfile/figure/regression/"
 common_exp_id = "170127_"
 st_exp_id = 1
 ed_exp_id = 75
@@ -98,7 +98,6 @@ def reg_analy_coord(query_id):
         
         while (tmp_dt < ed_dt):
 
-
             if cnt != 0:
                 v_limit = V_LIMIT # 移動距離制限[px]
                 dist_th = DIST_TH
@@ -155,7 +154,7 @@ def reg_analy_coord(query_id):
             db.reg_analy_coord.insert(ins_data)
             cnt += 1
 
-            actual_data = db.actual_position.find_one({"mac":mac, "datetime":tmp_dt})
+            actual_data = db.examine_route.find_one({"mac":mac, "datetime":tmp_dt})
 
             x_act_list.append(actual_data["pos_x"])
             y_act_list.append(actual_data["pos_y"])
