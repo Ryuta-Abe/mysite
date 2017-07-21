@@ -115,13 +115,15 @@ def dt_to_end_next05(dt,output_type):
   else:
     print("the type of the argument num 1 must be str or datetime.datetime!")
 
-  if (1 <= dt_end <= 4):
+  if (0 <= dt_end <= 4):
     delta = 5 - dt_end
     dt = shift_seconds(dt,delta)
-  elif (6 <= dt_end <= 9):
+  elif (5 <= dt_end <= 9):
     delta = 10 - dt_end
     dt = shift_seconds(dt,delta)
 
+  dt = dt.replace(microsecond = 0)
+  
   if output_type == "str":
     dt = dt_from_iso_to_str(dt)[:14]
 
