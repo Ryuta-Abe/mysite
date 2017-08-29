@@ -70,7 +70,10 @@ def get_start_end_mod(all_st_time):
     # data取り出し
     mac_query = ""
     # datas = db.tmpcol.find({"_id.mac":"00:11:81:10:01:0e"}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
+    # タグのみ
     datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
+    # 全体
+    # datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist()
     print("--- "+str(all_st_time)+" ---")
 
@@ -81,19 +84,19 @@ def get_start_end_mod(all_st_time):
             ins_flag = False
             intersection_flag = False
             data["nodelist"] = reverse_list(data["nodelist"], "dbm")
-            
+
             # RSSI最大のノードがあるfloorの必要データ作成
             for list_data in data["nodelist"]:
                 largest_floor = convert_ip(list_data["ip"])["floor"]
                 if largest_floor != "Unknown":
                     break
-                
+
             floor_node_list = []
             floor_node_col = db.pcwlnode.find({"floor":largest_floor}).sort("pcwl_id",ASCENDING)
             for node in floor_node_col:
                 floor_node_list.append(node["pcwl_id"])
             floor_rssi_list = [-99] * len(floor_node_list)
-            
+
             # nodelistデータ(floor,pcwl_id,rssi) reform
             loop_cnt = 0
             for list_data in data["nodelist"][:]:
@@ -112,7 +115,7 @@ def get_start_end_mod(all_st_time):
                         index = floor_node_list.index(list_data["pcwl_id"])
                         floor_rssi_list[index] = list_data["rssi"]
                 loop_cnt += 1
-            
+
             data["id"] = data["_id"]
             del(data["_id"])
             db.tmpcol_backup.insert(data)
@@ -190,15 +193,15 @@ def get_start_end_mod(all_st_time):
                                         # intervalに応じて距離フィルタを可変に
                                         velocity = fix_velocity(tmp_floor, interval)
                                         if d_total < interval * velocity:
-                                            
+
                                             past_ed_node = [pastlist[0]["start_node"]]
                                             current_node = [tmp_node]
                                             past_ed_id   = past_ed_node[0]["pcwl_id"]
                                             current_id   = current_node[0]["pcwl_id"]
                                             current_st_ed= [past_ed_id, current_id]
-                                            route_info = [] 
+                                            route_info = []
                                             route_info += db.pcwlroute.find({"$and":[{"floor" : tmp_floor},
-                                                                                    {"query" : current_st_ed[0]}, 
+                                                                                    {"query" : current_st_ed[0]},
                                                                                     {"query" : current_st_ed[1]}]})
 
                                             # 向きの最適化と各経路の重み付けを行う
@@ -377,7 +380,7 @@ def get_min_distance(floor, node1, node2):
     """
     d_total = 0
     # 経路情報の取り出し
-    route_info = [] 
+    route_info = []
     route_info += db.pcwlroute.find({"$and":[{"floor":floor},{"query":node1},{"query":node2}]})
     # 最小距離算出
     for info in route_info:
@@ -389,7 +392,7 @@ def get_min_distance(floor, node1, node2):
                 d_total = tmp_d_total
             if (tmp_d_total < d_total):
                 d_total = tmp_d_total
-    
+
     return d_total
 
 def init_nodecnt_dict():
@@ -507,16 +510,16 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
 
 # pastlistの更新用関数
 def update_pastlist(pastd, get_time_no, num, nodelist):
-    past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist, "alive":True, "arrive_intersection":False} 
+    past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist, "alive":True, "arrive_intersection":False}
     pastd["pastlist"].append(past_dict)
 
 def update_pastlist_intersection(pastd, get_time_no, num, nodelist, start_node):
-    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":True} 
+    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":True}
     pastd["pastlist"].append(past_dict)
 
 # 逆経路と部分一致 or 分岐点到着後のstay用
 def update_pastlist_alt(pastd, get_time_no, num, nodelist, start_node):
-    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":False} 
+    past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":False}
     pastd["pastlist"].append(past_dict)
 
 # データ欠落時、一旦stayで残しておく用
@@ -600,7 +603,7 @@ def reverse_list(data_list, sort_key):
     """
     data_list = sorted(data_list, key=lambda x:x[str(sort_key)], reverse=True)
     return data_list
-    
+
 def make_pastmaclist():
     """
     pastdataコレクションから過去データ(1min)に含まれるmacアドレスを抽出した

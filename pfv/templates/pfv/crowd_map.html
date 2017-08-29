@@ -1,0 +1,1330 @@
+{% extends "base.html" %}
+
+{% block title %}crowd map{% endblock title %}
+
+{% block extrahead %}
+<style>
+  .axis path,
+  .axis line {
+     fill: none;
+     stroke: black;
+     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+     font-family: sans-serif;
+     font-size: 11px;
+  }
+
+  /* 説明窓(div要素)の設定 */
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 12px;
+    padding: 8px;
+    font: 15px sans-serif;
+    font-weight: bold; /*太字*/
+    color: white; /*文字の色*/
+    background: red;
+    /*border: solid 1px #aaa;*/
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  *.logbox
+      {
+         border: solid 1px #808080;
+         width: 350px;
+         height: 120px;
+         padding: 0.5em;
+         overflow: auto;
+         display: inline-block;
+         _display: inline;
+         background-color: white;
+      }
+
+  *.logbox2
+      {
+         border: solid 1px #808080;
+         width: 700px;
+         height: 120px;
+         padding: 0.5em;
+         overflow: auto;
+         display: inline-block;
+         _display: inline;
+      }
+
+  p.tabs
+  {
+    margin: 0px;
+    padding: 0px;
+    /*position: absolute;*/
+  }
+  p.tabs a
+  {
+    display: block;
+    width: 13em;
+    float: left;
+    margin: 0px 1px 0px 1px;
+    padding: 8px;
+    text-align: center;
+    border-radius: 15px 15px 0px 0px;
+    cursor: pointer;
+  }
+  p.tabs a.select_tab
+  {
+    background-color: black;
+    color: white;
+    padding: 8px;
+  }
+  p.tabs a.waiting_tab
+  {
+    background-color: black;
+    color: white;
+    opacity: 0.5;
+  }
+  p.tabs a:hover
+  {
+    color: yellow;
+  }
+
+  select {
+    cursor: pointer;
+    padding: 0.3em 0em;
+    /*color: white;*/
+    border: 1px solid black;
+    border-radius: 8px;
+    /*background: black;*/
+    font-weight: bold;
+  }
+
+  .btn{
+    /*color: white;
+    border: 1px solid black;*/
+    border-radius: 8px;
+    /*background: blue;*/
+    font-weight: bold;
+    /*font-size: 15px;*/
+    /*font-family: sans-serif;*/
+  }
+  .page-header{
+    font-weight: bold;
+    font-size: 25px;
+  }
+  .container{
+    width: 1360px;
+    /*background-color: aliceblue;*/
+  }
+  #svg1{
+    float: left;
+    background-color: white;
+    border: 3px solid black;
+    margin: 0px 0px 0px 1px;
+  }
+  #svg2{
+    float: right;
+    position: relative;
+    background-color: white;
+    border: 3px solid black;
+  }
+  body{
+    background-color: seashell;
+    /*background-color: cornsilk;*/
+  }
+
+  #tag_list p{
+    /*position: relative;*/
+    float: right;
+    display: block;
+    /*width: 22.3em;*/
+    /*float: left;*/
+    margin: 0px 0px 0px 0px;
+    /*padding: 8px;*/
+    text-align: center;
+    /*border-radius: 0px 0px 0px 0px;*/
+    background-color: black;
+    color: white;
+    width: 300px;
+    height: 30px;
+    font-size: 25px;
+  }
+  /*.not_select {
+    fill:black;
+  }*/
+  .selected circle{
+    fill: black;
+  }
+  #change_btn{
+    float: right;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 id="header" class="page-header"></h1>
+<form name="Sample_form" action="Sample.html">
+  　　<!-- ボタン間にスペースを -->
+  <text id="datetime_header"></text>
+  <font id="got_datetime" size="4"></font>
+  <a id="change_btn" onclick="change_node('change')" class="btn btn-default btn-sm"></a>
+  <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
+  <span id="selected_datetime">
+  <script type="text/javascript">
+    function make_selectbox(list){
+      var list_id = {"test":99};
+      for (var i = 0; i < list.length; i++) {
+        if (list[i] < 60) {
+          document.write('<option value="sec'+("0"+list[i]).slice(-2)+'"/>'+list[i]+' '+second_text+'</option>');
+        } else if (list[i] < 3600) {
+          document.write('<option value="min'+("0"+(list[i]/60)).slice(-2)+'"/>'+(list[i]/60)+' '+minute_text+'</option>');
+        } else if (list[i] < 43200) {
+          document.write('<option value="hou'+("0"+(list[i]/3600)).slice(-2)+'"/>'+(list[i]/3600)+' '+hour_text2+'</option>');
+        } else if (list[i] < 302400) {
+          document.write('<option value="day'+("0"+(list[i]/43200)).slice(-2)+'"/>'+(list[i]/43200)+' '+day_text+'</option>');
+        };
+        list_id[String(list[i])] = i;
+      };
+      return list_id;
+    }
+
+    var year_text = "年";
+    var month_text = "月";
+    var day_text = "日";
+    var hour_text = "時";
+    var hour_text2 = "時間";
+    var minute_text = "分";
+    var second_text = "秒";
+
+    var year_list = [2014,2015,2016,2017,2018];
+
+    document.write('<select name="textbox_year">');
+    for (var i = 0; i < year_list.length; i++) {
+      document.write('<option id="year'+year_list[i]+'" value="'+year_list[i]+'"/>'+year_list[i]+' '+year_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_month">');
+    for (var i = 0; i < 12; i++) {
+      document.write('<option id="month'+("0"+(i+1)).slice(-2)+'" value="'+("0"+(i+1)).slice(-2)+'"/>'+(i+1)+' '+month_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_day">');
+    for (var i = 0; i < 31; i++) {
+      document.write('<option id="day'+("0"+(i+1)).slice(-2)+'" value="'+("0"+(i+1)).slice(-2)+'"/>'+(i+1)+' '+day_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_hour">');
+    for (var i = 0; i < 24; i++) {
+      document.write('<option id="hour'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+hour_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_minute">');
+    for (var i = 0; i < 60; i++) {
+      document.write('<option id="minute'+("0"+i).slice(-2)+'" value="'+("0"+i).slice(-2)+'"/>'+i+' '+minute_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<select name="textbox_second">');
+    for (var i = 0; i < 12; i++) {
+      document.write('<option id="second'+("0"+(i*5)).slice(-2)+'" value="'+("0"+(i*5)).slice(-2)+'"/>'+(i*5)+' '+second_text+'</option>');
+    };
+    document.write('</select>');
+
+    document.write('<a type="button" id="btn_reload" onclick="Load_Form(1)" class="btn btn-default btn-sm" accesskey="/"></a>');
+    document.write('</span>');
+    document.write('　　');
+    document.write('<span>');
+
+    document.write('<select name="textbox_interval">');
+    var interval_list = [5,10,20,30,60,120,300,600,1200,1800,3600,7200,10800,21600,43200]
+    make_selectbox(interval_list);
+    document.write('</select>');
+
+    document.write('<a type="button" id="btn_back" onclick="slide_DT(1)" class="btn btn-default btn-sm" accesskey=","></a>');
+    document.write('<a type="button" id="btn_forward" onclick="slide_DT(-1)" class="btn btn-default btn-sm" accesskey="."></a>');
+    // document.write('<a onclick="Auto_Animation()" class="btn btn-default btn-sm" id="btn_Auto">Animation</a>');
+    document.write('<a onclick="Auto_Animation2()" class="btn btn-default btn-sm" id="btn_Auto2">Animation</a>');
+    document.write('</span>');
+    document.write('　　');
+    document.write('<span>');
+
+    document.write('<select name="selectbox_timerange">');
+    timerange_list = [5,10,20,30,60,120,300,600,1200,1800,3600,7200,10800,21600,43200]
+    timerange_list_id = make_selectbox(timerange_list);
+    document.write('</select>');
+
+  </script>
+  <text id="time_interval_text"></text>
+  </span></div>
+  <div id="layer_2" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  </div>
+  <div id="layer_4" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="floor_list" class="logbox"></div>
+  </div>
+  <div id="layer_3" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
+  <div id="filter_list" class="logbox2">
+    <text id="macfilter_text"></text><br>
+    <input type="text" name="textbox_mac" size="80">
+  </div>
+  </div>
+</form>
+<br><!-- ボタンと地図の間にスペースを -->
+<div class="tabbox" id="tabbox"></div>
+<?xml version="1.0" standalone="no"?>
+
+<svg id="svg1" width="1024" height="560">
+  <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.6"></image>
+</svg>
+<div id="tooltip_div"></div>
+<div id="tag_list">
+    <!-- <p>タグ一覧</p> -->
+    <p>最大ノード / 最多経路</p>
+</div>
+<svg id="svg2" width="300" height="530"></svg>
+<svg id="color_bar" width="1024" height="100"></svg>
+<script type="text/javascript">
+
+    //floorのリストと現在の階を定義
+    var floor_list = ["W2-6F","W2-7F","W2-8F","W2-9F"];
+    var floor = "{{ floor }}";
+
+    // ヘッダーやその他文字の表示
+    d3.select("#header").text("群測位マップ ~"+floor+"~");
+    d3.select("#datetime_header").text("取得日時：");
+    d3.select("#category_1").text("時間調整");
+    d3.select("#btn_reload").text("更新");
+    d3.select("#btn_back").text("戻る");
+    d3.select("#btn_forward").text("進む");
+    d3.select("#time_interval_text").text("間のデータを表示");
+    d3.select("#change_btn").text("滞留数");
+    Sample_form.textbox_mac.value = "{{ mac }}";
+
+    //タブ用の枠を作成
+    var tab = d3.select("#tabbox").append("p").attr("class", "tabs");
+    tab.selectAll("p.tab")
+    .data(floor_list)
+    .enter()
+    .append("a")
+    .text(function(d){return d})
+    .attr("onclick",function(d){return "jump_floor('"+d+"')"})
+    .attr("id", function(d){return d})
+    .attr("class", function(d){
+      if(floor == d){
+        return "select_tab"
+      } else{
+        return "waiting_tab"
+      }
+    })
+
+    // マップ画像の挿入
+    if ("{{ floor }}" == "W2-6F") {
+      var file_name = "6F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-7F"){
+      var file_name = "7F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-8F"){
+      var file_name = "8F_west2.jpg";
+    } else if ("{{ floor }}" == "W2-9F"){
+      var file_name = "9F_west2.jpg";
+    };
+    d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
+
+    console.log({{ap_data.max_node}});
+
+    // データセットの定義
+    var pcwlnode = [],pfvinfo = [];  //データ保存用
+    var rank_node = [],rank_mac = []; //滞留数、端末数それぞれのランキング用リスト
+    var max_pfv = {{flow_data.max_pfv}},min_pfv = {{flow_data.min_pfv}}
+    var max_node = {{ap_data.max_node}},min_node = {{ap_data.min_node}}
+    var max_mac = {{ap_data.max_mac}},min_mac = {{ap_data.min_mac}}
+    var num_band_node = max_node-min_node+1, num_band_mac = max_mac-min_mac+1;
+    {% for s in pcwlnode %}
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},size:{{ s.size }},mac_len:{{ s.mac_len }}});
+    {% endfor %}
+    {% for s in pfvinfo %}
+    pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},color:"{{ s.color }}"});
+    {% endfor %}
+    {% for s in rank_node %}
+    rank_node.push({cnt:{{ s.size }},pcwl_id:{{ s.pcwl_id }}});
+    {% endfor %}
+    {% for s in rank_mac %}
+    rank_mac.push({cnt:{{ s.mac_len }},pcwl_id:{{ s.pcwl_id }}});
+    {% endfor %}
+
+    // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+    var pcwlnode_id = [];
+    for (var i = 0; i < pcwlnode.length; i++) {
+      pcwlnode_id[pcwlnode[i].pcwl_id] = i;
+    };
+
+    // pfvinfoにノード間距離情報追加
+    for (var i = 0; i < pfvinfo.length; i++) {
+      var c1 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[0]]];
+      var c2 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[1]]];
+      var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
+      pfvinfo[i].totalLength = totalLength;
+    };
+
+    // マウスオーバーすると出てくる説明文(div要素)
+    var div = d3.select("#tooltip_div")
+    .attr("class","tooltip")
+    .style("width", "80px" )
+    .style("height", "35px")
+    .style("opacity",0)
+
+    // 取得時間を表示
+    var year = parseInt({{ year }});
+    var month = parseInt({{ month }})-1;
+    var day = parseInt({{ day }});
+    var hour = parseInt({{ hour }});
+    var minute = parseInt({{ minute }});
+    var second = parseInt({{ second }});
+    var datetime = new Date(year,month,day,hour,minute,second);
+    set_selectbox(); // セレクトボックスにdatetimeをセット
+
+    // セレクトボックスの値をtimerangeに合わせる
+    document.Sample_form.selectbox_timerange.selectedIndex = timerange_list_id["{{ timerange }}"];
+
+    // 時間抽出
+    var parseDate = d3.time.format("%Y年%m月%d日%H:%M:%S").parse;
+
+    // アニメーション時間
+    var animation_time = 500;
+
+    // svgの選択
+    var svg1 = d3.select("#svg1")
+    var svg2 = d3.select("#svg2")
+    var bar = d3.select("#color_bar")
+
+    // staycircleの描画空間
+    var stay_palet = svg1.append("g")
+
+    // pcwlnodeのマッピング
+    var g = svg1.selectAll("g.pcwlnode")
+    .data(pcwlnode)
+    .enter()
+    .append("g")
+    .attr({
+      "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+       transform: function(d) {
+         return "translate(" + d.pos_x + "," + d.pos_y + ")";
+       },
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+      div.transition().duration(300)
+      .style("opacity",1)
+      .style("background","purple")
+      .style("height", "35px")
+      .style("width", "250px")
+      .style("left", (d3.event.pageX + 20) + "px")
+      .style("top", (d3.event.pageY + 20) + "px")
+      div.text("AP:"+d.pcwl_id+"/滞留数:"+d.size+"/端末数:"+d.mac_len);
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0)
+    })
+
+    // 滞留端末数によって色が変わる円の描画
+    g.append("circle")
+    .attr({
+      "id": function(d){return "pcwl_staycircle"+d.pcwl_id;},
+      "class": "staycircle",
+      "r": function(d){
+        if(d.size == 0){
+          return 13;
+        } else{
+          if(num_band_node >= 13){
+            return (d.size - min_node + 1)/num_band_node*13 + 17;
+          } else{
+            return (d.size - min_node + 1) + 17;
+          }
+        }
+      },
+      // "fill": "darkgray",
+      "fill": "lightpink",
+    })
+    .style("opacity",1);
+
+    // 円の描画
+    g.append("circle")
+    .attr({
+      "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+      "r": 0.1,
+      "stroke": "red",
+      "stroke-width": 0,
+      "fill": "purple",
+    })
+    .transition(function(d){return "pcwl_circle"+d.pcwl_id;})
+    .duration(1000)
+    .attr("r",13);
+
+    // テキストの描画
+    g.append("text")
+    .attr({
+      "id": function(d){return "pcwl_text"+d.pcwl_id;},
+      "text-anchor": "middle",
+      "dy": ".35em",
+      "fill": "white",
+    })
+    .text(function(d) {
+            return d.pcwl_id;
+    });
+
+    // pathの計算で使うので、半径と矢印の微調整パラメータを別定義にしている。
+    var r1 = 13;
+    var r2 = 13;
+    var ref1 = 7;
+
+    // defs/markerという構造で、svgの下に矢印を定義
+    var marker = svg1.append("defs").selectAll("g.marker").data(pfvinfo).enter().append("marker")
+    .attr({
+      'id': function(d,i){return "arrowhead"+i;},
+      'refX': ref1,
+      'refY': 2,
+      'markerWidth': 4,
+      'markerHeight': 4,
+      'orient': "auto"
+    });
+
+    // 矢印の形をpathで定義
+    marker.append("path")
+        .attr({
+          d: "M 2,0.5 V 3.5 L4,2 Z",
+          fill: function(d){return thermography(d.size);}
+    });
+
+    // line関数を定義
+    var line = d3.svg.line()
+    .interpolate('basis')
+    .x(function(d) {return d.pos_x;})
+    .y(function(d) {return d.pos_y;});
+
+    // 滞留円の描画領域を作成
+    var stay_palet_g = stay_palet.append("g").attr("id","g_staycircle")
+
+    // path要素を作成
+    svg1.append("g").attr("id","g_arrow").style("opacity",0.8);
+    path = svg1.select("#g_arrow").selectAll("g.arrow")
+    .data(pfvinfo)
+    .enter()
+    .append("path")
+    .attr({
+      'd': function(d){
+      var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+      var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+      var carray = [c1,c2];
+      return line(carray);
+    },
+    'stroke': function(d){ return thermography(d.size);},
+    'stroke-width': 5,
+    'fill': 'none',
+    // pathの属性として、上で定義した矢印を指定します
+    'marker-end':function(d,i){return "url(#arrowhead"+i+")";},
+    // 破線の指定を行います。
+    'stroke-dasharray': function(d){
+      var t = d.totalLength - (r1+r2+ref1);
+      return "0 " + r1 + " " + t + " " + r2;
+    },
+    // 破線の開始相対位置を指定します
+    'stroke-dashoffset': 0,
+    })
+    .style("opacity",function(d){
+      if(d.size == 0){return 0.5} else{return 1}
+    })
+    // マウスがバーに重なったら説明文を出す
+    .on( "mouseover", function(d){
+      div.transition().duration(300)
+      .style("opacity",1)
+      .style("background",thermography(d.size))
+      .style("height", "35px")
+      .style("left", (d3.event.pageX + 20) + "px")
+      .style("top", (d3.event.pageY + 20) + "px")
+      div.style("width", "150px")
+      .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size+"回");
+    })
+    // マウスがバーから離れたら説明文をけす
+    .on( "mouseout", function(d){
+      div.transition().duration(300)
+      .style("opacity",0)
+    })
+    // クリック時の動作
+    .on( "click", function(d){
+      jump_pfvgraph(d.direction);
+    });
+    // 2本の矢印をアニメーション付きでずらす
+    path.transition().duration(1000).attr({
+      transform: function(d){
+        var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+        var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+        var interval = 6; // 2本の矢印間の間隔
+        var trans_x = +1 * interval * (c1.pos_y - c2.pos_y) / d.totalLength;
+        var trans_y = -1 * interval * (c1.pos_x - c2.pos_x) / d.totalLength;
+        return "translate("+trans_x+","+trans_y+")";
+      },
+    })
+
+    // // Floor関係の描画
+    for (var i = 0; i < floor_list.length; i++) {
+      add_floor_list(floor_list[i]);
+    };
+    if (floor_list.length < 4) {
+      add_space_floor(4 - floor_list.length);
+    };
+    function add_floor_list(floor_name){ // 1つのフロアを表に書き足す
+      d3.select("#floor_list").append("p")
+      .append("a")
+      .text(floor_name+" ")
+      .attr("onclick","jump_floor('"+floor_name+"')");
+    }
+    function add_space_floor(num){ // 表を整えるためにスペースを作る
+      var book = d3.select("#floor_list");
+      for (var i = 0; i < num; i++) {
+        book.append("p").attr("id","space").text("_"); // 間隔調整
+      };
+    }
+
+    // 人数参考バーの表示
+    // 幅（Width）と高さ（ height）
+    var w = 1024;
+    var h = 100;
+    var padding = 30;
+
+    function result_view(){
+      d3.select("#svg2").selectAll("g").remove();
+      var node_cnt = svg2.append("g").attr("id","node_cnt"); //滞留回数用
+      var mac_cnt = svg2.append("g").attr("id","mac_cnt"); //端末数用
+      if(rank_node.length != 0){ var max_node_id = rank_node[0]["pcwl_id"];}
+      else{var max_node_id = []}
+      if(rank_mac.length != 0){ var max_mac_id = rank_mac[0]["pcwl_id"];}
+      else{var max_mac_id = []}
+
+      // 滞留回数 ///////////////////////////////////////////////////////////////////////////////////////////
+      node_cnt.attr({
+        transform: function(d,i) {
+          return "translate(" + 0 + "," + 10 + ")";},
+      }).append("text").attr({
+        "font-size":"20px",
+        "font-weight":"bold",
+        transform: function(d,i) {
+          return "translate(" + 5 + "," + 30 + ")";},
+      }).text("-----------------滞留数-----------------");
+      for(var rank = 0; rank < rank_node.length; rank++){
+        var node_id = rank_node[rank]["pcwl_id"];
+        node_cnt.append("text").attr({
+          "font-size":"20px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 15 + "," + (67.5+rank*40) + ")";},
+        }).text((rank+1)+"位 : "+rank_node[rank]["cnt"]+"回");
+        node_cnt.selectAll().data(node_id).enter().append("circle").attr({
+          "r": 13,
+          "fill": "purple",
+          "id": function(d){return "max_node"+d;},
+          "transform": function(d,i){
+            return "translate(" + ((200- (15*(node_id.length-1))) +(i*30)) + "," + (60+rank*40) + ")";
+          },
+        });
+        node_cnt.selectAll().data(node_id).enter().append("text").attr({
+          "text-anchor":"middle",
+          "fill":"white",
+          "font-size":"20px",
+          "transform": function(d,i){
+            return "translate(" + ((200- (15*(node_id.length-1))) +(i*30)) + "," + (67.5+rank*40) + ")";
+          },
+        }).text(function(d){return d;});
+      }
+      //0回の場合の表記用
+      if(rank_node.length == 0){
+        node_cnt.append("text").attr({
+          "font-size":"30px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 120 + "," + 100 + ")";},
+        }).text("0回");
+      }
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      // 端末数 /////////////////////////////////////////////////////////////////////////////////////////////////
+      mac_cnt.attr({
+        transform: function(d,i) {
+          return "translate(" + 0 + "," + 170 + ")";},
+      }).append("text").attr({
+        "font-size":"20px",
+        "font-weight":"bold",
+        transform: function(d,i) {
+          return "translate(" + 5 + "," + 30 + ")";},
+      }).text("-----------------端末数-----------------");
+      for(var rank = 0; rank < rank_mac.length; rank++){
+        var mac_id = rank_mac[rank]["pcwl_id"];
+        mac_cnt.append("text").attr({
+          "font-size":"20px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 15 + "," + (67.5+rank*40) + ")";},
+        }).text((rank+1)+"位 : "+rank_mac[rank]["cnt"]+"回");
+        mac_cnt.selectAll().data(mac_id).enter().append("circle").attr({
+          "r": 13,
+          "fill": "purple",
+          "id": function(d){return "max_mac"+d;},
+          "transform": function(d,i){
+            return "translate(" + ((200- (15*(mac_id.length-1))) +(i*30)) + "," + (60+rank*40) + ")";
+          },
+        });
+        mac_cnt.selectAll().data(mac_id).enter().append("text").attr({
+          "text-anchor":"middle",
+          "fill":"white",
+          "font-size":"20px",
+          "transform": function(d,i){
+            return "translate(" + ((200- (15*(mac_id.length-1))) +(i*30)) + "," + (67.5+rank*40) + ")";
+          },
+        }).text(function(d){return d;});
+      }
+      //0回の場合の表記用
+      if(rank_mac.length == 0){
+        mac_cnt.append("text").attr({
+          "font-size":"30px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 120 + "," + 100 + ")";},
+        }).text("0回");
+      }
+    }
+    result_view();
+
+    // 最大・最小値に対応した色を返す(サーモグラフィ風)
+    function thermography(tu){
+      if(tu == 0.0) {
+        return "black";
+      }
+      threshold_H = max_pfv; // この温度以上は赤色
+      threshold_L = min_pfv; // この温度以下は青色
+      if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 4.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + 0 + ", " + 0 + ")"; // 赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 3.0 / 4.0 ) ) {
+        return  "rgb(" + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 0 + ")"; // 黄～赤
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 2.0 / 4.0 ) ) {
+        return  "rgb(" + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ", " + 0 + ")"; // 緑～黄
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 1.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + 255 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ")"; // 水～緑
+      } else if ( (tu - threshold_L)/(threshold_H - threshold_L) >= ( 0.0 / 4.0 ) ) {
+        return  "rgb(" + 0 + ", " + (Math.round( ( -(Math.cos( 4 * Math.PI * (tu - threshold_L)/(threshold_H - threshold_L) )) / 2 + 0.5 ) * 255 )) + ", " + 255 + ")"; // 青～水
+      }else {
+        return  "rgb(" + 0 + ", " + 0 + ", " + 255 + ")"; // 青
+      }
+    }
+
+    function make_temperature_graph(){
+      var color_bar = document.getElementById("color_bar");
+      color_bar.textContent = null;
+      var tmp_pad = 5;
+      if ((max_pfv == 0)&&(min_pfv == 0)){
+        console.log("no_bar");
+        bar.append("p").attr({
+          "id": "no_bar",
+          "text-anchor": "middle",
+          "dy": ".35em",
+          "fill": "black",
+        }).text("test");
+      } else{
+        //スケール関数の生成
+        var xScale = d3.scale.linear()
+                         .domain([min_pfv-1, max_pfv])
+                         .range([tmp_pad, w - tmp_pad *2]);
+        // 目盛りの数を最大最小より算出
+        var tick = 0;
+        if((max_pfv-min_pfv) <= 20){
+          tick = max_pfv-min_pfv+1;
+        } else if(((max_pfv-min_pfv+1) > 20)){
+          tick = 20;
+          // tick = max_pfv-min_pfv+1;
+        }
+        // x軸の定義
+        var xAxis = d3.svg.axis()  // ここのsvgは変数名じゃない！；；
+                      .scale(xScale)
+                      .orient("bottom")
+                      .ticks(tick);  // 大雑把に目盛りの個数を設定
+        xAxis.tickFormat(function(d) { return d; });
+        // x軸の生成
+        bar.append("g")
+          .attr("class", "axis")  // "axis" クラスを定義
+          .attr("transform", "translate(0," + (h - padding*1.9) + ")")
+          .call(xAxis);
+        // 棒グラフの追加
+        var temperature = [];
+        // console.log("max:"+String(max_pfv)+"/min:"+String(min_pfv));
+        for (var i = min_pfv-1; i < max_pfv; i++) {
+          temperature.push(i);
+        };
+        bar.selectAll("rect.temperature")
+        .data(temperature)
+        .enter()
+        .append("rect")
+        .attr({
+          "x": function(d){ return xScale(d);},
+          "y": tmp_pad,
+          "width": (w - tmp_pad*3)/temperature.length,
+          "height": h - padding*2 - 10,
+          "fill": function(d){ return thermography(d+1);},
+        });
+      }
+    }
+    make_temperature_graph();
+
+    // ノードの表示を滞留回数・滞留種類で切り替える
+    var stay_btn = "stay_num";
+    function change_node(tmp){
+      if(tmp == "change"){
+        if (stay_btn == "stay_type") {
+          document.getElementById("change_btn").innerHTML="滞留数";
+          stay_btn = "stay_num";
+        } else{
+          document.getElementById("change_btn").innerHTML="端末数";
+          stay_btn = "stay_type";
+        }
+      }
+      svg1.selectAll(".staycircle")
+      .transition().duration(900)
+      .attr({
+        "r": function(d){
+          if(stay_btn == "stay_num"){
+            if(d.size == 0){ return 13;}
+            else{
+              if(num_band_node >= 13){ return (d.size - min_node + 1)/num_band_node*13 + 17;}
+              else{ return (d.size - min_node + 1) + 17;}}}
+          else{
+            if(d.mac_len == 0){ return 13;}
+            else{
+              if(num_band_mac >= 13){ return (d.mac_len - min_mac + 1)/num_band_mac*13 + 17;}
+              else{ return (d.mac_len - min_mac + 1) + 17;}
+            }
+          }
+        },
+      }).style("opacity",1)
+    }
+
+    // セレクトボックスの値をdatetimeに合わせる
+    function set_selectbox(){
+      var year = datetime.getFullYear() - 2014;
+      var minute = datetime.getMinutes();
+      var second = datetime.getSeconds()/5;
+      document.Sample_form.textbox_year.selectedIndex = year;
+      document.Sample_form.textbox_month.selectedIndex = datetime.getMonth();
+      document.Sample_form.textbox_day.selectedIndex = datetime.getDate()-1;
+      document.Sample_form.textbox_hour.selectedIndex = datetime.getHours();
+      document.Sample_form.textbox_minute.selectedIndex = minute;
+      document.Sample_form.textbox_second.selectedIndex = second;
+    }
+
+    function describe_datetime(){
+      d3.select("#got_datetime").text(datetime.getFullYear()+"年"+("0"+(datetime.getMonth()+1)).slice(-2)+"月"+("0"+datetime.getDate()).slice(-2)+"日"+" "+("0"+datetime.getHours()).slice(-2)+":"+("0"+datetime.getMinutes()).slice(-2)+":"+("0"+datetime.getSeconds()).slice(-2));
+    }
+    describe_datetime();
+
+    // datetime,language,floor,mac,timerangeのurlクエリを出力する
+    function make_url_query(){
+      var year = datetime.getFullYear();
+      var month = ("0"+(datetime.getMonth()+1)).slice(-2);
+      var day = ("0"+datetime.getDate()).slice(-2);
+      var hour = ("0"+datetime.getHours()).slice(-2);
+      var minute = ("0"+datetime.getMinutes()).slice(-2);
+      var second = ("0"+datetime.getSeconds()).slice(-2);
+
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      } else if (value.slice(0,3) == "hou"){
+        var timerange = num*3600;
+      } else if (value.slice(0,3) == "day"){
+        var timerange = num*86400;
+      }
+      var mac = Sample_form.textbox_mac.value;
+      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
+      return url;
+    }
+
+    /***********************************
+                Ajax関係
+   ************************************/
+
+   // datetimeに対応したJSONをajaxで読み込む
+    function Load_JSON(datetime){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:crowd_map_json' %}"+make_url_query(),
+        dataType: 'json',
+        success: function(json){
+          describe_datetime();
+          Reload_pfvinfo(json);
+          result_view();
+          make_temperature_graph();
+        }
+      });
+    }
+    function Load_JSON2(datetime){
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'pfv:crowd_map_json' %}"+make_url_query(),
+        dataType: 'json',
+        success: function(json){
+          d3.select("#header").text("群測位マップ ~"+floor+"~");
+          describe_datetime();
+          Reload_pcwlnode(json);
+          Reload_pfvinfo_floor(json);
+          make_temperature_graph();
+          result_view();
+          if(flag_jud_anime){
+            Auto_Animation2();
+            flag_jud_anime = !flag_jud_anime;
+          };
+        }
+      });
+    }
+
+    // セレクトボックスの日付のJSONをajaxで読み込む
+    function Load_Form(num){
+      var year = Sample_form.textbox_year.value;
+      var month = Sample_form.textbox_month.value;
+      var day = Sample_form.textbox_day.value;
+      var hour = Sample_form.textbox_hour.value;
+      var minute = Sample_form.textbox_minute.value;
+      var second = Sample_form.textbox_second.value;
+      datetime.setYear(parseInt(year));
+      datetime.setMonth(parseInt(month)-1);
+      datetime.setDate(parseInt(day));
+      datetime.setHours(parseInt(hour));
+      datetime.setMinutes(parseInt(minute));
+      datetime.setSeconds(parseInt(second));
+      if(num == 1){
+        Load_JSON(datetime);
+      } else if(num == 2){
+        Load_JSON2(datetime);
+      }
+    }
+
+    //別のフロアにジャンプする際の判定用フラグ
+      var flag_jud_anime = false;
+
+    // 別のフロアへジャンプ
+    function jump_floor(floor_name){
+      for (var i = 0; i < floor_list.length; i++){
+          document.getElementById(floor_list[i]).setAttribute("onclick", "null");
+      }
+      if(flag_Auto2){
+        flag_jud_anime = !flag_jud_anime;
+        Auto_Animation2();
+      };
+      d3.select("#svg1").selectAll("g").remove();
+      d3.select("#svg1").selectAll("defs").remove();
+      //変更前のfloorのタブを待機状態に変更
+      var before_floor_ID = document.getElementById(floor);
+      before_floor_ID.className = 'waiting_tab';
+      //階層を変更
+      floor = floor_name;
+      //変更後のfloorのタブを選択状態に変更
+      var after_floor_ID = document.getElementById(floor);
+      after_floor_ID.className = 'select_tab';
+      //リストpcwlnodeを空にする
+      pcwlnode.length = 0;
+      // マップ画像の挿入
+      if (floor == "W2-6F") {
+        var file_name = "6F_west2.jpg";
+      } else if (floor == "W2-7F"){
+        var file_name = "7F_west2.jpg";
+      } else if (floor == "W2-8F"){
+        var file_name = "8F_west2.jpg";
+      } else if (floor == "W2-9F"){
+        var file_name = "9F_west2.jpg";
+      };
+      d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
+      // staycircleの描画空間
+      stay_palet = svg1.append("g")
+      //データの更新
+      Load_Form(2);
+    }
+
+    // xx秒戻るor進む
+    function slide_DT(s){ // s=1なら戻る,s=-1なら進む
+      var value = Sample_form.textbox_interval.value;
+      var num = s * parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        datetime.setSeconds(datetime.getSeconds() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "min"){
+        datetime.setMinutes(datetime.getMinutes() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "hou") {
+        datetime.setHours(datetime.getHours() - num);
+        Load_JSON(datetime);
+      } else if (value.slice(0,3) == "day") {
+        datetime.setDate(datetime.getDate() - num);
+        Load_JSON(datetime);
+      }
+      set_selectbox();
+    }
+
+    function Reload_pcwlnode(json){
+      // //pcwlnodeの更新
+      for (var i = 0; i < json["pcwlnode"].length; i++){
+        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"],size:json["pcwlnode"][i]["size"],mac_len:json["pcwlnode"][i]["mac_len"]});
+      }
+      // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
+      pcwlnode_id.length = 0;
+      for (var i = 0; i < pcwlnode.length; i++) {
+        pcwlnode_id[pcwlnode[i].pcwl_id] = i;
+      };
+      //ノードに関するデータの更新
+      max_node = json["ap_data"]["max_node"],min_node = json["ap_data"]["min_node"];
+      max_mac = json["ap_data"]["max_mac"],min_mac = json["ap_data"]["min_mac"];
+      num_band_node = max_node-min_node+1;
+      num_band_mac = max_mac-min_mac+1;
+      //ノードのランキングを更新
+      rank_node.length = 0,rank_mac.length = 0;
+      for (var i = 0; i < json["rank_node"].length; i++){
+        rank_node.push({pcwl_id:json["rank_node"][i]["pcwl_id"],cnt:json["rank_node"][i]["size"]});
+      }
+      for (var i = 0; i < json["rank_mac"].length; i++){
+        rank_mac.push({pcwl_id:json["rank_mac"][i]["pcwl_id"],cnt:json["rank_mac"][i]["mac_len"]});
+      }
+      // pcwlnodeのマッピング
+      var g = svg1.selectAll("g.pcwlnode")
+      .data(pcwlnode)
+      .enter()
+      .append("g")
+      .attr({
+        "id": function(d){return "g_pcwl_"+d.pcwl_id;},
+        transform: function(d) {
+          return "translate(" + d.pos_x + "," + d.pos_y + ")";
+        },
+      })
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+          div.transition().duration(300)
+          .style("opacity",1)
+          .style("background","purple")
+          .style("height", "35px")
+          .style("width", "250px")
+          .style("left", (d3.event.pageX + 20) + "px")
+          .style("top", (d3.event.pageY + 20) + "px")
+          div.text("AP:"+d.pcwl_id+"/滞留数:"+d.size+"/端末数:"+d.mac_len);
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+
+      // 滞留端末数によって色が変わる円の描画
+      g.append("circle")
+      .attr({
+        "id": function(d){return "pcwl_staycircle"+d.pcwl_id;},
+        "class": "staycircle",
+        "r": function(d){
+          if(stay_btn == "stay_num"){
+            if(d.size == 0){ return 13;}
+            else{
+              if(num_band_node >= 13){ return (d.size - min_node + 1)/num_band_node*13 + 17;}
+              else{ return (d.size - min_node + 1) + 17;}
+            }
+          } else{
+            if(d.mac_len == 0){ return 13;}
+            else{
+              if(num_band_mac >= 13){ return (d.mac_len - min_mac + 1)/num_band_mac*13 + 17;}
+              else{ return (d.mac_len - min_mac + 1) + 17;}
+            }
+          }
+        },
+        // "fill": "darkgray",
+        "fill": "lightpink",
+      })
+      .style("opacity",1);
+
+      // 円の描画
+      g.append("circle")
+      .attr({
+        "id": function(d){return "pcwl_circle"+d.pcwl_id;},
+        "r": 0.1,
+        "stroke": "red",
+        "stroke-width": 0,
+        "fill": function(d){
+          if(d.state == "timeout"){
+            // return "black";
+            return "darkgray";
+          }
+          else{
+            return "purple";
+          }
+        },
+      })
+      .transition(function(d){return "repcwl_circle"+d.pcwl_id;}).duration(1000)
+      .attr("r", 13);
+      // テキストの描画
+      g.append("text")
+      .attr({
+        "id": function(d){return "pcwl_text"+d.pcwl_id;},
+        "text-anchor": "middle",
+        "dy": ".35em",
+        "fill": "white",
+      })
+      .text(function(d) {
+              return d.pcwl_id;
+      });
+      for (var i = 0; i < floor_list.length; i++){
+          document.getElementById(floor_list[i]).setAttribute("onclick", "jump_floor('"+floor_list[i]+"')");
+      }
+    }
+
+    function Reload_pfvinfo(json){
+      // pfvinfoの更新
+      for (var i = 0; i < json["pfvinfo"].length; i++) {
+          if(String(pfvinfo[i]["direction"]) == String(json["pfvinfo"][i]["direction"])){
+            pfvinfo[i]["size"] = json["pfvinfo"][i]["size"]
+            pfvinfo[i]["color"] = json["pfvinfo"][i]["color"]
+          } else {
+            console.log("miss"+String(pfvinfo[i]["direction"])+String(json["pfvinfo"][i]["direction"]));
+          }
+      };
+      for (var i = 0; i < pcwlnode.length; i++) {
+        pcwlnode[i].size = json["pcwlnode"][i].size;
+        pcwlnode[i].mac_len = json["pcwlnode"][i].mac_len;
+      }
+      max_pfv = json["flow_data"]["max"];
+      min_pfv = json["flow_data"]["min"];
+
+      //ノードに関するデータの更新
+      max_node = json["ap_data"]["max_node"],min_node = json["ap_data"]["min_node"];
+      max_mac = json["ap_data"]["max_mac"],min_mac = json["ap_data"]["min_mac"];
+      num_band_node = max_node-min_node+1;
+      num_band_mac = max_mac-min_mac+1;
+      //ノードのランキングを更新
+      rank_node.length = 0,rank_mac.length = 0;
+      for (var i = 0; i < json["rank_node"].length; i++){
+        rank_node.push({pcwl_id:json["rank_node"][i]["pcwl_id"],cnt:json["rank_node"][i]["size"]});
+      }
+      for (var i = 0; i < json["rank_mac"].length; i++){
+        rank_mac.push({pcwl_id:json["rank_mac"][i]["pcwl_id"],cnt:json["rank_mac"][i]["mac_len"]});
+      }
+
+      marker.selectAll("path").transition().duration(900)
+      .attr({
+        fill: function(d){return thermography(d.size);}
+      });
+      change_node("floor");
+
+      path.transition().duration(900)
+      .attr({
+        'stroke': function(d){return thermography(d.size);},
+      })
+      .style("opacity",function(d){if(d.size == 0){return 0.5} else{return 1}})
+    }
+
+    function Reload_pfvinfo_floor(json){
+      pfvinfo.length = 0;
+      // pfvinfoの更新
+      for (var i = 0; i < json["pfvinfo"].length; i++) {
+        pfvinfo.push({direction:json["pfvinfo"][i]["direction"],size:json["pfvinfo"][i]["size"],color:json["pfvinfo"][i]["color"]});
+      };
+      max_pfv = json["flow_data"]["max"];
+      min_pfv = json["flow_data"]["min"];
+
+      // pfvinfoにノード間距離情報追加
+      for (var i = 0; i < pfvinfo.length; i++) {
+        var c1 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[0]]];
+        var c2 = pcwlnode[pcwlnode_id[pfvinfo[i].direction[1]]];
+        var totalLength = Math.sqrt((c1.pos_x-c2.pos_x)*(c1.pos_x-c2.pos_x)+(c1.pos_y-c2.pos_y)*(c1.pos_y-c2.pos_y));
+        pfvinfo[i].totalLength = totalLength;
+      };
+
+      // defs/markerという構造で、svgの下に矢印を定義
+      marker = svg1.append("defs").selectAll("g.marker").data(pfvinfo).enter().append("marker")
+      .attr({
+        'id': function(d,i){return "arrowhead"+i;},
+        'refX': ref1,
+        'refY': 2,
+        'markerWidth': 4,
+        'markerHeight': 4,
+        'orient': "auto"
+      });
+      // 矢印の形をpathで定義
+      marker.append("path")
+          .attr({
+            d: "M 2,0.5 V 3.5 L4,2 Z",
+            fill: function(d){return thermography(d.size);}
+      });
+      // line関数を定義
+      line = d3.svg.line()
+      .interpolate('basis')
+      .x(function(d) {return d.pos_x;})
+      .y(function(d) {return d.pos_y;});
+      // path要素を作成
+      svg1.append("g").attr("id","g_arrow").style("opacity",0.8);
+      path = svg1.select("#g_arrow").selectAll("g.arrow")
+      .data(pfvinfo)
+      .enter()
+      .append("path")
+      .attr({
+        'd': function(d){
+        var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+        var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+        var carray = [c1,c2];
+        return line(carray);
+      },
+      'stroke': function(d){return thermography(d.size);},
+      'stroke-width': 5,
+      'fill': 'none',
+      // pathの属性として、上で定義した矢印を指定します
+      'marker-end':function(d,i){return "url(#arrowhead"+i+")";},
+      // 破線の指定を行います。
+      'stroke-dasharray': function(d){
+        var t = d.totalLength - (r1+r2+ref1);
+        return "0 " + r1 + " " + t + " " + r2;
+      },
+      // 破線の開始相対位置を指定します
+      'stroke-dashoffset': 0,
+      })
+      // 0人ならば矢印を見えなくする
+      .style("opacity",function(d){if(d.size == 0){return 0.5} else{return 1}})
+      // マウスがバーに重なったら説明文を出す
+      .on( "mouseover", function(d){
+        div.transition().duration(300)
+        .style("opacity",1)
+        .style("background",thermography(d.size))
+        .style("height", "35px")
+        .style("left", (d3.event.pageX + 20) + "px")
+        .style("top", (d3.event.pageY + 20) + "px")
+        div.style("width", "150px")
+        .text(d.direction[0]+" → "+d.direction[1]+" ： "+d.size+"回");
+      })
+      // マウスがバーから離れたら説明文をけす
+      .on( "mouseout", function(d){
+        div.transition().duration(300)
+        .style("opacity",0)
+      })
+      // クリック時の動作
+      .on( "click", function(d){
+        jump_pfvgraph(d.direction);
+      });
+      // 2本の矢印をアニメーション付きでずらす
+      path.attr({
+        "transform": function(d){
+          var c1 = pcwlnode[pcwlnode_id[d.direction[0]]];
+          var c2 = pcwlnode[pcwlnode_id[d.direction[1]]];
+          var interval = 6; // 2本の矢印間の間隔
+          var trans_x = +1 * interval * (c1.pos_y - c2.pos_y) / d.totalLength;
+          var trans_y = -1 * interval * (c1.pos_x - c2.pos_x) / d.totalLength;
+          return "translate("+trans_x+","+trans_y+")";
+        },
+      })
+    }
+
+    d3.select("#Auto_Animation").style("color","black");
+    var flag_Auto2 = false;
+    var Timer;
+
+    function Auto_Ajax(){
+      slide_DT(-1);
+    }
+
+    // 実験中のボールアニメーション
+    var tmp_timerange_order; // ボールアニメーション実行前のtimerange値を記録
+    function Auto_Animation2(){
+      // timerange値を取得
+      var value = Sample_form.selectbox_timerange.value;
+      var num = parseInt(value.slice(-2));
+      if (value.slice(0,3) == "sec"){
+        var timerange = num;
+      } else if (value.slice(0,3) == "min"){
+        var timerange = num*60;
+      } else if (value.slice(0,3) == "hou"){
+        var timerange = num*3600;
+      } else if (value.slice(0,3) == "day"){
+        var timerange = num*86400;
+      }
+      // flagによりアニメーション実行or停止
+      if (flag_Auto2) {
+        flag_Auto2 = !flag_Auto2;
+        if(!flag_jud_anime){
+          d3.select("#btn_Auto2").style("color","black");
+        };
+        if (!flag_realtime) {
+          clearInterval(Timer);
+        };
+        animate_circle.remove();
+        document.Sample_form.selectbox_timerange.selectedIndex = tmp_timerange_order;
+        describe_datetime();
+      } else {
+        flag_Auto2 = !flag_Auto2;
+        make_animate_circle();
+        document.Sample_form.selectbox_timerange.selectedIndex = timerange_list_id[String(timerange)]; // ボールアニメーション中はtimerange=10固定
+        tmp_timerange_order = timerange_list_id[String(timerange)];
+        d3.select("#btn_Auto2").style("color","blue");
+        if (!flag_realtime) {
+          Auto_Ajax();
+          // Timer = setInterval(Auto_Ajax,2000);
+          Timer = setInterval(Auto_Ajax,1500);
+          // Timer = setInterval(Auto_Ajax,5000);
+        };
+      };
+    }
+    function make_animate_circle(){
+      animate_circle = svg1.selectAll("g.pfvcircle")
+      .data(pfvinfo)
+      .enter()
+      .append("circle")
+      .attr({
+        "r": 0,
+        "fill":function(d){return d.color;},
+        "id": function(d){return d.color + "anime";},
+      })
+      .style("opacity", function(d){return 0.8;})
+    }
+    function move_animate_circle(){
+      if (flag_realtime) {
+        var ball_animation_time = 4000; // リアルタイムビューの場合4秒かけてアニメーション
+        var ball_appear_time = 500; // リアルタイムビューの場合の出現・消滅時間
+      } else {
+        var ball_animation_time = 1000; // そうでなければ1秒かけてアニメーション
+        var ball_appear_time = 100;
+        // var ball_animation_time = 4000; //localでのrealtimeデバッグ用
+        // var ball_appear_time = 500;
+      };
+
+      animate_circle
+      .each(function(d){ // 円のそれぞれに対して以下を実行
+        var ball = d3.select(this);
+        if (d.route.length == 0) { // ボールのデータがない場合
+          ball = ball.transition(d.mac+"disappear").duration(ball_appear_time)
+          .attr("r",0)
+        } else { // ボールのデータが有る場合
+          ball = ball.attr({
+            "cx": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_x"],
+            "cy": pcwlnode[pcwlnode_id[d.route[0][0][0]]]["pos_y"],
+          })
+          .transition(d.mac+"appear").duration(ball_appear_time)
+          .attr("r",18)
+          if (d.route[0][0].length == 2) { // ボールが動く場合
+            for (var i = 0; i < d.route[0].length; i++) { // 各ルートに対して
+              ball = ball.transition(d.mac+"move").duration(ball_animation_time/d.route[0].length)
+              .ease("linear")
+              .attr({
+                "cx": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_x"],
+                "cy": pcwlnode[pcwlnode_id[d.route[0][i][1]]]["pos_y"],
+              })
+            }
+          }
+        };
+      })
+    }
+
+   // RealTimeビュー実行
+   var flag_realtime = false;
+  </script>
+  {% endblock content %}
