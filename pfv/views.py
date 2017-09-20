@@ -1155,7 +1155,7 @@ def tag_position_check_json(request):
 def crowd_map(request):
 
   # urlからクエリの取り出し
-  date_time = request.GET.get('datetime', '20170621060000')
+  date_time = request.GET.get('datetime', '20170906150000')
   timerange = int(request.GET.get('timerange', 5))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
@@ -1197,13 +1197,13 @@ def crowd_map(request):
     # pfv情報の取り出し
     tmp_pfvinfo = []
     tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
-    pfvmacinfo = []
-    pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # pfvmacinfo = []
+    # pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 滞留端末情報の取り出し
     stayinfo = []
     stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
-    staymacinfo = []
-    staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # staymacinfo = []
+    # staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 全体のデータを作成===========================================================
     if len(tmp_pfvinfo) >= 1:
       for i in range(0,len(tmp_pfvinfo[0]["plist"])):
@@ -1343,13 +1343,13 @@ def crowd_map_json(request):
     # pfv情報の取り出し
     tmp_pfvinfo = []
     tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
-    pfvmacinfo = []
-    pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # pfvmacinfo = []
+    # pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 滞留端末情報の取り出し
     stayinfo = []
     stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
-    staymacinfo = []
-    staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # staymacinfo = []
+    # staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 全体のデータを作成===========================================================
     if len(tmp_pfvinfo) >= 1:
       for i in range(0,len(tmp_pfvinfo[0]["plist"])):

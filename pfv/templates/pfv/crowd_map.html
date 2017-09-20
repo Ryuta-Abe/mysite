@@ -253,7 +253,7 @@
     document.write('<span>');
 
     document.write('<select name="selectbox_timerange">');
-    timerange_list = [5,10,20,30,60,120,300,600,1200,1800,3600,7200,10800,21600,43200]
+    timerange_list = [5,30,60,240,300,600,1200,1800,3600,7200,10800,21600,43200]
     timerange_list_id = make_selectbox(timerange_list);
     document.write('</select>');
 
@@ -282,7 +282,7 @@
 <div id="tooltip_div"></div>
 <div id="tag_list">
     <!-- <p>タグ一覧</p> -->
-    <p>最大ノード / 最多経路</p>
+    <p>最大ノード</p>
 </div>
 <svg id="svg2" width="300" height="530"></svg>
 <svg id="color_bar" width="1024" height="100"></svg>

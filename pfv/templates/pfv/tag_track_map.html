@@ -570,6 +570,7 @@
                 "r": 20,
                 "fill": d.color,
                 'id': d.color + "stay",
+                "class": d.color + "stay",
               })
               .style("opacity",function(){
                 if ($.inArray(d.color, hidden_color) >= 0){
@@ -966,14 +967,14 @@
       if ($.inArray(color, hidden_color) >= 0) {
         svg2.select("#"+color+"circle").attr("fill", color);
         svg1.select("#"+color+"path").style("opacity", 1);
-        svg1.select("#"+color+"stay").style("opacity", 0.5);
+        svg1.selectAll("."+color+"stay").style("opacity", 0.5);
         svg1.select("#"+color+"anime").style("opacity", 0.8);
         hidden_color.splice($.inArray(color, hidden_color), 1);
       } else{
         hidden_color.push(color);
         svg2.select("#"+color+"circle").attr("fill", "Transparent");
         svg1.select("#"+color+"path").style("opacity", 0);
-        svg1.select("#"+color+"stay").style("opacity", 0);
+        svg1.selectAll("."+color+"stay").style("opacity", 0);
         svg1.select("#"+color+"anime").style("opacity", 0);
       }
       // if(flag_Auto2){
