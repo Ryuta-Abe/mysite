@@ -381,3 +381,104 @@ def make_staymacinfo(dataset,db_name,min_interval): # mac情報を付加した�
 # make_pfvmacinfo(dataset,db.pfvmacinfo)
 # end = time.time()
 # print("time:"+str(end-start))
+
+def make_modpfvinfo(dataset,db_name,min_interval): # macを識別せずに時刻ごとに全階層・全経路のsizeを作成(補正版)
+
+    for data in dataset:
+        if data == None: # データがない場合は次のループへ
+            continue
+        interval = (data["end"]-data["start"]).seconds
+        num = int(round(interval / min_interval))+1 # 何時刻分か回数を計算
+        tlist = db.pcwltime.find({"datetime":{"$gte":data["start"]}}).sort("datetime", ASCENDING).limit(num) # 開始時刻以降の時刻のデータを必要分取り出す
+
+        route_info = [{"route":[],"distance":0,"add":1}] # 経路情報の作成
+        for i in range(len(data["route"])):
+            if i > 0:
+                tmp_direction = []
+                tmp_direction += db.idealroute.find({"$and": [
+                                                    {"floor" : data["floor"]},
+                                                    {"query" : data["route"][i-1]},
+                                                    {"query" : data["route"][i]}
+                                                ]})
+                route_info[0]["distance"] += tmp_direction[0]["total_distance"]
+                if len(tmp_direction[0]["dlist"]) == 1:
+                    route_info[0]["route"].append({"direction":[data["route"][i-1],data["route"][i]],"distance":tmp_direction[0]["total_distance"]})
+                else:
+                    if data["route"][i-1] == tmp_direction[0]["dlist"][0]["direction"][0]:
+                        for j in tmp_direction[0]["dlist"]:
+                            route_info[0]["route"].append(j)
+                    else:
+                        for j in range(-1,-len(tmp_direction[0]["dlist"])-1,-1):
+                            route_info[0]["route"].append({"direction":[tmp_direction[0]["dlist"][j]["direction"][1],tmp_direction[0]["dlist"][j]["direction"][0]],"distance":tmp_direction[0]["dlist"][j]["distance"]})
+        if num >= 1:
+            for route in route_info: # ある経路に対して以下を実行
+                # print("add = "+str(route["add"]))
+
+                # 抜けている出発到着情報の補完
+                if num > 1: # リアルタイムの5秒更新ではほとんど使われない
+                    total_distance = route["distance"]
+                    tmp_distance = 0 # 推定に用いる一時累計距離
+                    st_ed_info = [] # 欠落した出発到着情報を補完するリスト
+                    tmp_st_ed_info = []
+                    n_count = 0 # ノード情報のカウンター
+                    t_count = 1 # タイム情報のカウンター
+                    while t_count < num: # 1時刻でどれだけの経路を進んだかのリストを作成する
+                        tmp_distance += route["route"][n_count]["distance"]
+                        tmp_st_ed_info.append(route["route"][n_count]["direction"])
+                        if tmp_distance >= (total_distance*t_count/num): # 一時累計距離がしきい値を超えたら以下を実行
+                            extra_distance = tmp_distance - (total_distance*t_count/num) # 超過分の距離を計算
+                            if extra_distance >= (route["route"][n_count]["distance"]/2): # 次のノードまでの距離を半分以上移動していない場合
+                                tmp_st_ed_info.pop(-1) # リストから1経路分除去（例:[[1,2],[2,3]]→[[1,2]]）
+                                tmp_distance -= route["route"][n_count]["distance"] # 1経路分の距離を引く
+                            else :
+                                n_count += 1 # 次のノードを対象にする
+                            st_ed_info.append(tmp_st_ed_info)
+                            tmp_st_ed_info = []
+                            t_count += 1
+                            if n_count == len(route["route"]): # 全時刻ループする前に全経路移動した場合(リストの最後に空のリストが追加される)
+                                for i in range(t_count-1,num):
+                                    st_ed_info.append([])
+                                break
+                            if t_count == num: # 時刻ループの最後の場合（残りの経路を最後の時刻分として追加する）
+                                for i in range(n_count,len(route["route"])):
+                                    tmp_st_ed_info.append(route["route"][i]["direction"])
+                                st_ed_info.append(tmp_st_ed_info)
+                        else :
+                            n_count += 1 # 次のノードを対象とする
+                elif num == 1:
+                    tmp_st_ed_info = []
+                    for node in route["route"]:
+                        tmp_st_ed_info.append(node["direction"])
+                    st_ed_info = [tmp_st_ed_info]
+
+                # pfv情報の登録
+                for j in range(0,num):
+                    if len(st_ed_info[j]) >= 1: # j番目の時刻において出発点到着点が同じ場亜合は以下をスキップ（経路情報が空のリストではない場合）
+                        tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[j]["datetime"]},"floor":data["floor"]}) # 対象のコレクションに同一フロア・同一時刻のデータを確認
+                        if tmp_plist == None: # この時間の情報がまだDBに登録されていない場合
+                            tmp_plist = make_empty_pfvinfo(tlist[j]["datetime"], db_name, data["floor"]) # この時間の空の情報を作成
+                        for dire in st_ed_info[j]:
+                            tmp_plist["plist"][pfvinfo_dict[data["floor"]][dire[0]][dire[1]]]["size"] += route["add"] # 同一時刻・同一フロアの登録順にしたがって、人数（size）を追加
+                        db_name.save(tmp_plist) # コレクションに追加
+                        # print(str(tlist[j]["datetime"])+"のpfvinfoを登録完了, 経路分岐 = "+str(len(route_info))+" floor:"+data["floor"])
+
+def make_modstayinfo(dataset,db_name,min_interval): # 全mac対象の累計の滞留データを作成(補正版)
+
+    for data in dataset:
+        if data == None:
+            continue
+        interval = (data["end"]-data["start"]).seconds
+        num = int(round(interval / min_interval))+1 # 何時刻分か回数を計算
+        tlist = db.pcwltime.find({"datetime":{"$gte":data["start"]}}).sort("datetime", ASCENDING).limit(num) # 開始時刻以降の時刻のデータを必要分取り出す
+
+        for i in range(0,num):
+
+            # 滞留端末情報の一時データ取り出し
+            tmp_plist = db_name.find_one({"datetime":{"$eq":tlist[i]["datetime"]},"floor":data["floor"]}) # 同一時刻・同一階のデータを取り出し
+            if tmp_plist == None: # この時間の情報がまだDBに登録されていない場合
+                tmp_plist = make_empty_stayinfo(tlist[i]["datetime"],data["floor"]) # この時間の空の情報を作成
+
+                # 滞留端末情報更新
+            tmp_plist["plist"][stayinfo_dict[data["floor"]][data["pcwl_id"]]]["size"] += 1 # 該当ノードにsizeを+1
+            tmp_plist["plist"][stayinfo_dict[data["floor"]][data["pcwl_id"]]]["mac_list"] += [data["mac"]] # 該当ノードにmacも追加
+            db_name.save(tmp_plist) # コレクションのデータを更新

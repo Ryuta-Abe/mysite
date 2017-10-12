@@ -158,6 +158,18 @@
   #change_btn{
     float: right;
   }
+  #remake_btn{
+    float: right;
+  }
+  #remake_display{
+    float: right;
+    font-size: 30px;
+    color: red;
+    border: 2px solid red;
+    background-color: white;
+    /*display: none;*/
+    opacity: 0;
+  }
 </style>
 {% endblock %}
 
@@ -168,6 +180,7 @@
   <text id="datetime_header"></text>
   <font id="got_datetime" size="4"></font>
   <a id="change_btn" onclick="change_node('change')" class="btn btn-default btn-sm"></a>
+  <a id="remake_btn" onclick="change_remake()" class="btn btn-default btn-sm"></a>
   <div id="layer_1" style="display: block;position:relative;margin-left:15pt;margin-top:15pt" class="open">
   <span id="selected_datetime">
   <script type="text/javascript">
@@ -259,6 +272,7 @@
 
   </script>
   <text id="time_interval_text"></text>
+  <text id="remake_display"></text>
   </span></div>
   <div id="layer_2" style="display: none;position:relative;margin-left:15pt;margin-top:15pt" class="close">
   </div>
@@ -295,12 +309,14 @@
     // ヘッダーやその他文字の表示
     d3.select("#header").text("群測位マップ ~"+floor+"~");
     d3.select("#datetime_header").text("取得日時：");
+    d3.select("#remake_display").text("補正中");
     d3.select("#category_1").text("時間調整");
     d3.select("#btn_reload").text("更新");
     d3.select("#btn_back").text("戻る");
     d3.select("#btn_forward").text("進む");
     d3.select("#time_interval_text").text("間のデータを表示");
     d3.select("#change_btn").text("滞留数");
+    d3.select("#remake_btn").text("補正");
     Sample_form.textbox_mac.value = "{{ mac }}";
 
     //タブ用の枠を作成
@@ -808,6 +824,21 @@
       }).style("opacity",1)
     }
 
+    // ノードの表示を滞留回数・滞留種類で切り替える
+    var remake_btn = "off";
+    function change_remake(){
+      if (remake_btn == "off") {
+        document.getElementById("remake_btn").innerHTML="解除";
+        remake_btn = "on";
+        d3.select("#remake_display").style("opacity",1);
+      } else{
+        document.getElementById("remake_btn").innerHTML="補正";
+        remake_btn = "off";
+        d3.select("#remake_display").style("opacity",0);
+      }
+      Load_Form(1);
+    }
+
     // セレクトボックスの値をdatetimeに合わせる
     function set_selectbox(){
       var year = datetime.getFullYear() - 2014;
@@ -847,7 +878,11 @@
         var timerange = num*86400;
       }
       var mac = Sample_form.textbox_mac.value;
-      var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor;
+      if (remake_btn == "off"){
+        var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor + "&mod=off";
+      } else{
+        var url = "?datetime=" + year + month + day + hour + minute + second + "&timerange=" + timerange + "&mac=" + mac + "&language=" + "{{ language }}" + "&floor=" + floor + "&mod=on";
+      }
       return url;
     }
 

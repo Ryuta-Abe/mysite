@@ -1155,11 +1155,12 @@ def tag_position_check_json(request):
 def crowd_map(request):
 
   # urlからクエリの取り出し
-  date_time = request.GET.get('datetime', '20170906150000')
-  timerange = int(request.GET.get('timerange', 5))
+  date_time = request.GET.get('datetime', '20170920183730')
+  timerange = int(request.GET.get('timerange', 600))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
-  floor = request.GET.get('floor', 'W2-6F')
+  floor = request.GET.get('floor', 'W2-7F')
+  mod = request.GET.get('mod', 'off')
 
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
@@ -1196,12 +1197,18 @@ def crowd_map(request):
   for time in time_list:
     # pfv情報の取り出し
     tmp_pfvinfo = []
-    tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    if mod == "on":
+      tmp_pfvinfo += db.modpfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # pfvmacinfo = []
     # pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 滞留端末情報の取り出し
     stayinfo = []
-    stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    if mod == "on":
+      stayinfo += db.modstayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # staymacinfo = []
     # staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 全体のデータを作成===========================================================
@@ -1301,9 +1308,10 @@ def crowd_map_json(request):
   timerange = int(request.GET.get('timerange', 5))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
-  floor = request.GET.get('floor', 'W2-6F')
+  floor = request.GET.get('floor', 'W2-7F')
   selectnode = request.GET.get("selectnode", "")
   realtime = request.GET.get("realtime", "false")
+  mod = request.GET.get('mod', 'off')
 
   if date_time == 'now':
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
@@ -1342,12 +1350,18 @@ def crowd_map_json(request):
   for time in time_list:
     # pfv情報の取り出し
     tmp_pfvinfo = []
-    tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    if mod == "on":
+      tmp_pfvinfo += db.modpfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # pfvmacinfo = []
     # pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 滞留端末情報の取り出し
     stayinfo = []
-    stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    if mod == "on":
+      stayinfo += db.modstayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # staymacinfo = []
     # staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
     # 全体のデータを作成===========================================================
