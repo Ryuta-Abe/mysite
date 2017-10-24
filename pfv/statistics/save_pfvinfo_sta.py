@@ -469,7 +469,8 @@ def make_modstayinfo(dataset,db_name,min_interval): # 全mac対象の累計の�
             continue
         interval = (data["end"]-data["start"]).seconds
         num = int(round(interval / min_interval))+1 # 何時刻分か回数を計算
-        tlist = db.pcwltime.find({"datetime":{"$gte":data["start"]}}).sort("datetime", ASCENDING).limit(num) # 開始時刻以降の時刻のデータを必要分取り出す
+        tlist = []
+        tlist += db.pcwltime.find({"datetime":{"$gte":data["start"]}}).sort("datetime", ASCENDING).limit(num) # 開始時刻以降の時刻のデータを必要分取り出す
 
         for i in range(0,num):
 
@@ -480,5 +481,6 @@ def make_modstayinfo(dataset,db_name,min_interval): # 全mac対象の累計の�
 
                 # 滞留端末情報更新
             tmp_plist["plist"][stayinfo_dict[data["floor"]][data["pcwl_id"]]]["size"] += 1 # 該当ノードにsizeを+1
-            tmp_plist["plist"][stayinfo_dict[data["floor"]][data["pcwl_id"]]]["mac_list"] += [data["mac"]] # 該当ノードにmacも追加
+            if data["mac"] not in tmp_plist["plist"][stayinfo_dict[data["floor"]][data["pcwl_id"]]]["mac_list"]:
+                tmp_plist["plist"][stayinfo_dict[data["floor"]][data["pcwl_id"]]]["mac_list"] += [data["mac"]] # 該当ノードにmacも追加
             db_name.save(tmp_plist) # コレクションのデータを更新

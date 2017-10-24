@@ -27,7 +27,7 @@ def analyze_mod(st_dt, ed_dt):
     db.trtmp.create_index([("get_time_no", ASCENDING)])
 
     tmp_st = st_dt  # for debug
-    while(tmp_st < ed_dt):
+    while(tmp_st <= ed_dt):
         # loop_st = time.time()
         after_5s = shift_seconds(tmp_st, 5)
 
