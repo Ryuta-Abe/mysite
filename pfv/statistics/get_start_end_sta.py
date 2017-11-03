@@ -28,7 +28,8 @@ FLOOR_LIST   = ["W2-6F","W2-7F","W2-9F"]
 int_time_range = 30
 time_range = timedelta(seconds=int_time_range) # 過去の参照時間幅設定
 # RSSIの閾値（機械学習使用時は機能しない）
-TH_RSSI    = -70
+TH_RSSI    = -60
+TH_RSSI_FLOOR = -60
 # time_range以内の繰り返し出現回数
 repeat_cnt = 99
 # データ欠落時に滞留として端末を滞留させておく時間
@@ -101,7 +102,7 @@ def get_start_end_mod(all_st_time):
             for list_data in data["nodelist"][:]:
                 largest_floor = list_data["floor"] #大きいrssiを観測したノード順に最大階を確定
                 if largest_floor != past_floor:
-                    if list_data["rssi"] <= TH_RSSI+10:
+                    if list_data["rssi"] <= TH_RSSI_FLOOR:
                         missing_flag = True
                         break
                     floor_key = lambda x:x["floor"]

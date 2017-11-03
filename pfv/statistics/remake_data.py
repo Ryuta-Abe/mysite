@@ -12,8 +12,8 @@ client = MongoClient()
 db = client.nm4bd
 
 DATA_INTERVAL = 60 # データの間隔
-STAY_SEC_TH = 45 # 滞留時間の基準値
-STAY_JUD_TH = 45 # 滞留判定を行うまでの時間
+STAY_SEC_TH = 60 # 滞留時間の基準値
+STAY_JUD_TH = 30 # 滞留判定を行うまでの時間
 INTERVAL = 5 # データ取得間隔
 
 def remake_data(st,ed):
@@ -21,7 +21,7 @@ def remake_data(st,ed):
     db.modpfvinfo.remove({"datetime":{"$gte":st,"$lte":ed}})
     db.modstayinfo.remove({"datetime":{"$gte":st,"$lte":ed}})
     # 該当期間に更新されたmacの取り出し
-    # maclist = ["00:11:81:10:01:00"]
+    # maclist = ["00:11:81:10:01:1b"]
     # maclist = ["b0:72:bf:4a:76:c9"]
     maclist = []
     maclist += db.pastdata.find({},{"mac":1,"_id":0})
@@ -67,13 +67,6 @@ def remake_data(st,ed):
                     if ap_list_flow == []:
                         ap_list_flow.append({"pcwl_id":time["route"][i][0],"datetime":time["datetime"]})
                     ap_list_flow.append({"pcwl_id":time["route"][i][1],"datetime":time["datetime"]})
-                    # if i == 0:
-                    #     ap_list_flow.append({"pcwl_id":time["route"][i][0],"datetime":time["datetime"]})
-                    #     ap_list_flow.append({"pcwl_id":time["route"][i][1],"datetime":time["datetime"]})
-                    # else:
-                    #     ap_list_flow.append({"pcwl_id":time["route"][i][1],"datetime":time["datetime"]})
-                # print(ap_list_flow)
-                # print(time["route"])
             update_dt = time["datetime"]
             pre_floor = time["floor"]
         print_result(mac,start_dt,update_dt,ap_list_flow,ap_list_stay,flow_cnt,stay_cnt,pre_floor)
@@ -136,7 +129,6 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                                         if ap["datetime"] > tmp_ap_list[start_index-1]["datetime"]:
                                             break
                                         start_index += 1
-                                # stay_ap_list.append({"start":stay_jud_list[start_index]["datetime"],"end":[end_index]["datetime"],"pcwl_id":stay_jud_list[0]["pcwl_id"]})
                             else:
                                 start_index -= 1
                             if "real_id" in stay_jud_list[0]:
@@ -146,30 +138,17 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                         else: # 滞留のリストに既にデータが存在している場合
                             flow_start_index = tmp_ap_list.index({"datetime":stay_ap_list[-1]["end"],"pcwl_id":stay_ap_list[-1]["pcwl_id"]})
                             flow_start_time = shift_seconds(tmp_ap_list[flow_start_index]["datetime"],5)
-                            tmp_start = stay_jud_list[0]["start"]
-                            # reverse_list = tmp_ap_list[flow_start_index+1:start_index]
-                            for ap in reversed(tmp_ap_list[flow_start_index+1:start_index]):
-                                if (tmp_start - ap["datetime"]).seconds > STAY_JUD_TH:
-                                    break
-                                else:
-                                    if ap["pcwl_id"] == Ap_id:
-                                        tmp_start = ap["datetime"]
-                                        start_index = tmp_ap_list.index({"datetime":tmp_start,"pcwl_id":Ap_id}) + 1
-                            # if tmp_ap_list[flow_start_index]["datetime"] == tmp_ap_list[flow_start_index+1]["datetime"]: # 前回の滞留終了時刻と移動開始時刻が同一か判定
-                            #     change_time_flag = True
-                            # else:
-                            #     flow_start_time = tmp_ap_list[flow_start_index+1]["datetime"]
-                            #     change_time_flag = False
+                            # tmp_start = stay_jud_list[0]["start"]
+                            # for ap in reversed(tmp_ap_list[flow_start_index+1:start_index]):
+                            #     if (tmp_start - ap["datetime"]).seconds > STAY_JUD_TH:
+                            #         break
+                            #     else:
+                            #         if ap["pcwl_id"] == Ap_id:
+                            #             tmp_start = ap["datetime"]
+                            #             start_index = tmp_ap_list.index({"datetime":tmp_start,"pcwl_id":Ap_id}) + 1
                             route = []
                             for j in tmp_ap_list[flow_start_index:start_index]:
                                 route.append(j["pcwl_id"])
-                                # if change_time_flag:
-                                #     if tmp_ap_list[flow_start_index]["datetime"] < j["datetime"]:
-                                #         flow_start_time = j["datetime"]
-                                #         change_time_flag = False
-                            # if change_time_flag:
-                            #     flow_start_time = tmp_ap_list[flow_start_index]["datetime"]
-
                             flow_ap_list.append({"start":flow_start_time,"end":tmp_ap_list[start_index-1]["datetime"],"route":route,"start_index":flow_start_index,"end_index":start_index-1})
                             if tmp_ap_list[start_index-1]["datetime"] == tmp_ap_list[start_index]["datetime"]:
                                 for ap in tmp_ap_list[start_index+1]:
@@ -214,20 +193,9 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             else: # 滞留のリストに既にデータが存在している場合
                 flow_start_index = tmp_ap_list.index({"datetime":stay_ap_list[-1]["end"],"pcwl_id":stay_ap_list[-1]["pcwl_id"]})
                 flow_start_time = shift_seconds(tmp_ap_list[flow_start_index]["datetime"],5)
-                # if tmp_ap_list[flow_start_index]["datetime"] == tmp_ap_list[flow_start_index+1]["datetime"]: # 前回の滞留終了時刻と移動開始時刻が同一か判定
-                #     change_time_flag = True
-                # else:
-                #     flow_start_time = tmp_ap_list[flow_start_index+1]["datetime"]
-                #     change_time_flag = False
                 route = []
                 for j in tmp_ap_list[flow_start_index:start_index]:
                     route.append(j["pcwl_id"])
-                #     if change_time_flag:
-                #         if tmp_ap_list[flow_start_index]["datetime"] < j["datetime"]:
-                #             flow_start_time = j["datetime"]
-                #             change_time_flag = False
-                # if change_time_flag:
-                #     flow_start_time = tmp_ap_list[flow_start_index]["datetime"]
                 flow_ap_list.append({"start":flow_start_time,"end":tmp_ap_list[start_index-1]["datetime"],"route":route,"start_index":flow_start_index,"end_index":start_index-1})
                 if tmp_ap_list[start_index-1]["datetime"] == tmp_ap_list[start_index]["datetime"]:
                     for ap in tmp_ap_list[start_index+1:]:
@@ -247,20 +215,9 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
     elif tmp_ap_list[-1]["datetime"] > stay_ap_list[-1]["end"]:
         flow_start_index = tmp_ap_list.index({"datetime":stay_ap_list[-1]["end"],"pcwl_id":stay_ap_list[-1]["pcwl_id"]})
         flow_start_time = shift_seconds(tmp_ap_list[flow_start_index]["datetime"],5)
-        # if tmp_ap_list[flow_start_index]["datetime"] == tmp_ap_list[flow_start_index+1]["datetime"]: # 前回の滞留終了時刻と移動開始時刻が同一か判定
-        #     change_time_flag = True
-        # else:
-        #     flow_start_time = tmp_ap_list[flow_start_index+1]["datetime"]
-        #     change_time_flag = False
         route = []
         for j in tmp_ap_list[flow_start_index:]:
             route.append(j["pcwl_id"])
-        #     if change_time_flag:
-        #         if tmp_ap_list[flow_start_index]["datetime"] < j["datetime"]:
-        #             flow_start_time = j["datetime"]
-        #             change_time_flag = False
-        # if change_time_flag:
-        #     flow_start_time = tmp_ap_list[flow_start_index]["datetime"]
         flow_ap_list.append({"start":flow_start_time,"end":tmp_ap_list[-1]["datetime"],"route":route,"start_index":flow_start_index,"end_index":-1})
 
     # 滞留情報の補正
@@ -271,12 +228,11 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
         stay_info["mac"] = mac
         stay_info_index = stay_ap_list.index(stay_info)
         if "real_id" in stay_info:
-            start_index = tmp_ap_list.index({"datetime":stay_info["start"],"pcwl_id":stay_info["real_id"]})
-            del stay_info["real_id"]
+            start_index = flow.index({"datetime":stay_info["start"],"pcwl_id":stay_info["real_id"]})
         else:
-            start_index = tmp_ap_list.index({"datetime":stay_info["start"],"pcwl_id":stay_info["pcwl_id"]})
-        end_index = tmp_ap_list.index({"datetime":stay_info["end"],"pcwl_id":stay_info["pcwl_id"]})
-        part_stay_list = tmp_ap_list[start_index:end_index+1]
+            start_index = flow.index({"datetime":stay_info["start"],"pcwl_id":stay_info["pcwl_id"]})
+        end_index = flow.index({"datetime":stay_info["end"],"pcwl_id":stay_info["pcwl_id"]})
+        part_stay_list = flow[start_index:end_index+1]
         # 滞留中の出現回数確認
         appear_list = list(map(key_id,part_stay_list))
         appear_cnt = Counter(appear_list).most_common(2)
@@ -291,7 +247,9 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                     next_flow_index = None
                 break
             next_flow_index = 0
+
         if (stay_info["pcwl_id"] != appear_cnt[0][0]) and (appear_cnt[0][1] > appear_cnt[1][1]): # 対象のAPが期間内出現回数1位のAPと異なる場合
+
             for ap in part_stay_list: # 期間内で最初に最多APが出現した時間を参照
                 if ap["pcwl_id"] == appear_cnt[0][0]:
                     # mod_ap_info = {"datetime":ap["datetime"],"pcwl_id":ap["pcwl_id"]}
@@ -299,7 +257,11 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                     mod_ap_info_start = {"datetime":ap["datetime"],"pcwl_id":ap["pcwl_id"]} # 最初の出現データ保存用
                     mod_ap_info_end = {"datetime":ap["datetime"],"pcwl_id":ap["pcwl_id"]} # 最後の出現データ保存用
                     break
-            for ap in reversed(tmp_ap_list[:mod_ap_index]): # 期間外まで遡り最初に出現した時刻を求める
+            if prev_flow_index == None:
+                reverse = reversed(tmp_ap_list[:mod_ap_index])
+            else:
+                reverse = reversed(tmp_ap_list[flow_ap_list[prev_flow_index]["start_index"]:mod_ap_index])
+            for ap in reverse: # 期間外まで遡り最初に出現した時刻を求める
                 if (mod_ap_info_start["datetime"]-ap["datetime"]).seconds > STAY_JUD_TH:
                     break
                 else:
@@ -326,7 +288,7 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             elif prev_flow_index == None:
                 route = []
                 for tmp_route in tmp_ap_list[:tmp_ap_list.index(mod_ap_info_start)+1]:
-                    route.append(tmp_route)
+                    route.append(tmp_route["pcwl_id"])
                 if len(route) != 1:
                     flow_ap_list.insert(0,{"start":tmp_ap_list[0]["datetime"],"end":tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"],"route":route})
                 else:
@@ -337,28 +299,28 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                     flow_ap_list[prev_flow_index]["route"].append(ap["pcwl_id"])
             # 滞留直後の移動を適切な形に変更
             if (next_flow_index != None) and (tmp_ap_list.index(mod_ap_info_end) >= flow_ap_list[next_flow_index]["start_index"]):
-                route = flow_ap_list[next_flow_index]["route"]
-                for tmp_route in range(len(route)):
-                    if route[tmp_route] == stay_info["pcwl_id"]:
-                        del flow_ap_list[next_flow_index]["route"][:tmp_route]
-                        if len(route) < 2:
-                            if len(stay_ap_list) > stay_info_index + 1:
-                                stay_info["end"] = stay_ap_list[stay_info_index+1]["end"]
-                                del stay_ap_list[stay_info_index+1]
-                            else:
-                                stay_info["end"] = flow_ap_list[next_flow_index]["end"]
-                            del flow_ap_list[next_flow_index]
-                        else:
-                            flow_ap_list[next_flow_index]["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"]
-                        break
+                flow_ap_list[next_flow_index]["route"] = []
+                for tmp_route in tmp_ap_list[tmp_ap_list.index(mod_ap_info_end):flow_ap_list[next_flow_index]["end_index"]+1]:
+                    flow_ap_list[next_flow_index]["route"].append(tmp_route["pcwl_id"])
+                if len(flow_ap_list[next_flow_index]["route"]) < 2:
+                    if len(stay_ap_list) > stay_info_index + 1:
+                        stay_info["end"] = stay_ap_list[stay_info_index+1]["end"]
+                        del stay_ap_list[stay_info_index+1]
+                    else:
+                        stay_info["end"] = flow_ap_list[next_flow_index]["end"]
+                    del flow_ap_list[next_flow_index]
+                else:
+                    flow_ap_list[next_flow_index]["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"]
             elif next_flow_index == None:
                 route = []
                 for tmp_route in tmp_ap_list[tmp_ap_list.index(mod_ap_info_end):]:
-                    route.append(tmp_route)
-                flow_ap_list.insert(0,{"start":tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"],"end":tmp_ap_list[-1]["datetime"],"route":route})
+                    route.append(tmp_route["pcwl_id"])
+                if prev_flow_index == None:
+                    flow_ap_list.insert(0,{"start":tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"],"end":tmp_ap_list[-1]["datetime"],"route":route})
+                else:
+                    flow_ap_list.insert(prev_flow_index+1,{"start":tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"],"end":tmp_ap_list[-1]["datetime"],"route":route})
             else:
                 flow_ap_list[next_flow_index]["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"]
-                print(tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)])
                 len_route = -len(flow_ap_list[next_flow_index]["route"])
                 for ap in tmp_ap_list[tmp_ap_list.index(mod_ap_info_end):flow_ap_list[next_flow_index]["start_index"]]:
                     flow_ap_list[next_flow_index]["route"].insert(len_route,ap["pcwl_id"])
@@ -366,6 +328,10 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             if prev_flow_index == None:
                 continue
             else:
+                if "real_id" in stay_info:
+                    start_index = tmp_ap_list.index({"datetime":stay_info["start"],"pcwl_id":stay_info["real_id"]})
+                else:
+                    start_index = tmp_ap_list.index({"datetime":stay_info["start"],"pcwl_id":stay_info["pcwl_id"]})
                 mod_ap_info_start = {"datetime":stay_info["start"],"pcwl_id":stay_info["pcwl_id"]} # 最初の出現データ保存用
                 for ap in reversed(tmp_ap_list[flow_ap_list[prev_flow_index]["start_index"]:start_index-1]): # 直前の移動まで遡り最初に出現した時刻を求める
                     if (mod_ap_info_start["datetime"]-ap["datetime"]).seconds > STAY_JUD_TH:
@@ -382,15 +348,20 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                         stay_info["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"]
                     else:
                         flow_ap_list[prev_flow_index]["end"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"]
-                        stay_info["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)+1]["datetime"]
+                        # stay_info["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)+1]["datetime"]
+                        stay_info["start"] = shift_seconds(tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"],5)
+        if "real_id" in stay_info:
+            del stay_info["real_id"]
 
     # 移動情報の補正
     for flow_info in flow_ap_list[:]:
         if len(flow_info["route"]) < 2:
             flow_ap_list.remove(flow_info)
             continue
-        del flow_info["start_index"]
-        del flow_info["end_index"]
+        if "start_index" in flow_info:
+            del flow_info["start_index"]
+        if "end_index" in flow_info:
+            del flow_info["end_index"]
         flow_info["floor"] = floor
         flow_info["mac"] = mac
         route = []
@@ -404,6 +375,7 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             else:
                 route.append(ap)
         flow_info["route"] = route
+
 
     make_modpfvinfo(flow_ap_list,db.modpfvinfo,INTERVAL)
     make_modstayinfo(stay_ap_list,db.modstayinfo,INTERVAL)
@@ -420,6 +392,7 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
     # print("滞留割合："+str(round(stay_cnt/(stay_cnt+flow_cnt)*100,2)))
     # print("AP"+str(tmp.most_common(5)[0][0])+"滞留率:"+str(round(tmp.most_common(5)[0][1]/len(stay)*100,2))+"%")
     print("----------------------------------------------------------------------------")
+
 
 if __name__ == '__main__':
     st = dt_from_14digits_to_iso(20170920182730)

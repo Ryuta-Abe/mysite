@@ -29,8 +29,12 @@ def statistics_all(st_dt, ed_dt):
     analyze_mod(st_dt,ed_dt)
 
 if __name__ == '__main__':
-    st_dt = 20171013154500
-    ed_dt = 20171013160000
+    # st_dt = 20171013154500
+    # ed_dt = 20171013160000
+    # st_dt = 20171024164400
+    # ed_dt = 20171024165535
+    st_dt = 20171024164400
+    ed_dt = 20171024171000
     # 時刻をiso形式に変換
     st_dt = dt_from_14digits_to_iso(st_dt)
     ed_dt = dt_from_14digits_to_iso(ed_dt)

@@ -1154,8 +1154,17 @@ def tag_position_check_json(request):
 #群測位用マップ
 def crowd_map(request):
 
+  new_date = []
+  new_date += db.pfvinfo.find().sort("datetime", DESCENDING).limit(1)
+  if (60 - new_date[0]["datetime"].second == 60) or (60 - new_date[0]["datetime"].second == 30):
+    new_date = dt_from_iso_to_str(new_date[0]["datetime"])
+  elif new_date[0]["datetime"].second >30:
+    new_date = dt_from_iso_to_str(shift_seconds(new_date[0]["datetime"],-new_date[0]["datetime"].second+30))
+  else:
+    new_date = dt_from_iso_to_str(shift_seconds(new_date[0]["datetime"],-new_date[0]["datetime"].second))
+
   # urlからクエリの取り出し
-  date_time = request.GET.get('datetime', '20170920183730')
+  date_time = request.GET.get('datetime', new_date)
   timerange = int(request.GET.get('timerange', 600))
   mac = request.GET.get('mac', '')
   language = request.GET.get('language', 'jp')
@@ -1297,7 +1306,8 @@ def crowd_map(request):
                               {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,
                                'language':language,'timerange':timerange,'floor':floor,
                                'year':lt.year,'month':lt.month,'day':lt.day,
-                               'hour':lt.hour,'minute':lt.minute,'second':lt.second,"flow_data":flow_data,"ap_data":ap_data,"rank_pfv":rank_pfv,"rank_node":rank_node,"rank_mac":rank_mac
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second,'pre_year':gt.year,'pre_month':gt.month,'pre_day':gt.day,
+                               'pre_hour':gt.hour,'pre_minute':gt.minute,'pre_second':gt.second,"flow_data":flow_data,"ap_data":ap_data,"rank_pfv":rank_pfv,"rank_node":rank_node,"rank_mac":rank_mac
                                }
                               )
 
@@ -1447,8 +1457,9 @@ def crowd_map_json(request):
 
   flow_data = {"max":max_pfv,"min":min_pfv,"rank_pfv":rank_pfv}
   ap_data = {"max_node":max_node,"min_node":min_node,"max_mac":max_mac,"min_mac":min_mac}
+  pre_date = {'pre_year':gt.year,'pre_month':gt.month,'pre_day':gt.day,'pre_hour':gt.hour,'pre_minute':gt.minute,'pre_second':gt.second}
   # 送信するデータセット
-  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode,"flow_data":flow_data,"ap_data":ap_data,"rank_pfv":rank_pfv,"rank_node":rank_node,"rank_mac":rank_mac}
+  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode,"flow_data":flow_data,"ap_data":ap_data,"rank_pfv":rank_pfv,"rank_node":rank_node,"rank_mac":rank_mac,"pre_date":pre_date}
   # dataset = {"pfvinfo":pfvinfo}
 
   return render_json_response(request, dataset) # dataをJSONとして出力
