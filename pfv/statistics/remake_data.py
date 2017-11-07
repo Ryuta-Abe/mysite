@@ -16,7 +16,7 @@ STAY_SEC_TH = 60 # 滞留時間の基準値
 STAY_JUD_TH = 30 # 滞留判定を行うまでの時間
 INTERVAL = 5 # データ取得間隔
 
-def remake_data(st,ed):
+def data_sorting(st,ed):
     # 該当期間のデータを消去
     db.modpfvinfo.remove({"datetime":{"$gte":st,"$lte":ed}})
     db.modstayinfo.remove({"datetime":{"$gte":st,"$lte":ed}})
@@ -51,7 +51,7 @@ def remake_data(st,ed):
                 start_dt = time["datetime"]
             else:
                 if ((time["datetime"] - update_dt).seconds >DATA_INTERVAL) or (time["floor"] != pre_floor):
-                    print_result(mac,start_dt,update_dt,ap_list_flow,ap_list_stay,flow_cnt,stay_cnt,pre_floor)
+                    remake_data(mac,start_dt,update_dt,ap_list_flow,ap_list_stay,flow_cnt,stay_cnt,pre_floor)
                     start_dt = time["datetime"] # 開始時刻更新
                     ap_list_flow =[] # 1データ分のAPのリスト
                     ap_list_stay = []
@@ -69,9 +69,9 @@ def remake_data(st,ed):
                     ap_list_flow.append({"pcwl_id":time["route"][i][1],"datetime":time["datetime"]})
             update_dt = time["datetime"]
             pre_floor = time["floor"]
-        print_result(mac,start_dt,update_dt,ap_list_flow,ap_list_stay,flow_cnt,stay_cnt,pre_floor)
+        remake_data(mac,start_dt,update_dt,ap_list_flow,ap_list_stay,flow_cnt,stay_cnt,pre_floor)
 
-def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
+def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
     flow_ap_list = [] # 時刻を付与したAPのリスト(移動時)
     stay_ap_list = [] # 時刻を付与したAPのリスト(滞留時)
     tmp_ap_list = []
@@ -379,18 +379,11 @@ def  print_result(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
 
     make_modpfvinfo(flow_ap_list,db.modpfvinfo,INTERVAL)
     make_modstayinfo(stay_ap_list,db.modstayinfo,INTERVAL)
-    tmp = Counter(stay)
     print("mac: "+mac+" / st: "+str(st)+" / ed: "+str(ed))
-    # print(st)
-    # print(ed)
     print("flow------------------------------------------------------------------------")
     print(flow_ap_list)
     print("stay------------------------------------------------------------------------")
     print(stay_ap_list)
-    # print(tmp_ap_list)
-    # print(tmp.most_common(5))
-    # print("滞留割合："+str(round(stay_cnt/(stay_cnt+flow_cnt)*100,2)))
-    # print("AP"+str(tmp.most_common(5)[0][0])+"滞留率:"+str(round(tmp.most_common(5)[0][1]/len(stay)*100,2))+"%")
     print("----------------------------------------------------------------------------")
 
 
@@ -399,4 +392,4 @@ if __name__ == '__main__':
     ed = dt_from_14digits_to_iso(20170920183730)
     # st = dt_from_14digits_to_iso(20170905182730)
     # ed = dt_from_14digits_to_iso(20170907183730)
-    remake_data(st,ed)
+    data_sorting(st,ed)

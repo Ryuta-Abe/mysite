@@ -11,7 +11,7 @@ Env()
 
 from analyze_sta import analyze_mod
 from convert_datetime import dt_from_14digits_to_iso
-from remake_data import remake_data
+from remake_data import data_sorting
 
 from pymongo import *
 client = MongoClient()
@@ -38,6 +38,6 @@ if __name__ == '__main__':
     # 時刻をiso形式に変換
     st_dt = dt_from_14digits_to_iso(st_dt)
     ed_dt = dt_from_14digits_to_iso(ed_dt)
-    statistics_all(st_dt, ed_dt)
-    remake_data(st_dt, ed_dt)
+    # statistics_all(st_dt, ed_dt)
+    data_sorting(st_dt, ed_dt)
     print(time() - st)

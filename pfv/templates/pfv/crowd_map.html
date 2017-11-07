@@ -105,12 +105,13 @@
 
   select {
     cursor: pointer;
-    height: 26px;
-    /*padding: 0.2em 0em;*/
+    height: 20px;
+    /*padding: 0.2em 0em 0em;*/
     /*padding: 0em 0em 0.3em 0em;*/
     /*color: white;*/
     border: 1px solid black;
     border-radius: 8px;
+    vertical-align: middle;
     /*background: black;*/
     font-weight: bold;
     font-size: 13px;
@@ -120,7 +121,7 @@
   /*position: relative;*/
   /*display: inline-block;*/
   width: 90px;
-  height: 26px;
+  height: 20px;
   border: 1px solid black;
   border-radius: 8px;
   /*padding: 0.1em 0em;*/
@@ -129,10 +130,10 @@
 input[type="date"] {
   /*position: relative;*/
   position: absolute;
-  width: 90px;
-  height: 26px;
+  width: 88px;
+  height: 20px;
   border: 0;
-  top: 4.5px;
+  top: 9px;
   left: 83px;
   background: transparent;
   font-size: 13px;
@@ -140,12 +141,15 @@ input[type="date"] {
 }
 input[type="date"]::-webkit-calendar-picker-indicator{
   position: absolute;
-  top: 8.5px;
-  right: 5.5px;
-  width: 3px;
-  height: 5px;
-  background: rgba(0, 0, 255, 0.5);
-  color: black;
+  top: 1.5px;
+  right: 2.5px;
+  width: 8.5px;
+  height: 19px;
+  background: rgba(0, 0, 0, 0);
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  /*color: black;*/
+  color: transparent;
   cursor: pointer;
 }
 input[type="date"]::-webkit-inner-spin-button{
@@ -156,13 +160,19 @@ input[type="date"]::-webkit-clear-button{
 }
 
   .btn{
-    /*color: white;
-    border: 1px solid black;*/
+    /*color: white;*/
+    border: 1px solid gray;
     border-radius: 8px;
-    /*background: blue;*/
     font-weight: bold;
-    /*font-size: 15px;*/
+    /*height: 28px;*/
+    /*background: orange;*/
+    /*font-size: 13px;*/
     /*font-family: sans-serif;*/
+  }
+  .btn:hover
+  {
+    border: 1px solid black;
+    /*font-size: 13px;*/
   }
   #datetime_header{
     display: inline-block;
@@ -236,6 +246,14 @@ input[type="date"]::-webkit-clear-button{
     /*display: none;*/
     opacity: 0;
   }
+  .blinking{
+    -webkit-animation:blink 0.6s ease-in-out infinite alternate;
+  }
+  @-webkit-keyframes blink{
+    0% {opacity:0;}
+    100% {opacity:1;}
+  }
+
 </style>
 {% endblock %}
 
@@ -711,22 +729,66 @@ input[type="date"]::-webkit-clear-button{
           transform: function(d,i) {
             return "translate(" + 15 + "," + (42.5+rank*60) + ")";},
         }).text((rank+1)+"位 : "+rank_node[rank]["cnt"]+"秒");
-        node_sec.selectAll().data(node_id).enter().append("circle").attr({
-          "r": 13,
-          "fill": "purple",
+        var node_sec_area = node_sec.selectAll().data(node_id).enter().append("g").attr({
+          "cursor": "pointer",
           "id": function(d){return "max_node"+d;},
           "transform": function(d,i){
             return "translate(" + ((150- (15*(node_id.length-1))) +(i*30)) + "," + (65+rank*60) + ")";
           },
+        })
+        .on( "mouseover", function(d){
+          d3.select("#pcwl_staycircle"+d).attr({
+            "class":"blinking",
+            "fill":"crimson",
+          })
+        })
+        .on( "mouseout", function(d){
+          d3.select("#pcwl_staycircle"+d).attr({
+            "class":"staycircle",
+            "fill":"lightpink",
+          })
         });
-        node_sec.selectAll().data(node_id).enter().append("text").attr({
+        node_sec_area.append("circle").attr({
+          "r": 13,
+          "fill": "purple",
+          "id": function(d){return "max_node"+d;},
+        });
+        node_sec_area.append("text").attr({
           "text-anchor":"middle",
           "fill":"white",
           "font-size":"20px",
           "transform": function(d,i){
-            return "translate(" + ((150- (15*(node_id.length-1))) +(i*30)) + "," + (72.5+rank*60) + ")";
+            return "translate( 0 , 7.5 )";
           },
         }).text(function(d){return d;});
+      //   node_sec.selectAll().data(node_id).enter().append("circle").attr({
+      //     "r": 13,
+      //     "fill": "purple",
+      //     "id": function(d){return "max_node"+d;},
+      //     "transform": function(d,i){
+      //       return "translate(" + ((150- (15*(node_id.length-1))) +(i*30)) + "," + (65+rank*60) + ")";
+      //     },
+      //   })
+      //   .on( "mouseover", function(d){
+      //     d3.select("#g_pcwl_"+d).attr("class","blinking")
+      //   })
+      //   .on( "mouseout", function(d){
+      //     d3.select("#g_pcwl_"+d).attr("class","display")
+      //   });
+      //   node_sec.selectAll().data(node_id).enter().append("text").attr({
+      //     "text-anchor":"middle",
+      //     "fill":"white",
+      //     "font-size":"20px",
+      //     "transform": function(d,i){
+      //       return "translate(" + ((150- (15*(node_id.length-1))) +(i*30)) + "," + (72.5+rank*60) + ")";
+      //     },
+      //   }).text(function(d){return d;})
+      //   .on( "mouseover", function(d){
+      //     d3.select("#g_pcwl_"+d).attr("class","blinking")
+      //   })
+      //   .on( "mouseout", function(d){
+      //     d3.select("#g_pcwl_"+d).attr("class","display")
+      //   });
       }
       //0秒の場合の表記用
       if(rank_node.length == 0){
@@ -769,9 +831,8 @@ input[type="date"]::-webkit-clear-button{
           },
         }).text((rank+1)+"位 : "+rank_mac[rank]["cnt"]+"台");
         mac_id = rank_mac[rank]["pcwl_id"];
-        mac_cnt.selectAll().data(mac_id).enter().append("circle").attr({
-          "r": 13,
-          "fill": "purple",
+        var mac_cnt_area = mac_cnt.selectAll().data(mac_id).enter().append("g").attr({
+          "cursor": "pointer",
           "id": function(d){return "max_mac"+d;},
           "transform": function(d,i){
             if (mac_id.length<=flap_num){
@@ -784,25 +845,67 @@ input[type="date"]::-webkit-clear-button{
                 return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)-mac_id.length%2))) +(i*30)) + "," + (defaul_cir+30+rank*60) + ")";
               }
             }
-          },
+          }
+        })
+        .on( "mouseover", function(d){
+          d3.select("#pcwl_staycircle"+d).attr({
+            "class":"blinking",
+            "fill":"crimson",
+          })
+        })
+        .on( "mouseout", function(d){
+          d3.select("#pcwl_staycircle"+d).attr({
+            "class":"staycircle",
+            "fill":"lightpink",
+          })
         });
-        mac_cnt.selectAll().data(mac_id).enter().append("text").attr({
+        mac_cnt_area.append("circle").attr({
+          "r": 13,
+          "fill": "purple",
+          "id": function(d){return "max_mac"+d;},
+        });
+        mac_cnt_area.append("text").attr({
           "text-anchor":"middle",
           "fill":"white",
           "font-size":"20px",
           "transform": function(d,i){
-            if (mac_id.length<=flap_num){
-              return "translate(" + ((150- (15*(mac_id.length-1))) +(i*30)) + "," + (defaul_txt+rank*60) + ")";
-            } else{
-              if (i <= Math.floor(mac_id.length/2) + mac_id.length%2 - 1){
-                return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)))) +(i*30)) + "," + (defaul_txt+rank*60) + ")";
-              } else {
-                i = i - Math.floor(mac_id.length/2) - mac_id.length%2;
-                return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)-mac_id.length%2))) +(i*30)) + "," + (defaul_txt+30+rank*60) + ")";
-              }
-            }
+            return "translate( 0 , 7.5 )";
           },
         }).text(function(d){return d;});
+        // mac_cnt.selectAll().data(mac_id).enter().append("circle").attr({
+        //   "r": 13,
+        //   "fill": "purple",
+        //   "id": function(d){return "max_mac"+d;},
+        //   "transform": function(d,i){
+        //     if (mac_id.length<=flap_num){
+        //       return "translate(" + ((150- (15*(mac_id.length-1))) +(i*30)) + "," + (defaul_cir+rank*60) + ")";
+        //     } else{
+        //       if (i <= Math.floor(mac_id.length/2) + mac_id.length%2 - 1){
+        //         return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)))) +(i*30)) + "," + (defaul_cir+rank*60) + ")";
+        //       } else {
+        //         i = i - Math.floor(mac_id.length/2) - mac_id.length%2;
+        //         return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)-mac_id.length%2))) +(i*30)) + "," + (defaul_cir+30+rank*60) + ")";
+        //       }
+        //     }
+        //   },
+        // });
+        // mac_cnt.selectAll().data(mac_id).enter().append("text").attr({
+        //   "text-anchor":"middle",
+        //   "fill":"white",
+        //   "font-size":"20px",
+        //   "transform": function(d,i){
+        //     if (mac_id.length<=flap_num){
+        //       return "translate(" + ((150- (15*(mac_id.length-1))) +(i*30)) + "," + (defaul_txt+rank*60) + ")";
+        //     } else{
+        //       if (i <= Math.floor(mac_id.length/2) + mac_id.length%2 - 1){
+        //         return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)))) +(i*30)) + "," + (defaul_txt+rank*60) + ")";
+        //       } else {
+        //         i = i - Math.floor(mac_id.length/2) - mac_id.length%2;
+        //         return "translate(" + ((150- (15*(mac_id.length-1-Math.floor(mac_id.length/2)-mac_id.length%2))) +(i*30)) + "," + (defaul_txt+30+rank*60) + ")";
+        //       }
+        //     }
+        //   },
+        // }).text(function(d){return d;});
       }
       //0台の場合の表記用
       if(rank_mac.length == 0){
