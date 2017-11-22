@@ -397,14 +397,14 @@ def make_modpfvinfo(dataset,db_name,min_interval): # macを識別せずに時刻
                 tmp_direction = []
                 tmp_direction += db.idealroute.find({"$and": [
                                                     {"floor" : data["floor"]},
-                                                    {"query" : data["route"][i-1]},
-                                                    {"query" : data["route"][i]}
+                                                    {"query" : data["route"][i-1]["pcwl_id"]},
+                                                    {"query" : data["route"][i]["pcwl_id"]}
                                                 ]})
                 route_info[0]["distance"] += tmp_direction[0]["total_distance"]
                 if len(tmp_direction[0]["dlist"]) == 1:
-                    route_info[0]["route"].append({"direction":[data["route"][i-1],data["route"][i]],"distance":tmp_direction[0]["total_distance"]})
+                    route_info[0]["route"].append({"direction":[data["route"][i-1]["pcwl_id"],data["route"][i]["pcwl_id"]],"distance":tmp_direction[0]["total_distance"]})
                 else:
-                    if data["route"][i-1] == tmp_direction[0]["dlist"][0]["direction"][0]:
+                    if data["route"][i-1]["pcwl_id"] == tmp_direction[0]["dlist"][0]["direction"][0]:
                         for j in tmp_direction[0]["dlist"]:
                             route_info[0]["route"].append(j)
                     else:

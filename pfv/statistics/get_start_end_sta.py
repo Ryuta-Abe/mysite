@@ -149,14 +149,14 @@ def get_start_end_mod(all_st_time):
                                 if rank["pcwl_id"] == tmp_list[0]["pcwl_id"]:
                                     tmp_list.append(list_data)
                                     break
-                                elif rank["pcwl_id"] == tmp_list[0]["pcwl_id"]:
+                                elif rank["pcwl_id"] == list_data["pcwl_id"]:
                                     tmp_list.insert(0,list_data)
                                     break
                                 else:
                                     pass
-                    elif (list_data["floor"] == largest_floor):
+                    elif (list_data["floor"] == largest_floor): #rssi同値ではない場合に追加する
                         tmp_list.append(list_data)
-                    if (list_data["floor"] == largest_floor) and (tmp_list[-1]["pcwl_id"] != list_data["pcwl_id"]):
+                    if (list_data["floor"] == largest_floor) and (tmp_list[-1]["pcwl_id"] != list_data["pcwl_id"]): #上のifで全てpassした場合に用いる
                         tmp_list.append(list_data)
                     if len(tmp_list) == 3:
                         break

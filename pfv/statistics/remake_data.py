@@ -106,8 +106,10 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                     end_index = tmp_ap_list.index({"datetime":stay_jud_list[0]["last"],"pcwl_id":stay_jud_list[0]["pcwl_id"]})
 
                     if (stay_jud_list[0]["last"] - stay_jud_list[0]["start"]).seconds<STAY_SEC_TH:
-                        tmp_ap_list[start_index-1]["datetime"] = tmp_ap_list[end_index]["datetime"]
-                        del tmp_ap_list[start_index:end_index+1]
+                        # tmp_ap_list[start_index-1]["datetime"] = tmp_ap_list[end_index]["datetime"]
+                        # del tmp_ap_list[start_index:end_index+1]
+                        # print(list(map(key_id,tmp_ap_list[start_index:end_index+1])))
+                        pass
                     else:
                         if len(stay_ap_list) == 0:
                             tmp_start = stay_jud_list[0]["start"]
@@ -119,13 +121,13 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                                         tmp_start = ap["datetime"]
                                         start_index = tmp_ap_list.index({"datetime":tmp_start,"pcwl_id":Ap_id}) + 1
                             route = []
-                            for j in tmp_ap_list[:start_index]:
-                                route.append(j["pcwl_id"])
+                            for ap in tmp_ap_list[:start_index]:
+                                route.append(ap)
                             # start_index -= 1
                             if len(route) > 1:
                                 flow_ap_list.append({"start":tmp_ap_list[0]["datetime"],"end":tmp_ap_list[start_index-1]["datetime"],"route":route,"start_index":0,"end_index":start_index-1})
                                 if tmp_ap_list[start_index-1]["datetime"] == tmp_ap_list[start_index]["datetime"]:
-                                    for ap in tmp_ap_list[start_index+1]:
+                                    for ap in tmp_ap_list[start_index+1:]:
                                         if ap["datetime"] > tmp_ap_list[start_index-1]["datetime"]:
                                             break
                                         start_index += 1
@@ -138,20 +140,13 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                         else: # 滞留のリストに既にデータが存在している場合
                             flow_start_index = tmp_ap_list.index({"datetime":stay_ap_list[-1]["end"],"pcwl_id":stay_ap_list[-1]["pcwl_id"]})
                             flow_start_time = shift_seconds(tmp_ap_list[flow_start_index]["datetime"],5)
-                            # tmp_start = stay_jud_list[0]["start"]
-                            # for ap in reversed(tmp_ap_list[flow_start_index+1:start_index]):
-                            #     if (tmp_start - ap["datetime"]).seconds > STAY_JUD_TH:
-                            #         break
-                            #     else:
-                            #         if ap["pcwl_id"] == Ap_id:
-                            #             tmp_start = ap["datetime"]
-                            #             start_index = tmp_ap_list.index({"datetime":tmp_start,"pcwl_id":Ap_id}) + 1
                             route = []
-                            for j in tmp_ap_list[flow_start_index:start_index]:
-                                route.append(j["pcwl_id"])
+                            for ap in tmp_ap_list[flow_start_index:start_index]:
+                                route.append(ap)
                             flow_ap_list.append({"start":flow_start_time,"end":tmp_ap_list[start_index-1]["datetime"],"route":route,"start_index":flow_start_index,"end_index":start_index-1})
                             if tmp_ap_list[start_index-1]["datetime"] == tmp_ap_list[start_index]["datetime"]:
-                                for ap in tmp_ap_list[start_index+1]:
+                                print(mac+" : "+str(tmp_ap_list[start_index-1]["datetime"]))
+                                for ap in tmp_ap_list[start_index+1:]:
                                     if ap["datetime"] > tmp_ap_list[start_index-1]["datetime"]:
                                         break
                                     start_index += 1
@@ -159,6 +154,7 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                                 stay_ap_list.append({"start":tmp_ap_list[start_index]["datetime"],"end":tmp_ap_list[end_index]["datetime"],"pcwl_id":stay_jud_list[0]["pcwl_id"],"real_id":stay_jud_list[0]["real_id"]})
                             else:
                                 stay_ap_list.append({"start":tmp_ap_list[start_index]["datetime"],"end":tmp_ap_list[end_index]["datetime"],"pcwl_id":stay_jud_list[0]["pcwl_id"]})
+
                     del stay_jud_list[0]
         tmp_ap_list.append({"datetime":i["datetime"],"pcwl_id":i["pcwl_id"]})
 
@@ -170,13 +166,14 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             start_index = tmp_ap_list.index({"datetime":stay_jud["start"],"pcwl_id":stay_jud["pcwl_id"]})
         end_index = tmp_ap_list.index({"datetime":stay_jud["last"],"pcwl_id":stay_jud["pcwl_id"]})
         if (stay_jud["last"] - stay_jud["start"]).seconds<STAY_SEC_TH:
-            tmp_ap_list[start_index-1]["datetime"] = tmp_ap_list[end_index]["datetime"]
-            del tmp_ap_list[start_index:end_index+1]
+            # tmp_ap_list[start_index-1]["datetime"] = tmp_ap_list[end_index]["datetime"]
+            # del tmp_ap_list[start_index:end_index+1]
+            pass
         else:
             if len(stay_ap_list) == 0:
                 route = []
-                for j in tmp_ap_list[:start_index]:
-                    route.append(j["pcwl_id"])
+                for ap in tmp_ap_list[:start_index]:
+                    route.append(ap)
                 if len(route) > 1:
                     flow_ap_list.append({"start":tmp_ap_list[0]["datetime"],"end":tmp_ap_list[start_index-1]["datetime"],"route":route,"start_index":0,"end_index":start_index-1})
                     if tmp_ap_list[start_index-1]["datetime"] == tmp_ap_list[start_index]["datetime"]:
@@ -194,8 +191,8 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                 flow_start_index = tmp_ap_list.index({"datetime":stay_ap_list[-1]["end"],"pcwl_id":stay_ap_list[-1]["pcwl_id"]})
                 flow_start_time = shift_seconds(tmp_ap_list[flow_start_index]["datetime"],5)
                 route = []
-                for j in tmp_ap_list[flow_start_index:start_index]:
-                    route.append(j["pcwl_id"])
+                for ap in tmp_ap_list[flow_start_index:start_index]:
+                    route.append(ap)
                 flow_ap_list.append({"start":flow_start_time,"end":tmp_ap_list[start_index-1]["datetime"],"route":route,"start_index":flow_start_index,"end_index":start_index-1})
                 if tmp_ap_list[start_index-1]["datetime"] == tmp_ap_list[start_index]["datetime"]:
                     for ap in tmp_ap_list[start_index+1:]:
@@ -209,15 +206,15 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
     # 未処理のtmp_ap_listの処理
     if len(stay_ap_list) == 0:
         route = []
-        for i in tmp_ap_list:
-            route.append(i["pcwl_id"])
+        for ap in tmp_ap_list:
+            route.append(ap)
         flow_ap_list.append({"start":tmp_ap_list[0]["datetime"],"end":tmp_ap_list[-1]["datetime"],"route":route,"start_index":0,"end_index":-1})
     elif tmp_ap_list[-1]["datetime"] > stay_ap_list[-1]["end"]:
         flow_start_index = tmp_ap_list.index({"datetime":stay_ap_list[-1]["end"],"pcwl_id":stay_ap_list[-1]["pcwl_id"]})
         flow_start_time = shift_seconds(tmp_ap_list[flow_start_index]["datetime"],5)
         route = []
-        for j in tmp_ap_list[flow_start_index:]:
-            route.append(j["pcwl_id"])
+        for ap in tmp_ap_list[flow_start_index:]:
+            route.append(ap)
         flow_ap_list.append({"start":flow_start_time,"end":tmp_ap_list[-1]["datetime"],"route":route,"start_index":flow_start_index,"end_index":-1})
 
     # 滞留情報の補正
@@ -249,7 +246,6 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             next_flow_index = 0
 
         if (stay_info["pcwl_id"] != appear_cnt[0][0]) and (appear_cnt[0][1] > appear_cnt[1][1]): # 対象のAPが期間内出現回数1位のAPと異なる場合
-
             for ap in part_stay_list: # 期間内で最初に最多APが出現した時間を参照
                 if ap["pcwl_id"] == appear_cnt[0][0]:
                     # mod_ap_info = {"datetime":ap["datetime"],"pcwl_id":ap["pcwl_id"]}
@@ -268,7 +264,7 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                     if ap["pcwl_id"] == mod_ap_info_start["pcwl_id"]:
                         mod_ap_info_start["datetime"] = ap["datetime"]
             for ap in tmp_ap_list[mod_ap_index+1:]:
-                if (ap["datetime"]-mod_ap_info_end["datetime"]).seconds > STAY_JUD_TH:
+                if ((ap["datetime"]-mod_ap_info_end["datetime"]).seconds > STAY_JUD_TH) and (ap["pcwl_id"] != appear_cnt[1][0]) and (ap["pcwl_id"] != appear_cnt[0][0]):
                     break
                 else:
                     if ap["pcwl_id"] == mod_ap_info_end["pcwl_id"]:
@@ -282,26 +278,27 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                 flow_ap_list[prev_flow_index]["end"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"]
                 route = flow_ap_list[prev_flow_index]["route"]
                 for tmp_route in reversed(route):
-                    if tmp_route == stay_info["pcwl_id"]:
+                    if tmp_route["pcwl_id"] == stay_info["pcwl_id"]:
                         break
                     del flow_ap_list[prev_flow_index]["route"][-1]
             elif prev_flow_index == None:
                 route = []
                 for tmp_route in tmp_ap_list[:tmp_ap_list.index(mod_ap_info_start)+1]:
-                    route.append(tmp_route["pcwl_id"])
+                    route.append(tmp_route)
                 if len(route) != 1:
                     flow_ap_list.insert(0,{"start":tmp_ap_list[0]["datetime"],"end":tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"],"route":route})
+                    next_flow_index += 1
                 else:
                     stay_info["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"]
             else:
                 flow_ap_list[prev_flow_index]["end"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"]
                 for ap in tmp_ap_list[flow_ap_list[prev_flow_index]["end_index"]+1:tmp_ap_list.index(mod_ap_info_start)+1]:
-                    flow_ap_list[prev_flow_index]["route"].append(ap["pcwl_id"])
+                    flow_ap_list[prev_flow_index]["route"].append(ap)
             # 滞留直後の移動を適切な形に変更
             if (next_flow_index != None) and (tmp_ap_list.index(mod_ap_info_end) >= flow_ap_list[next_flow_index]["start_index"]):
                 flow_ap_list[next_flow_index]["route"] = []
                 for tmp_route in tmp_ap_list[tmp_ap_list.index(mod_ap_info_end):flow_ap_list[next_flow_index]["end_index"]+1]:
-                    flow_ap_list[next_flow_index]["route"].append(tmp_route["pcwl_id"])
+                    flow_ap_list[next_flow_index]["route"].append(tmp_route)
                 if len(flow_ap_list[next_flow_index]["route"]) < 2:
                     if len(stay_ap_list) > stay_info_index + 1:
                         stay_info["end"] = stay_ap_list[stay_info_index+1]["end"]
@@ -314,7 +311,7 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
             elif next_flow_index == None:
                 route = []
                 for tmp_route in tmp_ap_list[tmp_ap_list.index(mod_ap_info_end):]:
-                    route.append(tmp_route["pcwl_id"])
+                    route.append(tmp_route)
                 if prev_flow_index == None:
                     flow_ap_list.insert(0,{"start":tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"],"end":tmp_ap_list[-1]["datetime"],"route":route})
                 else:
@@ -323,7 +320,7 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                 flow_ap_list[next_flow_index]["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_end)+1]["datetime"]
                 len_route = -len(flow_ap_list[next_flow_index]["route"])
                 for ap in tmp_ap_list[tmp_ap_list.index(mod_ap_info_end):flow_ap_list[next_flow_index]["start_index"]]:
-                    flow_ap_list[next_flow_index]["route"].insert(len_route,ap["pcwl_id"])
+                    flow_ap_list[next_flow_index]["route"].insert(len_route,ap)
         else: # 異なっていない場合も直前のデータは確認する
             if prev_flow_index == None:
                 continue
@@ -343,7 +340,7 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
                     # 滞留直前の移動を適切な形に変更
                     flow_ap_list[prev_flow_index]["route"] = []
                     for tmp_route in tmp_ap_list[flow_ap_list[prev_flow_index]["start_index"]:tmp_ap_list.index(mod_ap_info_start)+1]:
-                        flow_ap_list[prev_flow_index]["route"].append(tmp_route["pcwl_id"])
+                        flow_ap_list[prev_flow_index]["route"].append(tmp_route)
                     if len(flow_ap_list[prev_flow_index]["route"]) < 2:
                         stay_info["start"] = tmp_ap_list[tmp_ap_list.index(mod_ap_info_start)]["datetime"]
                     else:
@@ -353,33 +350,47 @@ def  remake_data(mac,st,ed,flow,stay,flow_cnt,stay_cnt,floor):
         if "real_id" in stay_info:
             del stay_info["real_id"]
 
-    # 移動情報の補正
+    # 移動情報の補正・最初と最後の移動データの統合判定
     for flow_info in flow_ap_list[:]:
-        if len(flow_info["route"]) < 2:
-            flow_ap_list.remove(flow_info)
-            continue
+        # # 最初の移動データの統合判定
+        # if len(stay_ap_list) == 0:
+        #     pass
+        # elif flow_info["start"] > stay_ap_list[0]["start"]:
+        #     pass
+
+        # print(list(map(key_id,flow_info["route"])))
+        # 不要情報の除去
         if "start_index" in flow_info:
             del flow_info["start_index"]
         if "end_index" in flow_info:
             del flow_info["end_index"]
+        # 必要情報の付与
         flow_info["floor"] = floor
         flow_info["mac"] = mac
+        # 移動情報の補正
         route = []
         for ap in flow_info["route"]:
             if len(route) == 0:
                 route.append(ap)
-            elif route[-1] == ap:
+            elif route[-1]["pcwl_id"] == ap["pcwl_id"]:
                 pass
-            elif (len(route) >= 2) and (route[-2] == ap):
+            elif (len(route) >= 2) and (route[-2]["pcwl_id"] == ap["pcwl_id"]):
                 del route[-1]
             else:
                 route.append(ap)
-        flow_info["route"] = route
+        if len(route) < 2:
+            flow_ap_list.remove(flow_info)
+            continue
+        else:
+            flow_info["route"] = route
+            print(list(map(key_id,route)))
+
 
 
     make_modpfvinfo(flow_ap_list,db.modpfvinfo,INTERVAL)
     make_modstayinfo(stay_ap_list,db.modstayinfo,INTERVAL)
     print("mac: "+mac+" / st: "+str(st)+" / ed: "+str(ed))
+    # print(list(map(key_id,flow)))
     print("flow------------------------------------------------------------------------")
     print(flow_ap_list)
     print("stay------------------------------------------------------------------------")
