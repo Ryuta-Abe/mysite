@@ -44,12 +44,14 @@ if __name__ == '__main__':
     # ed_dt = 20171013160000
     # st_dt = 20171024164400
     # ed_dt = 20171024165535
-    st_dt = 20171024164400
-    ed_dt = 20171024170500
+    # st_dt = 20171024164400
+    # ed_dt = 20171024170500
+    st_dt = 20171128163730
+    ed_dt = 20171128165030
     # 時刻をiso形式に変換
     st_dt = dt_from_14digits_to_iso(st_dt)
     ed_dt = dt_from_14digits_to_iso(ed_dt)
     # db_clear(st_dt, ed_dt)
-    statistics_all(st_dt, ed_dt)
+    # statistics_all(st_dt, ed_dt)
     data_sorting(st_dt, ed_dt)
     print(time() - st)
