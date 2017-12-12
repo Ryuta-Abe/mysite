@@ -17,9 +17,12 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
-def statistics_all(st_dt, ed_dt):
+def statistics_all(st_dt, ed_dt): #ローカルでのみ使用、サーバ上では使用しない
+    mac = []
+    mac += db.trtmp.find({"get_time_no":{"$gte":st_dt,"$lte":ed_dt}}).distinct("mac") # データ作成に用いるmacのみの過去データをリセットする
     ### DB初期化 ##############
-    db.pastdata.drop()
+    for i in mac:
+        db.pastdata.remove({"mac":i})
     db.pcwltime.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
     db.pfvinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
     db.pfvmacinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
@@ -46,8 +49,12 @@ if __name__ == '__main__':
     # ed_dt = 20171024165535
     # st_dt = 20171024164400
     # ed_dt = 20171024170500
-    st_dt = 20171128163730
-    ed_dt = 20171128165030
+    # st_dt = 20171128163730
+    # ed_dt = 20171128165030
+    # st_dt = 20171206174000
+    # ed_dt = 20171206175500
+    st_dt = 20171208161500
+    ed_dt = 20171208163000
     # 時刻をiso形式に変換
     st_dt = dt_from_14digits_to_iso(st_dt)
     ed_dt = dt_from_14digits_to_iso(ed_dt)
