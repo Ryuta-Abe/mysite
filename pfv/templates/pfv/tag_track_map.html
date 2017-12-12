@@ -925,17 +925,17 @@
       })
       .text(function(d) {
               if (d.mac == "00:11:81:10:01:1b") {
-                return "童夢の森";
+                return "端末１";
               }　else if (d.mac == "00:11:81:10:01:00") {
-                return "あじや";
+                return "端末２";
               }　else if (d.mac == "00:11:81:10:01:0d") {
-                return "もみだれや";
+                return "端末３";
               } else if (d.mac == "00:11:81:10:01:0c") {
-                return "童夢の森予備";
+                return "端末４";
               } else if (d.mac == "00:11:81:10:01:0e") {
-                return "あじや予備";
+                return "端末５";
               } else if (d.mac == "00:11:81:10:01:3d") {
-                return "もみだれや予備";
+                return "端末６";
               } /*else {
                 return d.mac;
               }*/
@@ -1071,6 +1071,9 @@
       var minute = ("0"+datetime.getMinutes()).slice(-2);
       var second = ("0"+datetime.getSeconds()).slice(-2);
 
+      if (flag_realtime) {
+        Sample_form.textbox_interval.value = "sec05";
+      }
       var value = Sample_form.selectbox_timerange.value;
       var num = parseInt(value.slice(-2));
       if (value.slice(0,3) == "sec"){

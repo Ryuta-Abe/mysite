@@ -813,10 +813,10 @@ input[type="date"]::-webkit-clear-button{
         transform: function(d,i) {
           return "translate(" + 5 + "," + 30 + ")";},
       }).text("-----------------端末数-----------------");
+      var defaul_rank = 52.5;
+      var defaul_cir = 75;
+      var defaul_txt = 82.5;
       for(var rank = 0; rank < rank_mac.length; rank++){
-        var defaul_rank = 52.5;
-        var defaul_cir = 75;
-        var defaul_txt = 82.5;
         prev_mac_id = mac_id;
         if (prev_mac_id.length>flap_num){
           defaul_rank += 30;
