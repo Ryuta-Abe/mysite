@@ -374,6 +374,7 @@ input[type="date"]::-webkit-clear-button{
 
 <svg id="svg1" width="1024" height="560">
   <image id="map_image" x="0" y="0" width="100%" height="100%" opacity="0.6"></image>
+  <g id="analyze" width="300" height="50"></g>
 </svg>
 <div id="tooltip_div"></div>
 <div id="tag_list">
@@ -437,10 +438,10 @@ input[type="date"]::-webkit-clear-button{
     var max_mac = {{ap_data.max_mac}},min_mac = {{ap_data.min_mac}}
     var num_band_node = max_node-min_node+1, num_band_mac = max_mac-min_mac+1;
     {% for s in pcwlnode %}
-    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},size:{{ s.size }},mac_len:{{ s.mac_len }}});
+    pcwlnode.push({pcwl_id:{{ s.pcwl_id }},pos_x:{{ s.pos_x }},pos_y:{{ s.pos_y }},size:{{ s.size }},mac_len:{{ s.mac_len }},go:{{ s.go }},come:{{ s.come }}});
     {% endfor %}
     {% for s in pfvinfo %}
-    pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},color:"{{ s.color }}"});
+    pfvinfo.push({direction:{{ s.direction }},size:{{ s.size }},color:"{{ s.color }}",transition:{{ s.transition }}});
     {% endfor %}
     {% for s in rank_node %}
     rank_node.push({cnt:{{ s.size }}*5,pcwl_id:{{ s.pcwl_id }}});
@@ -534,6 +535,9 @@ input[type="date"]::-webkit-clear-button{
     .on( "mouseout", function(d){
       div.transition().duration(300)
       .style("opacity",0)
+    })
+    .on("click",function(d){
+      display_node_analyze(d);
     })
 
     // 滞留端末数によって色が変わる円の描画
@@ -662,7 +666,7 @@ input[type="date"]::-webkit-clear-button{
     })
     // クリック時の動作
     .on( "click", function(d){
-      jump_pfvgraph(d.direction);
+      display_flow_analyze(d);
     });
     // 2本の矢印をアニメーション付きでずらす
     path.transition().duration(1000).attr({
@@ -918,6 +922,222 @@ input[type="date"]::-webkit-clear-button{
       }
     }
     result_view();
+
+    var display_num = 0;
+
+    function display_flow_analyze(num){
+      if (display_num == num["direction"]){
+        d3.select("#analyze").style("opacity",0);
+        display_num = 0;
+      } else{
+        d3.select("#analyze").selectAll("g").remove();
+        var tran_area = d3.select("#analyze").append("g").attr("id","tran_area");
+        tran_area.attr({
+          transform: function(d,i) {
+            return "translate(" + 0 + "," + 10 + ")";},
+        }).append("text").attr({
+          "font-size":"30px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 5 + "," + 18 + ")";},
+          }).text("移動率");
+        for (var ap in num["transition"]){
+          var tran_ap = Number(Object.keys(num["transition"][ap])[0]);
+          var tran_per = Number(Object.values(num["transition"][ap])[0]);
+          var tran_circle = tran_area.append("g").attr({
+            "cursor": "pointer",
+            // "id": function(d){return "max_node"+d;},
+            "transform": function(d){
+              return "translate(150 ," + (ap*27+5) + ")";
+            },
+          });
+          tran_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"30px",
+            "transform": function(d,i){
+              return "translate( "+ 50 +" , 7.5 )";
+            },
+          }).text("→");
+          tran_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"30px",
+            "transform": function(d,i){
+              return "translate( "+ 150 +" , 7.5 )";
+            },
+          }).text("→");
+          tran_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"20px",
+            "transform": function(d,i){
+              return "translate( "+ 250 +" , 7.5 )";
+            },
+          }).text(tran_per+"%");
+          for (var tmp = 0; tmp<3 ;tmp++){
+            tran_circle.append("circle").attr({
+              "r": 13,
+              "fill": "purple",
+              // "id": function(d){return "max_node"+d;},
+              "transform": function(d,i){
+                return "translate( "+ tmp*100 +" , 0 )";
+              },
+            });
+            tran_circle.append("text").attr({
+              "text-anchor":"middle",
+              "fill":"white",
+              "font-size":"20px",
+              "transform": function(d,i){
+                return "translate( "+ tmp*100 +" , 7.5 )";
+              },
+            }).text(function(d){
+              if (tmp == 0){
+                return num["direction"][0];
+              } else if (tmp == 1){
+                return num["direction"][1];
+              } else{
+                return tran_ap;
+              }
+            });
+          }
+        }
+        display_num = num["direction"];
+        d3.select("#analyze").style("opacity",1);
+      }
+    }
+
+    function display_node_analyze(num){
+      if (display_num == num["pcwl_id"]){
+        d3.select("#analyze").style("opacity",0);
+        display_num = 0;
+      } else{
+        d3.select("#analyze").selectAll("g").remove();
+        var go_area = d3.select("#analyze").append("g").attr("id","go_area"); //go用
+        var come_area = d3.select("#analyze").append("g").attr("id","come_area"); //come用
+        go_area.attr({
+          transform: function(d,i) {
+            return "translate(" + 0 + "," + 10 + ")";},
+        }).append("text").attr({
+          "font-size":"30px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 5 + "," + 18 + ")";},
+          }).text("go");
+        for (var ap in num["go"]){
+          var go_ap = Number(Object.keys(num["go"][ap])[0]);
+          var go_per = Number(Object.values(num["go"][ap])[0]);
+          var go_circle = go_area.append("g").attr({
+            "cursor": "pointer",
+            // "id": function(d){return "max_node"+d;},
+            "transform": function(d){
+              return "translate(80 ," + (ap*27+10) + ")";
+            },
+          });
+          go_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"30px",
+            "transform": function(d,i){
+              return "translate( "+ 40 +" , 7.5 )";
+            },
+          }).text("→");
+          go_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"20px",
+            "transform": function(d,i){
+              return "translate( "+ 130 +" , 7.5 )";
+            },
+          }).text(go_per+"%");
+          for (var tmp = 0; tmp<2 ;tmp++){
+            go_circle.append("circle").attr({
+              "r": 13,
+              "fill": "purple",
+              // "id": function(d){return "max_node"+d;},
+              "transform": function(d,i){
+                return "translate( "+ tmp*80 +" , 0 )";
+              },
+            });
+            go_circle.append("text").attr({
+              "text-anchor":"middle",
+              "fill":"white",
+              "font-size":"20px",
+              "transform": function(d,i){
+                return "translate( "+ tmp*80 +" , 7.5 )";
+              },
+            }).text(function(d){
+              if (tmp == 0){
+                return num["pcwl_id"];
+              } else{
+                return go_ap;
+              }
+            });
+          }
+        }
+
+        come_area.attr({
+          transform: function(d,i) {
+            return "translate(" + 250 + "," + 10 + ")";},
+        }).append("text").attr({
+          "font-size":"30px",
+          "font-weight":"bold",
+          transform: function(d,i) {
+            return "translate(" + 5 + "," + 18 + ")";},
+        }).text("come");
+        for (var ap in num["come"]){
+          var come_ap = Number(Object.keys(num["come"][ap])[0]);
+          var come_per = Number(Object.values(num["come"][ap])[0]);
+          var come_circle = come_area.append("g").attr({
+            "cursor": "pointer",
+            "transform": function(d){
+              return "translate(120 ," + (ap*27+10) + ")";
+            },
+          });
+          come_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"30px",
+            "transform": function(d,i){
+              return "translate( "+ 40 +" , 7.5 )";
+            },
+          }).text("→");
+          come_circle.append("text").attr({
+            "text-anchor":"middle",
+            "fill":"black",
+            "font-size":"20px",
+            "transform": function(d,i){
+              return "translate( "+ 130 +" , 7.5 )";
+            },
+          }).text(come_per+"%");
+          for (var tmp = 0; tmp<2 ;tmp++){
+            come_circle.append("circle").attr({
+              "r": 13,
+              "fill": "purple",
+              "transform": function(d,i){
+                return "translate( "+ tmp*80 +" , 0 )";
+              },
+            });
+            come_circle.append("text").attr({
+              "text-anchor":"middle",
+              "fill":"white",
+              "font-size":"20px",
+              "transform": function(d,i){
+                return "translate( "+ tmp*80 +" , 7.5 )";
+              },
+            }).text(function(d){
+              if (tmp == 0){
+                return come_ap;
+              } else{
+                return num["pcwl_id"];
+              }
+            });
+          }
+        }
+        display_num = num["pcwl_id"];
+        d3.select("#analyze").style("opacity",1);
+      }
+    }
 
     // 最大・最小値に対応した色を返す(サーモグラフィ風)
     function thermography(tu){
@@ -1190,6 +1410,11 @@ input[type="date"]::-webkit-clear-button{
         var file_name = "9F_west2.jpg";
       };
       d3.select("#map_image").attr("xlink:href","/site_media/"+file_name);
+      svg1.append("g").attr({
+        "id":"analyze",
+        "width":"300",
+        "height":"50",
+      });
       // staycircleの描画空間
       stay_palet = svg1.append("g")
       //データの更新
@@ -1219,7 +1444,7 @@ input[type="date"]::-webkit-clear-button{
     function Reload_pcwlnode(json){
       // //pcwlnodeの更新
       for (var i = 0; i < json["pcwlnode"].length; i++){
-        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"],size:json["pcwlnode"][i]["size"],mac_len:json["pcwlnode"][i]["mac_len"]});
+        pcwlnode.push({pcwl_id:json["pcwlnode"][i]["pcwl_id"],pos_x:json["pcwlnode"][i]["pos_x"],pos_y:json["pcwlnode"][i]["pos_y"],size:json["pcwlnode"][i]["size"],mac_len:json["pcwlnode"][i]["mac_len"],go:json["pcwlnode"][i]["go"],come:json["pcwlnode"][i]["come"]});
       }
       // pcwl_idから登録順を求められるように(pcwlnode_id[pcwl_id] = i )
       pcwlnode_id.length = 0;
@@ -1266,6 +1491,9 @@ input[type="date"]::-webkit-clear-button{
       .on( "mouseout", function(d){
         div.transition().duration(300)
         .style("opacity",0)
+      })
+      .on("click",function(d){
+        display_node_analyze(d);
       })
 
       // 滞留端末数によって色が変わる円の描画
@@ -1385,7 +1613,7 @@ input[type="date"]::-webkit-clear-button{
       pfvinfo.length = 0;
       // pfvinfoの更新
       for (var i = 0; i < json["pfvinfo"].length; i++) {
-        pfvinfo.push({direction:json["pfvinfo"][i]["direction"],size:json["pfvinfo"][i]["size"],color:json["pfvinfo"][i]["color"]});
+        pfvinfo.push({direction:json["pfvinfo"][i]["direction"],size:json["pfvinfo"][i]["size"],color:json["pfvinfo"][i]["color"],transition:json["pfvinfo"][i]["transition"]});
       };
       max_pfv = json["flow_data"]["max"];
       min_pfv = json["flow_data"]["min"];
@@ -1466,7 +1694,7 @@ input[type="date"]::-webkit-clear-button{
       })
       // クリック時の動作
       .on( "click", function(d){
-        jump_pfvgraph(d.direction);
+        display_flow_analyze(d);
       });
       // 2本の矢印をアニメーション付きでずらす
       path.attr({

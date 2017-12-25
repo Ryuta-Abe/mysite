@@ -42,6 +42,23 @@ def db_clear(st_dt, ed_dt):
     db.modpfvinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
     db.modstayinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
 
+def make_analyze_db():
+    db.floor_analyze.drop()
+    node_list = []
+    node_list += db.pcwlnode.find()
+    for node in node_list:
+        if node["floor"] != "kaiyo" or node["floor"] != "W2-8F":
+            go ={"total":0}
+            come = {"total":0}
+            transition = {}
+            for id in node["next_id"]:
+                go[str(id)] = 0
+                come[str(id)] = 0
+                transition[str(id)] = {"total":0}
+                for destination in db.pcwlnode.find_one({"floor":node["floor"],"pcwl_id":id})["next_id"]:
+                    transition[str(id)][str(destination)] = 0
+            db.floor_analyze.insert({"floor":node["floor"],"pcwl_id":node["pcwl_id"],"go":go,"come":come,"transition":transition})
+
 if __name__ == '__main__':
     # st_dt = 20171212185000
     # ed_dt = 20171212185500
@@ -57,6 +74,7 @@ if __name__ == '__main__':
     st_dt = dt_from_14digits_to_iso(st_dt)
     ed_dt = dt_from_14digits_to_iso(ed_dt)
     # db_clear(st_dt, ed_dt)
+    # make_analyze_db()
     # statistics_all(st_dt, ed_dt)
     data_sorting(st_dt, ed_dt)
     print(time() - st)

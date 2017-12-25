@@ -1189,16 +1189,52 @@ def crowd_map(request):
   pcwlnode = []
   pcwlnode += db.pcwlnode.find({"floor":floor},{"_id":0})
 
+  # nodeと矢印に付与する分析データ（go,come,transition）の取り出し
+  go_come = []
+  go_come += db.floor_analyze.find({"floor":floor},{"_id":0})
+
   pfvinfo = [] # 空のpfvinfo生成
   exist_mac = [] #出現中のmacを一時保存
   route_info =[] #経路ごとに格経路パターンを格納
   for i in range(0,len(pcwlnode)):
+    pcwlnode[i]["go"] = []
+    pcwlnode[i]["come"] = []
+    pcwlnode[i]["transition"] = []
+    go_come = db.floor_analyze.find_one({"floor":floor,"pcwl_id":pcwlnode[i]["pcwl_id"]},{"_id":0})
+    # go関連の処理
+    go_total = go_come["go"]["total"]
+    del go_come["go"]["total"]
+    if go_total != 0:
+      for num in sorted(go_come["go"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["go"].append({int(num[0]):round(num[1] / go_total * 100, 1)})
+    else:
+      for num in go_come["go"].items():
+        pcwlnode[i]["go"].append({int(num[0]):num[1]})
+    # come関連の処理
+    come_total = go_come["come"]["total"]
+    del go_come["come"]["total"]
+    if come_total != 0:
+      for num in sorted(go_come["come"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["come"].append({int(num[0]):round(num[1] / come_total * 100, 1)})
+    else:
+      for num in go_come["come"].items():
+        pcwlnode[i]["come"].append({int(num[0]):num[1]})
+
     for j in range(0,len(pcwlnode)):
       st = pcwlnode[i]["pcwl_id"] # 出発点
       ed = pcwlnode[j]["pcwl_id"] # 到着点
       # iとjが隣接ならば人流0人でpfvinfoに加える
       if ed in pcwlnode[i]["next_id"]:
-        pfvinfo.append({"direction":[st,ed],"size":0})
+        transition = []
+        trans_total = go_come["transition"][str(ed)]["total"]
+        del go_come["transition"][str(ed)]["total"]
+        if trans_total != 0:
+          for tmp in sorted(go_come["transition"][str(ed)].items(), key=lambda x: -x[1]):
+            transition.append({int(tmp[0]):round(tmp[1] / trans_total * 100, 1)})
+        else:
+          for tmp in go_come["transition"][str(ed)].items():
+            transition.append({int(tmp[0]):tmp[1]})
+        pfvinfo.append({"direction":[st,ed],"size":0,"transition":transition})
 
   for i in range(len(pcwlnode)):
     pcwlnode[i]["mac_len"] = []
@@ -1347,12 +1383,44 @@ def crowd_map_json(request):
   exist_mac = [] #出現中のmacを一時保存
   route_info =[] #経路ごとに格経路パターンを格納
   for i in range(0,len(pcwlnode)):
+    pcwlnode[i]["go"] = []
+    pcwlnode[i]["come"] = []
+    pcwlnode[i]["transition"] = []
+    go_come = db.floor_analyze.find_one({"floor":floor,"pcwl_id":pcwlnode[i]["pcwl_id"]},{"_id":0})
+    # go関連の処理
+    go_total = go_come["go"]["total"]
+    del go_come["go"]["total"]
+    if go_total != 0:
+      for num in sorted(go_come["go"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["go"].append({int(num[0]):round(num[1] / go_total * 100, 1)})
+    else:
+      for num in go_come["go"].items():
+        pcwlnode[i]["go"].append({int(num[0]):num[1]})
+    # come関連の処理
+    come_total = go_come["come"]["total"]
+    del go_come["come"]["total"]
+    if come_total != 0:
+      for num in sorted(go_come["come"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["come"].append({int(num[0]):round(num[1] / come_total * 100, 1)})
+    else:
+      for num in go_come["come"].items():
+        pcwlnode[i]["come"].append({int(num[0]):num[1]})
+
     for j in range(0,len(pcwlnode)):
       st = pcwlnode[i]["pcwl_id"] # 出発点
       ed = pcwlnode[j]["pcwl_id"] # 到着点
       # iとjが隣接ならば人流0人でpfvinfoに加える
       if ed in pcwlnode[i]["next_id"]:
-        pfvinfo.append({"direction":[st,ed],"size":0})
+        transition = []
+        trans_total = go_come["transition"][str(ed)]["total"]
+        del go_come["transition"][str(ed)]["total"]
+        if trans_total != 0:
+          for tmp in sorted(go_come["transition"][str(ed)].items(), key=lambda x: -x[1]):
+            transition.append({int(tmp[0]):round(tmp[1] / trans_total * 100, 1)})
+        else:
+          for tmp in go_come["transition"][str(ed)].items():
+            transition.append({int(tmp[0]):tmp[1]})
+        pfvinfo.append({"direction":[st,ed],"size":0,"transition":transition})
 
   for i in range(len(pcwlnode)):
     pcwlnode[i]["mac_len"] = []
