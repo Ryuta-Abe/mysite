@@ -101,15 +101,24 @@ def get_start_end_mod(all_st_time):
             # RSSI最大のノードがあるfloorの必要データ作成
             for list_data in data["nodelist"][:]:
                 largest_floor = list_data["floor"] #大きいrssiを観測したノード順に最大階を確定
-                if largest_floor != past_floor:
+                if (past_floor != None) and (largest_floor != past_floor):
                     if list_data["rssi"] <= TH_RSSI_FLOOR:
                         missing_flag = True
                         break
                     floor_key = lambda x:x["floor"]
                     floor_cnt = Counter(list(map(floor_key,data["nodelist"][:min(5,len(data["nodelist"]))]))).most_common(2)
-                    if floor_cnt[0][0] == past_floor: # フロアの出現件数最多フロアが過去データのフロアと一致する場合
+                    if (len(floor_cnt)>=2)and(floor_cnt[0][1] == floor_cnt[1][1]): #観測数が同値の場合
+                        if (floor_cnt[0][0] == data["nodelist"][0]["floor"]) or (floor_cnt[1][0] == data["nodelist"][0]["floor"]):
+                            largest_floor = data["nodelist"][0]["floor"]
+                        else:
+                            largest_floor = data["nodelist"][1]["floor"]
+                    else:
                         largest_floor = floor_cnt[0][0]
-                        break
+                    # if floor_cnt[0][0] == past_floor: # フロアの出現件数最多フロアが過去データのフロアと一致する場合
+                    #     largest_floor = floor_cnt[0][0]
+                    #     break
+                    # else:
+
                 if largest_floor != "Unknown":
                     break #正式なフロアが割り当てられたらbreak
             if missing_flag:
@@ -213,7 +222,7 @@ def get_start_end_mod(all_st_time):
                                 if (tmp_node["pcwl_id"] != pastlist[0]["start_node"]["pcwl_id"])and(tmp_floor == pastlist[0]["start_node"]["floor"]):
                                     # print("flow")
                                     if (pastd[0]["nodecnt_dict"][tmp_floor][tmp_id_str] <= repeat_cnt): # 過去データの該当ノードのカウント数がカウント上限以内の場合
-                                        interval = (tmp_enddt - tmp_startdt).seconds # 現在の時刻と過去で他の時刻差
+                                        interval = (tmp_enddt - tmp_startdt).seconds # 現在の時刻と過去データの時刻差
                                         d_total = get_min_distance(tmp_floor, pastlist[0]["start_node"]["pcwl_id"], tmp_node["pcwl_id"]) # 開始ノードと終了ノード間の距離を計算
 
                                         # intervalに応じて距離フィルタを可変に
