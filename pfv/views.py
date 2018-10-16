@@ -765,8 +765,6 @@ def count_result(request):
                                }
                                )
 
-
-
 def tag_track_map(request):
 
   # urlからクエリの取り出し
@@ -867,6 +865,8 @@ def tag_track_map_json(request):
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
   elif realtime == "true":
     lt = datetime.datetime.today() - datetime.timedelta(seconds = 10) # 現在時刻の5秒前を表示時間に
+    print(lt)
+    lt = iso_to_end05iso(lt)
   else :
     lt = dt_from_14digits_to_iso(date_time)
   gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
@@ -1149,6 +1149,387 @@ def tag_position_check_json(request):
 
   # 送信するデータセット
   dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode, 'analy_coord':analy_coord, 'examine_coord':examine_coord}
+  # dataset = {"pfvinfo":pfvinfo}
+
+  return render_json_response(request, dataset) # dataをJSONとして出力
+
+#群測位用マップ
+def crowd_map(request):
+
+  new_date = []
+  new_date += db.pfvinfo.find().sort("datetime", DESCENDING).limit(1)
+  if (60 - new_date[0]["datetime"].second == 60) or (60 - new_date[0]["datetime"].second == 30):
+    new_date = dt_from_iso_to_str(new_date[0]["datetime"])
+  elif new_date[0]["datetime"].second >30:
+    new_date = dt_from_iso_to_str(shift_seconds(new_date[0]["datetime"],-new_date[0]["datetime"].second+30))
+  else:
+    new_date = dt_from_iso_to_str(shift_seconds(new_date[0]["datetime"],-new_date[0]["datetime"].second))
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', new_date)
+  timerange = int(request.GET.get('timerange', 600))
+  mac = request.GET.get('mac', '')
+  language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-7F')
+  mod = request.GET.get('mod', 'off')
+
+  if date_time == 'now':
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  # 指定期間の時刻のリストを作成
+  time_list = []
+  for i in range(1,int(timerange/5)):
+    time_list.append(gt + datetime.timedelta(seconds = i*5))
+  time_list.append(lt)
+
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find({"floor":floor},{"_id":0})
+
+  # nodeと矢印に付与する分析データ（go,come,transition）の取り出し
+  go_come = []
+  go_come += db.floor_analyze.find({"floor":floor},{"_id":0})
+
+  pfvinfo = [] # 空のpfvinfo生成
+  exist_mac = [] #出現中のmacを一時保存
+  route_info =[] #経路ごとに格経路パターンを格納
+  for i in range(0,len(pcwlnode)):
+    pcwlnode[i]["go"] = []
+    pcwlnode[i]["come"] = []
+    pcwlnode[i]["transition"] = []
+    go_come = db.floor_analyze.find_one({"floor":floor,"pcwl_id":pcwlnode[i]["pcwl_id"]},{"_id":0})
+    # go関連の処理
+    go_total = go_come["go"]["total"]
+    del go_come["go"]["total"]
+    if go_total != 0:
+      for num in sorted(go_come["go"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["go"].append({int(num[0]):round(num[1] / go_total * 100, 1)})
+    else:
+      for num in go_come["go"].items():
+        pcwlnode[i]["go"].append({int(num[0]):num[1]})
+    # come関連の処理
+    come_total = go_come["come"]["total"]
+    del go_come["come"]["total"]
+    if come_total != 0:
+      for num in sorted(go_come["come"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["come"].append({int(num[0]):round(num[1] / come_total * 100, 1)})
+    else:
+      for num in go_come["come"].items():
+        pcwlnode[i]["come"].append({int(num[0]):num[1]})
+
+    for j in range(0,len(pcwlnode)):
+      st = pcwlnode[i]["pcwl_id"] # 出発点
+      ed = pcwlnode[j]["pcwl_id"] # 到着点
+      # iとjが隣接ならば人流0人でpfvinfoに加える
+      if ed in pcwlnode[i]["next_id"]:
+        transition = []
+        trans_total = go_come["transition"][str(ed)]["total"]
+        del go_come["transition"][str(ed)]["total"]
+        if trans_total != 0:
+          for tmp in sorted(go_come["transition"][str(ed)].items(), key=lambda x: -x[1]):
+            transition.append({int(tmp[0]):round(tmp[1] / trans_total * 100, 1)})
+        else:
+          for tmp in go_come["transition"][str(ed)].items():
+            transition.append({int(tmp[0]):tmp[1]})
+        pfvinfo.append({"direction":[st,ed],"size":0,"transition":transition})
+
+  for i in range(len(pcwlnode)):
+    pcwlnode[i]["mac_len"] = []
+    pcwlnode[i]["size"] = 0
+
+  # 時刻ごとに経路情報を作成
+  for time in time_list:
+    # pfv情報の取り出し
+    tmp_pfvinfo = []
+    if mod == "on":
+      tmp_pfvinfo += db.modpfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # pfvmacinfo = []
+    # pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # 滞留端末情報の取り出し
+    stayinfo = []
+    if mod == "on":
+      stayinfo += db.modstayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # staymacinfo = []
+    # staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # 全体のデータを作成===========================================================
+    if len(tmp_pfvinfo) >= 1:
+      for i in range(0,len(tmp_pfvinfo[0]["plist"])):
+        pfvinfo[i]["size"] += tmp_pfvinfo[0]["plist"][i]["size"]
+    if len(stayinfo) >= 1:
+      for i in range(0,len(stayinfo[0]["plist"])):
+        pcwlnode[i]["size"] += stayinfo[0]["plist"][i]["size"]
+        for new_mac in stayinfo[0]["plist"][i]["mac_list"]:
+          if new_mac in pcwlnode[i]["mac_len"]:
+            pass
+          else :
+            pcwlnode[i]["mac_len"] += [new_mac]
+    # ===========================================================================
+
+    # 経路情報を作成===============================================================
+    # tmp_mac = []
+    # for i in pfvmacinfo[0]:
+    #   if i["mac"] in exist_mac:
+    #     if route_info[i["mac"]]
+
+      # stayinfo = stayinfo[-1]["plist"]
+      # for i in range(len(pcwlnode)):
+      #   pcwlnode[i]["mac_len"] = len(stayinfo[i]["mac_list"])
+      #   pcwlnode[i]["size"] = stayinfo[i]["size"]
+      #   pcwlnode[i]["color"] = "red"
+
+  # 最大経路通過数・最多経路順を生成
+  max_pfv = 0
+  keyfunc_pfv = lambda x:x["size"]
+  tmp_sort_pfv = sorted(pfvinfo,key=keyfunc_pfv)
+  sort_pfv = []
+  for i in tmp_sort_pfv:
+    if i["size"] != 0:
+      if i["size"] == max_pfv:
+        sort_pfv[0]["direction"].append(i["direction"])
+      else:
+        sort_pfv.insert(0,{"size":i["size"],"direction":[i["direction"]]})
+        max_pfv = i["size"]
+  if len(sort_pfv) != 0:
+    min_pfv = sort_pfv[-1]["size"]
+  else:
+    min_pfv = 0
+  rank_pfv = sort_pfv[:3] #上位3位まで取り出し
+
+  # 滞留回数・端末数の最大･最小および順序を作成
+  for i in range(len(pcwlnode)):
+    pcwlnode[i]["mac_len"] = len(pcwlnode[i]["mac_len"])
+  keyfunc_node = lambda x:x["size"]
+  keyfunc_mac = lambda x:x["mac_len"]
+  tmp_sort_node = sorted(pcwlnode,key=keyfunc_node)
+  tmp_sort_mac = sorted(pcwlnode,key=keyfunc_mac)
+  sort_node =[]
+  sort_mac = []
+  max_node = 0
+  max_mac = 0
+  for i in tmp_sort_node:
+    if i["size"] != 0:
+      if max_node == i["size"]:
+        sort_node[0]["pcwl_id"].append(i["pcwl_id"])
+      else:
+        sort_node.insert(0,{"size":i["size"],"pcwl_id":[i["pcwl_id"]]})
+        max_node = i["size"]
+  if len(sort_node) != 0:
+    min_node = sort_node[-1]["size"]
+  else:
+    min_node = 0
+  rank_node = sort_node[:3] #上位3位まで取り出し
+  for i in tmp_sort_mac:
+    if i["mac_len"] != 0:
+      if max_mac == i["mac_len"]:
+        sort_mac[0]["pcwl_id"].append(i["pcwl_id"])
+      else:
+        sort_mac.insert(0,{"mac_len":i["mac_len"],"pcwl_id":[i["pcwl_id"]]})
+        max_mac = i["mac_len"]
+  if len(sort_mac) != 0:
+    min_mac = sort_mac[-1]["mac_len"]
+  else:
+    min_mac = 0
+  rank_mac = sort_mac[:3] #上位3位まで取り出し
+  ap_data = {"max_node":max_node,"min_node":min_node,"max_mac":max_mac,"min_mac":min_mac}
+  flow_data ={"max_pfv":max_pfv,"min_pfv":min_pfv}
+
+  return render_to_response('pfv/crowd_map.html',  # 使用するテンプレート
+                              {'pcwlnode': pcwlnode,'pfvinfo': pfvinfo,
+                               'language':language,'timerange':timerange,'floor':floor,
+                               'year':lt.year,'month':lt.month,'day':lt.day,
+                               'hour':lt.hour,'minute':lt.minute,'second':lt.second,'pre_year':gt.year,'pre_month':gt.month,'pre_day':gt.day,
+                               'pre_hour':gt.hour,'pre_minute':gt.minute,'pre_second':gt.second,"flow_data":flow_data,"ap_data":ap_data,"rank_pfv":rank_pfv,"rank_node":rank_node,"rank_mac":rank_mac
+                               }
+                              )
+
+def crowd_map_json(request):
+
+  # urlからクエリの取り出し
+  date_time = request.GET.get('datetime', 'now')
+  timerange = int(request.GET.get('timerange', 5))
+  mac = request.GET.get('mac', '')
+  language = request.GET.get('language', 'jp')
+  floor = request.GET.get('floor', 'W2-7F')
+  selectnode = request.GET.get("selectnode", "")
+  realtime = request.GET.get("realtime", "false")
+  mod = request.GET.get('mod', 'off')
+
+  if date_time == 'now':
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 20) # 現在時刻の20秒前をデフォルト表示時間に
+  elif realtime == "true":
+    lt = datetime.datetime.today() - datetime.timedelta(seconds = 10) # 現在時刻の5秒前を表示時間に
+  else :
+    lt = dt_from_14digits_to_iso(date_time)
+  gt = lt - datetime.timedelta(seconds = timerange) # timerange秒前までのデータを取得
+
+  # 指定期間の時刻のリストを作成
+  time_list = []
+  for i in range(1,int(timerange/5)):
+    time_list.append(gt + datetime.timedelta(seconds = i*5))
+  time_list.append(lt)
+
+  # pcwl情報の取り出し
+  pcwlnode = []
+  pcwlnode += db.pcwlnode.find({"floor":floor},{"_id":0})
+
+  pfvinfo = [] # 空のpfvinfo生成
+  exist_mac = [] #出現中のmacを一時保存
+  route_info =[] #経路ごとに格経路パターンを格納
+  for i in range(0,len(pcwlnode)):
+    pcwlnode[i]["go"] = []
+    pcwlnode[i]["come"] = []
+    pcwlnode[i]["transition"] = []
+    go_come = db.floor_analyze.find_one({"floor":floor,"pcwl_id":pcwlnode[i]["pcwl_id"]},{"_id":0})
+    # go関連の処理
+    go_total = go_come["go"]["total"]
+    del go_come["go"]["total"]
+    if go_total != 0:
+      for num in sorted(go_come["go"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["go"].append({int(num[0]):round(num[1] / go_total * 100, 1)})
+    else:
+      for num in go_come["go"].items():
+        pcwlnode[i]["go"].append({int(num[0]):num[1]})
+    # come関連の処理
+    come_total = go_come["come"]["total"]
+    del go_come["come"]["total"]
+    if come_total != 0:
+      for num in sorted(go_come["come"].items(), key=lambda x: -x[1]):
+        pcwlnode[i]["come"].append({int(num[0]):round(num[1] / come_total * 100, 1)})
+    else:
+      for num in go_come["come"].items():
+        pcwlnode[i]["come"].append({int(num[0]):num[1]})
+
+    for j in range(0,len(pcwlnode)):
+      st = pcwlnode[i]["pcwl_id"] # 出発点
+      ed = pcwlnode[j]["pcwl_id"] # 到着点
+      # iとjが隣接ならば人流0人でpfvinfoに加える
+      if ed in pcwlnode[i]["next_id"]:
+        transition = []
+        trans_total = go_come["transition"][str(ed)]["total"]
+        del go_come["transition"][str(ed)]["total"]
+        if trans_total != 0:
+          for tmp in sorted(go_come["transition"][str(ed)].items(), key=lambda x: -x[1]):
+            transition.append({int(tmp[0]):round(tmp[1] / trans_total * 100, 1)})
+        else:
+          for tmp in go_come["transition"][str(ed)].items():
+            transition.append({int(tmp[0]):tmp[1]})
+        pfvinfo.append({"direction":[st,ed],"size":0,"transition":transition})
+
+  for i in range(len(pcwlnode)):
+    pcwlnode[i]["mac_len"] = []
+    pcwlnode[i]["size"] = 0
+
+  # 時刻ごとに経路情報を作成
+  for time in time_list:
+    # pfv情報の取り出し
+    tmp_pfvinfo = []
+    if mod == "on":
+      tmp_pfvinfo += db.modpfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      tmp_pfvinfo += db.pfvinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # pfvmacinfo = []
+    # pfvmacinfo += db.pfvmacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # 滞留端末情報の取り出し
+    stayinfo = []
+    if mod == "on":
+      stayinfo += db.modstayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    else:
+      stayinfo += db.stayinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # staymacinfo = []
+    # staymacinfo += db.staymacinfo.find({"datetime":time, "floor":floor}).sort("datetime", ASCENDING)
+    # 全体のデータを作成===========================================================
+    if len(tmp_pfvinfo) >= 1:
+      for i in range(0,len(tmp_pfvinfo[0]["plist"])):
+        pfvinfo[i]["size"] += tmp_pfvinfo[0]["plist"][i]["size"]
+    if len(stayinfo) >= 1:
+      for i in range(0,len(stayinfo[0]["plist"])):
+        pcwlnode[i]["size"] += stayinfo[0]["plist"][i]["size"]
+        for new_mac in stayinfo[0]["plist"][i]["mac_list"]:
+          if new_mac in pcwlnode[i]["mac_len"]:
+            pass
+          else :
+            pcwlnode[i]["mac_len"] += [new_mac]
+    # ===========================================================================
+
+    # 経路情報を作成===============================================================
+    # tmp_mac = []
+    # for i in pfvmacinfo[0]:
+    #   if i["mac"] in exist_mac:
+    #     if route_info[i["mac"]]
+
+      # stayinfo = stayinfo[-1]["plist"]
+      # for i in range(len(pcwlnode)):
+      #   pcwlnode[i]["mac_len"] = len(stayinfo[i]["mac_list"])
+      #   pcwlnode[i]["size"] = stayinfo[i]["size"]
+      #   pcwlnode[i]["color"] = "red"
+
+  # 最大経路通過数・最多経路順を生成
+  max_pfv = 0
+  keyfunc_pfv = lambda x:x["size"]
+  tmp_sort_pfv = sorted(pfvinfo,key=keyfunc_pfv)
+  sort_pfv = []
+  for i in tmp_sort_pfv:
+    if i["size"] != 0:
+      if i["size"] == max_pfv:
+        sort_pfv[0]["direction"].append(i["direction"])
+      else:
+        sort_pfv.insert(0,{"size":i["size"],"direction":[i["direction"]]})
+        max_pfv = i["size"]
+  if len(sort_pfv) != 0:
+    min_pfv = sort_pfv[-1]["size"]
+  else:
+    min_pfv = 0
+  rank_pfv = sort_pfv[:3] #上位3位まで取り出し
+
+  # 滞留回数・端末数の最大･最小および順序を作成
+  for i in range(len(pcwlnode)):
+    pcwlnode[i]["mac_len"] = len(pcwlnode[i]["mac_len"])
+  keyfunc_node = lambda x:x["size"]
+  keyfunc_mac = lambda x:x["mac_len"]
+  tmp_sort_node = sorted(pcwlnode,key=keyfunc_node)
+  tmp_sort_mac = sorted(pcwlnode,key=keyfunc_mac)
+  sort_node =[]
+  sort_mac = []
+  max_node = 0
+  max_mac = 0
+  for i in tmp_sort_node:
+    if i["size"] != 0:
+      if max_node == i["size"]:
+        sort_node[0]["pcwl_id"].append(i["pcwl_id"])
+      else:
+        sort_node.insert(0,{"size":i["size"],"pcwl_id":[i["pcwl_id"]]})
+        max_node = i["size"]
+  if len(sort_node) != 0:
+    min_node = sort_node[-1]["size"]
+  else:
+    min_node = 0
+  rank_node = sort_node[:3] #上位3位まで取り出し
+  for i in tmp_sort_mac:
+    if i["mac_len"] != 0:
+      if max_mac == i["mac_len"]:
+        sort_mac[0]["pcwl_id"].append(i["pcwl_id"])
+      else:
+        sort_mac.insert(0,{"mac_len":i["mac_len"],"pcwl_id":[i["pcwl_id"]]})
+        max_mac = i["mac_len"]
+  if len(sort_mac) != 0:
+    min_mac = sort_mac[-1]["mac_len"]
+  else:
+    min_mac = 0
+  rank_mac = sort_mac[:3] #上位3位まで取り出し
+
+
+  flow_data = {"max":max_pfv,"min":min_pfv,"rank_pfv":rank_pfv}
+  ap_data = {"max_node":max_node,"min_node":min_node,"max_mac":max_mac,"min_mac":min_mac}
+  pre_date = {'pre_year':gt.year,'pre_month':gt.month,'pre_day':gt.day,'pre_hour':gt.hour,'pre_minute':gt.minute,'pre_second':gt.second}
+  # 送信するデータセット
+  dataset = {"pfvinfo":pfvinfo,"pcwlnode":pcwlnode,"flow_data":flow_data,"ap_data":ap_data,"rank_pfv":rank_pfv,"rank_node":rank_node,"rank_mac":rank_mac,"pre_date":pre_date}
   # dataset = {"pfvinfo":pfvinfo}
 
   return render_json_response(request, dataset) # dataをJSONとして出力
