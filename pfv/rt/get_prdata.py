@@ -41,7 +41,8 @@ tag_list = ["00:11:81:10:01:1b",
 
 # 6Fのデータ収集
 pcwliplist = []
-search_floor = ["W2-6F","W2-7F","W2-9F"] # exclude W2-8F
+#search_floor = ["W2-6F","W2-7F","W2-9F"] # exclude W2-8F
+search_floor = ["W2-7F"] # 7Fのみデータ取得の環境時
 #search_floor = ["kaiyo"]
 
 for floor in search_floor:

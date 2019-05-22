@@ -88,7 +88,7 @@ def make_pcwlroute():
 	ddict = {}
 	for floor in FLOOR_LIST:
 		tmp_nodes = [] 
-		tmp_nodes += db.pcwlnode_test.find({"floor":floor})
+		tmp_nodes += db.pcwlnode.find({"floor":floor})
 		floor_nodes = [0]*99 # nodes in the certain floor
 		for i in range(0,len(tmp_nodes)):
 			floor_nodes[tmp_nodes[i]["pcwl_id"]] = tmp_nodes[i]
