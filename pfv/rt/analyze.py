@@ -20,7 +20,8 @@ db = client.nm4bd
 # input:iso datetime
 def analyze_mod(st_dt, ed_dt):
     """
-    解析処理の開始・終了時刻を管理
+    Aggregate RSSI data in W2-6,7,9F (trtmp col.) using aggregate_mod and W2-8F (raw100 col.) using aggregate_row100,
+    integrate their results into tmpcol col., and run get_start_end
     @param  st_dt : datetime
     @param  ed_dt : datetime
     """

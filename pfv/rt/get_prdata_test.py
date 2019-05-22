@@ -41,7 +41,8 @@ tag_list = ["00:11:81:10:01:1b",
 
 # 6Fのデータ収集
 pcwliplist = []
-search_floor = ["W2-6F","W2-7F","W2-9F"] # cannot designate W2-8F using PCWL-0100
+#search_floor = ["W2-6F","W2-7F","W2-9F"] # cannot designate W2-8F using PCWL-0100
+search_floor = ["W2-7F"]
 #search_floor = ["kaiyo"]
 
 for floor in search_floor:
@@ -156,7 +157,7 @@ def save_function(pcwlip): #pcwlip: type:dict, elements: ip, floor, pcwl_id
 				# print("inserted.")
 
 
-@timeout_decorator.timeout(3.5) # cannot use on Windows
+#@timeout_decorator.timeout(3.5) # cannot use on Windows
 def multi(pcwliplist):
 	p = Pool(8) #プロセス数の選択
 	data_list = p.map(save_function, pcwliplist)
@@ -188,10 +189,10 @@ if __name__ == "__main__":
 
 	### Check col_name trtmp or trtmp_test ###
 	### when execute all process, uncomment under 5 lines. ###
-	param = sys.argv
-	st_dt = dt_end_to_05(str(param[1]))
-	st_dt = dt_from_14digits_to_iso(st_dt)
-	ed_dt = shift_seconds(st_dt, 5)
-	analyze_mod(st_dt, ed_dt)
-	print("Total:"+str(rounding(time.time()-all_st,3))+"[sec]")
+	# param = sys.argv
+	# st_dt = dt_end_to_05(str(param[1]))
+	# st_dt = dt_from_14digits_to_iso(st_dt)
+	# ed_dt = shift_seconds(st_dt, 5)
+	# analyze_mod(st_dt, ed_dt)
+	# print("Total:"+str(rounding(time.time()-all_st,3))+"[sec]")
 	##########################################################

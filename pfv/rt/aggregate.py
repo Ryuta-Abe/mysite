@@ -34,6 +34,8 @@ def aggregate_mod(startdt_iso, enddt_iso):
                                 {"$out": "tmpcol"},
                             ],
                             allowDiskUse=True,
+                            #explain=True
+                            #cursor: {}
                             )
 
     make_pcwltime(startdt_iso)

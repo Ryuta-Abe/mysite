@@ -39,6 +39,7 @@ def db_clear(st_dt, ed_dt):
     db.pfvmacinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
     db.stayinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
     db.staymacinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
+
     db.modpfvinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
     db.modstayinfo.remove({"datetime":{"$gte":st_dt,"$lte":ed_dt}})
 
@@ -107,6 +108,11 @@ if __name__ == '__main__':
     # ed_dt = 20180203173200
     # /////////////////////////////////////////////////////////////////////////
 
+    # 移動実験（7F直線 new）///////////////////////////////////////////////////////////////////
+    st_dt = 20181226013500
+    #ed_dt = 20181226022500 ## TODO: 戻す
+    ed_dt = 20181226013700  ## tmp time for debug
+
     # 移動実験（6Fジグザグ）///////////////////////////////////////////////////////////////////
     # st_dt = 20180203173500
     # ed_dt = 20180203174200
@@ -143,8 +149,8 @@ if __name__ == '__main__':
     # /////////////////////////////////////////////////////////////////////////
 
     # スマホ移動６F///////////////////////////////////////////////////////////////////
-    st_dt = 20180204193000
-    ed_dt = 20180204193330
+    # st_dt = 20180204193000
+    # ed_dt = 20180204193330
     # /////////////////////////////////////////////////////////////////////////
 
     # スマホ移動６F///////////////////////////////////////////////////////////////////
@@ -155,8 +161,8 @@ if __name__ == '__main__':
     # 時刻をiso形式に変換
     st_dt = dt_from_14digits_to_iso(st_dt)
     ed_dt = dt_from_14digits_to_iso(ed_dt)
-    # db_clear(st_dt, ed_dt)
-    # make_analyze_db()
+    db_clear(st_dt, ed_dt)
+    make_analyze_db()
     statistics_all(st_dt, ed_dt)
     data_sorting(st_dt, ed_dt)
     print(time() - st)

@@ -19,10 +19,11 @@ db = client.nm4bd
 # input:iso datetime
 def analyze_mod(st_dt, ed_dt):
     """
-    解析処理の開始・終了時刻を管理
+    Aggregate RSSI data in W2-6,7,9F (trtmp col.) using aggregate_mod,
+    output results into tmpcol col., and run get_start_end_sta
     @param  st_dt : datetime
     @param  ed_dt : datetime
-    """
+    """    
     # 高速化のためのindex
     db.trtmp.create_index([("get_time_no", ASCENDING)])
 
@@ -40,7 +41,7 @@ def analyze_mod(st_dt, ed_dt):
 
 
 # PR取得をせず、ローカルで解析のみを行う場合mainで実行
-# python analyze.py 20170123012345 20170123123456
+# python analyze_sta.py 20170123012345 20170123123456
 if __name__ == "__main__":
 
     param = sys.argv

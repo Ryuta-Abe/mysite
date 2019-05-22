@@ -50,7 +50,7 @@ def get_start_end_mod(all_st_time):
     開始・終了の時刻・地点を決定するモジュール
     @param  all_st_time : datetime 開始時刻
     """
-    from datetime import datetime, timedelta
+ #   from datetime import datetime, timedelta
 
     # 初期設定
     tmp_startdt = datetime(2000, 1, 1, 0, 0, 0)
@@ -61,6 +61,7 @@ def get_start_end_mod(all_st_time):
     # data取り出し(from tmpcol)
     # タグのみ
     # datas = db.tmpcol.find({"_id.mac":{"$regex":"00:11:81:10:01:"}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
+    # tmpcol : dict : {"_id":{"mac", "get_time_no"}, "nodelist":[{"dbm", "ip"}]}
     # 全体
     datas = db.tmpcol.find().sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist() #pastdataからmacのみ抽出してpastmaclistを作成
@@ -72,7 +73,7 @@ def get_start_end_mod(all_st_time):
         for data in datas: #macごとにループ
             ins_flag = False
             intersection_flag = False
-            data["nodelist"] = reverse_list(data["nodelist"], "dbm") #dbm順にnodelistをソート
+            data["nodelist"] = reverse_list(data["nodelist"], "dbm") #dbmが大きい順(降順)にnodelistをソート
 
             data["id"] = data["_id"]
             del(data["_id"])
@@ -102,18 +103,18 @@ def get_start_end_mod(all_st_time):
             for list_data in data["nodelist"][:]:
                 largest_floor = list_data["floor"] #大きいrssiを観測したノード順に最大階を確定
                 if (past_floor != None) and (largest_floor != past_floor):
-                    if list_data["rssi"] <= TH_RSSI_FLOOR:
+                    if list_data["rssi"] <= TH_RSSI_FLOOR:  #  if the largest rssi is below the threshold
                         missing_flag = True
                         break
                     floor_key = lambda x:x["floor"]
-                    floor_cnt = Counter(list(map(floor_key,data["nodelist"][:min(5,len(data["nodelist"]))]))).most_common(2)
-                    if (len(floor_cnt)>=2)and(floor_cnt[0][1] == floor_cnt[1][1]): #観測数が同値の場合
-                        if (floor_cnt[0][0] == data["nodelist"][0]["floor"]) or (floor_cnt[1][0] == data["nodelist"][0]["floor"]):
+                    floor_cnt = Counter(list(map(floor_key,data["nodelist"][:min(5,len(data["nodelist"]))]))).most_common(2)  #  dbm5番目までのnodelistが存在するフロアを抽出し、最頻2フロアとその出現回数を出力　ex: [("W2-6F", 3), ("W2-7F", 2)]
+                    if (len(floor_cnt)>=2)and(floor_cnt[0][1] == floor_cnt[1][1]): #最頻2フロアの出現回数が同じ場合　ex: [("W2-6F", 2), ("W2-7F", 2)]
+                        if (floor_cnt[0][0] == data["nodelist"][0]["floor"]) or (floor_cnt[1][0] == data["nodelist"][0]["floor"]): # 最頻2フロアのいずれかが、最大rssiを観測したフロアに一致している場合
                             largest_floor = data["nodelist"][0]["floor"]
                         else:
                             largest_floor = data["nodelist"][1]["floor"]
-                    else:
-                        largest_floor = floor_cnt[0][0]
+                    else:  # 最頻フロアが存在する場合、最頻フロアに決定 ex: [("W2-6F", 4), ("W2-7F", 1)]
+                        largest_floor = floor_cnt[0][0] 
                     # if floor_cnt[0][0] == past_floor: # フロアの出現件数最多フロアが過去データのフロアと一致する場合
                     #     largest_floor = floor_cnt[0][0]
                     #     break
@@ -122,21 +123,21 @@ def get_start_end_mod(all_st_time):
                 if largest_floor != "Unknown":
                     break #正式なフロアが割り当てられたらbreak
             if missing_flag:
-                continue
+                continue  # 消滅している場合、次のデータ（MACアドレス・取得時間）に遷移 
 
             floor_node_list = [] #largest_floorのノードidのリスト
             floor_node_col = db.pcwlnode.find({"floor":largest_floor}).sort("pcwl_id",ASCENDING)
             for node in floor_node_col:
-                floor_node_list.append(node["pcwl_id"])
-            floor_rssi_list = [-99] * len(floor_node_list) #機械学習用にrssiのリストを作成（例：[-99,-99,・・・,・・・,・・・,-99]）
+                floor_node_list.append(node["pcwl_id"])  # ex: "W2-6F" → [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27]
+            floor_rssi_list = [-99] * len(floor_node_list) # 機械学習用にrssiのリストを作成（例：[-99,-99,・・・,・・・,・・・,-99]（要素数はフロアに存在するPCWL数））
 
 
             for list_data in data["nodelist"][:]:
                 # RSSIが最大のfloorのデータか否かで分岐
                 if list_data["floor"] == largest_floor: # 最大の階か
                     if list_data["pcwl_id"] in floor_node_list: # その階にidが存在しているか
-                        index = floor_node_list.index(list_data["pcwl_id"])
-                        floor_rssi_list[index] = list_data["rssi"] # rssiのリストを更新（[-99,・・・,○,・・・,-99]）
+                        index = floor_node_list.index(list_data["pcwl_id"]) # そのノードは0から数えて何番目か取得 
+                        floor_rssi_list[index] = list_data["rssi"] # rssiのリストを更新（[-99,・・・,-80,・・・,-99]）
 
             # 機械学習を使う場合
             if USE_ML and largest_floor != "Unknown":
@@ -151,7 +152,7 @@ def get_start_end_mod(all_st_time):
             else:
                 tmp_list = []
                 for list_data in data["nodelist"]: # 最大フロアのデータ上位3つを抽出
-                    if (pastd != []) and ((len(tmp_list) == 1) or (len(tmp_list) == 2)) and (list_data["rssi"] == tmp_list[0]["rssi"]):
+                    if (pastd != []) and ((len(tmp_list) == 1) or (len(tmp_list) == 2)) and (list_data["rssi"] == tmp_list[0]["rssi"]):  #  if RSSI is the same as previous one
                         past_rank = pastd[0]["pastlist"][-1]["node"]
                         if (past_rank != []) and (past_rank[0]["floor"] == largest_floor):
                             for rank in past_rank:
@@ -174,13 +175,13 @@ def get_start_end_mod(all_st_time):
             # RSSI上位3つまで参照
             node_cnt = min(len(data["nodelist"]), 3)
 
-            # update_dtを下回る以上データがいるか確認
+            # update_dtより昔の異常データがいるか確認
             if (pastd != []) and (data["id"]["get_time_no"] <= pastd[0]["update_dt"]):
                 print("0:(dt > update_dt)or(pastd==[])")
                 pass
             else:
                 # 無ければ初期nodecnt_dict, 初期pastlistを作成
-                if pastd == []: # 過去データが存在しない場合
+                if pastd == []: # 該当macの過去データが存在しない場合
                     tmp_dict = {"mac":data["id"]["mac"], "nodecnt_dict":init_nodecnt_dict(), "pastlist":[], "update_dt":data["id"]["get_time_no"]}
                     pastd.append(tmp_dict) # 初期データを作成し過去データ用のリストに追加
 
@@ -272,9 +273,9 @@ def get_start_end_mod(all_st_time):
                                                         ins_flag = True
                                                         break
 
-                                            # stop once at intersection（分岐ノードを終了ノードと判定とする）
+                                            # stop once at intersection（分岐点ノードを終了ノードと判定とする）
                                             if INTERSECTION_FUNCTION and (interval == 5):
-                                                for route in route_info[0]["route"]: # 移動する全経路のうちそれぞれの経路の終点側のノードで判定を行う
+                                                for route in route_info[0]["route"]: # 移動する全子経路のうち各子経路の終点側のノードが分岐点ノードかどうか判定を行う
                                                     after_node_id = route["direction"][1]
                                                     after_node_info = db.pcwlnode.find_one({"floor":tmp_floor,"pcwl_id":after_node_id})
                                                     if (len(after_node_info["next_id"])>=3): # 隣接するノードが3つ以上の場合
@@ -433,7 +434,7 @@ def init_nodecnt_dict():
     """
     nodecnt_dictの初期化
     @return nodecnt_dict:dict
-        (ex: {"W2-6F":{1:0,2:0,...},...})
+        (ex: {"W2-6F":{"1":0,"2":0,...},...})
     """
     nodecnt_dict = {}
     for floor in FLOOR_LIST:
@@ -446,10 +447,10 @@ def init_nodecnt_dict():
 def make_nodecnt_dict(node_history, get_time_no, nodecnt_dict):
     """
     nodecnt_dictを更新
-    (過去のデータ[node_history]から、過去1分間に入っていないデータ分のカウントを減らす)
-    @param:node_hisory[ { "dt" : ISODate("2017-07-14T14:26:10Z"), "alive" : false, "node" : [ ], "start_node" : { "pcwl_id" : 7, "floor" : "W2-9F", "rssi" : -60 }, "arrive_intersection" : false },・・・ ]
-    @param:解析対象時刻
-    @param:過去データのノードのカウント情報
+    (過去のデータ[node_history]から、過去 time_range に入っていないデータ分のカウントを減らす)
+    @param:  node_hisory: dict [ { "dt" : ISODate("2017-07-14T14:26:10Z"), "alive" : false, "node" : [ ], "start_node" : { "pcwl_id" : 7, "floor" : "W2-9F", "rssi" : -60 }, "arrive_intersection" : false },・・・ ]
+    @param:  get_time_no:解析対象時刻
+    @param:  nodecnt_dict:過去データのノードのカウント情報
     """
     for history in node_history[:]: # time_range分の過去データでループ
         his_node_cnt = min(len(history["node"]),3)
@@ -651,6 +652,7 @@ def make_pastmaclist():
                             {"$out": "pastmaclist"},
                         ],
                         allowDiskUse=True,
+                        #explain=True
                     )
 
 def update_maclist(mac):

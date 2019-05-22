@@ -36,24 +36,24 @@ def data_sorting(st,ed):
             continue
         # 取り出したデータを時刻順にソート
         keyfunc_time = lambda x:x["datetime"]
-        data = sorted(data,key=keyfunc_time)
-        update_dt = 0 # 最終更新時刻
-        ap_list_flow =[] # 1データ分のAPのリスト
-        pre_floor = 0 # 前の時刻ののフロア
+        data = sorted(data,key=keyfunc_time)  # 時刻をキーとして昇順にソート
+        update_dt = 0 # 最新の過去データの取得時刻
+        ap_list_flow =[] # 1データ分（remake対象）のAPのリスト
+        pre_floor = 0 # 前の時刻のフロア
         for time in data:
             if update_dt==0:
-                start_dt = time["datetime"]
-            elif ((time["datetime"] - update_dt).seconds > DATA_INTERVAL) or (time["floor"] != pre_floor):
-                remake_data(mac,start_dt,update_dt,ap_list_flow,pre_floor)
+                start_dt = time["datetime"]  # remakeを行う開始時刻
+            elif ((time["datetime"] - update_dt).seconds > DATA_INTERVAL) or (time["floor"] != pre_floor):  # 過去データの取得時刻からDATA_INTERVAL秒経過している（長時間データが取れていない）か、フロア変更時
+                remake_data(mac,start_dt,update_dt,ap_list_flow,pre_floor)  # 一旦過去データの取得時刻までremakeを行う
                 start_dt = time["datetime"] # 開始時刻更新
                 ap_list_flow =[] # 1データ分のAPのリスト
-            if "pcwl_id" in time:
+            if "pcwl_id" in time:  # 滞留の場合(staymacinfo)
                 ap_list_flow.append({"pcwl_id":time["pcwl_id"],"datetime":time["datetime"]})
-            elif "route" in time:
+            elif "route" in time:  # 移動の場合(pfvmacinfo)
                 for i in range(len(time["route"])):
-                    if ap_list_flow == []:
-                        ap_list_flow.append({"pcwl_id":time["route"][i][0],"datetime":time["datetime"]})
-                    ap_list_flow.append({"pcwl_id":time["route"][i][1],"datetime":time["datetime"]})
+                    if ap_list_flow == []:  # remake対象の先頭の場合
+                        ap_list_flow.append({"pcwl_id":time["route"][i][0],"datetime":time["datetime"]})  # route = [[12,26],[26,9]]の時は、スタートノードの12を追加
+                    ap_list_flow.append({"pcwl_id":time["route"][i][1],"datetime":time["datetime"]})  # route = [[12,26],[26,9]]の時は、終了ノードの26(i=0)or9(i=1)を追加
             update_dt = time["datetime"]
             pre_floor = time["floor"]
         remake_data(mac,start_dt,update_dt,ap_list_flow,pre_floor)
