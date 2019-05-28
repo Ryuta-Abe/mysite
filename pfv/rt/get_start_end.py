@@ -130,7 +130,7 @@ def get_start_end_mod(all_st_time):
                 # print("3rd : "+str(floor_node_list[desc_index[2]]))
                 data["nodelist"] = tmp_list
 
-            # RSSI上位3つまで参照
+            # RSSI上位3つまでPRデータを参照
             node_cnt = min(len(data["nodelist"]), 3)
 
             # 過去の参照用データ　pastdata取り出し query:mac
@@ -147,21 +147,21 @@ def get_start_end_mod(all_st_time):
                     tmp_dict = {"mac":data["id"]["mac"], "nodecnt_dict":init_nodecnt_dict(), "pastlist":[], "update_dt":data["id"]["get_time_no"]}
                     pastd.append(tmp_dict)
 
-                tmp_enddt = data["id"]["get_time_no"]
+                tmp_enddt = data["id"]["get_time_no"]  #  tmp_enddt: 取得データの時刻
                 pastlist = pastd[0]["pastlist"]
                 # pastdata確認
                 if (pastlist != []):
-                    # pastlist1件ずつ参照
+                    # 1. pastlistを1件ずつ参照し、過去30秒間に入っていないデータ分のカウントを減らす
                     make_nodecnt_dict(pastlist, data["id"]["get_time_no"], pastd[0]["nodecnt_dict"])
 
                     pastlist = reverse_list(pastlist, "dt")
-
+                # 2. 最新時刻のデータ中に含まれるデータ分nodecnt_dictのカウントを増やす
                 update_nodecnt_dict(node_cnt, min_interval ,data, pastd[0]["nodecnt_dict"])
                 if (pastlist != []):
                     pastlist = reverse_list(pastlist, "dt")
-                    tmp_startdt = pastlist[0]["dt"]
+                    tmp_startdt = pastlist[0]["dt"]  #  tmp_startdt: 最新過去データの取得時刻, start -> end に移動するs
 
-                    # stay after intersection
+                    # stay after intersection (分岐点で止めたあとに5sec stayさせる機能)
                     if (STAY_AFTER_INTERSECTION and pastlist[0]["arrive_intersection"]):
                         se_data = append_data_lists_stay_alt(data["id"]["mac"], tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists_stay)
                         # print(se_data)
@@ -173,9 +173,10 @@ def get_start_end_mod(all_st_time):
                     else:
                         # node loop (sorted by RSSI)
                         for num in range(0, node_cnt):
-                            tmp_node   = data["nodelist"][num]
-                            tmp_id_str = str(tmp_node["pcwl_id"])
-                            tmp_floor  = tmp_node["floor"]
+                            
+                            tmp_node   = data["nodelist"][num]  #  取得データのnode情報num番目(ex: {"rssi" : -85,"floor" : "W2-7F","pcwl_id" : 11})
+                            tmp_id_str = str(tmp_node["pcwl_id"])  #  pcwl_id(str ver.)
+                            tmp_floor  = tmp_node["floor"]  #  floor
 
                             if tmp_floor == "Unknown":
                                 continue
@@ -209,6 +210,7 @@ def get_start_end_mod(all_st_time):
                                             # 行き来をstayに
                                             len_pastlist = len(pastlist)
                                             if (len_pastlist >= 2):
+                                                #  最新過去データの出発ノード情報(flow: 5->7なら 5)とpcwl_idを取得
                                                 past_st_node = [pastlist[1]["start_node"]]
                                                 past_st_id   = past_st_node[0]["pcwl_id"]
 
@@ -222,7 +224,6 @@ def get_start_end_mod(all_st_time):
                                                 past_route = []
                                                 past_route += db.pfvmacinfo.find({"mac":data["id"]["mac"], "datetime":{"$gte":q_gte,"$lt":q_lt}}).sort("datetime",-1)
                                                 if (len(past_route) == 1):
-                                                    # print(current_route, past_route[0]["route"])
 
                                                     if (route_partial_match(current_route, past_route[0]["route"])):
                                                         # data_lists_"stay" append
@@ -239,7 +240,7 @@ def get_start_end_mod(all_st_time):
                                                 for route in route_info[0]["route"]:
                                                     after_node_id = route["direction"][1]
                                                     after_node_info = db.pcwlnode.find_one({"floor":tmp_floor,"pcwl_id":after_node_id})
-                                                    if (len(after_node_info["next_id"])>=3):
+                                                    if (len(after_node_info["next_id"])>=3):  # 交差点である⇒隣接ノード数が3以上
                                                         intersection_flag = True
                                                         break
 
@@ -249,7 +250,7 @@ def get_start_end_mod(all_st_time):
                                                     after_node_info["rssi"] = None
                                                     se_data = append_data_lists(num, data, tmp_startdt, tmp_enddt, pastlist[0]["start_node"], data_lists)
                                                     if se_data != None:
-                                                        se_data["end_node"] = [{"floor":tmp_floor,"pcwl_id":after_node_id,"rssi":None}]
+                                                        se_data["end_node"] = [{"floor":tmp_floor,"pcwl_id":after_node_id,"rssi":None}]  # end_node(到着ノード)を更新
                                                         data_lists.append(se_data)
                                                         # pastlist update
                                                         update_pastlist_intersection(pastd[0], tmp_enddt, num, data["nodelist"], after_node_info)
@@ -316,14 +317,14 @@ def get_start_end_mod(all_st_time):
 
                             # RSSI小
                             else:
-                                # print("5:low RSSI")
+                                print("5:low RSSI")
                                 break
 
-                # pastlist == []
+                # pastlist == []の時⇔当該macのデータが始めて取得された場合
                 else:
                     # print("6:not append")
                     for num in range(0, node_cnt):
-                        tmp_node   = data["nodelist"][num]
+                        tmp_node = data["nodelist"][num]
                         if (tmp_node["rssi"] >= TH_RSSI):
                             # nodecnt_dict update
                             # pastlist update
@@ -350,7 +351,7 @@ def get_start_end_mod(all_st_time):
         make_nodecnt_dict(pastmacdata["pastlist"], all_st_time, pastmacdata["nodecnt_dict"])
         if (len(pastmacdata["pastlist"]) != 0):
             for node in pastmacdata["pastlist"]:
-                if(all_st_time - node["dt"] <= KEEP_ALIVE):
+                if(all_st_time - node["dt"] <= KEEP_ALIVE):　# 現在のデータが取れていないが、最新取得時刻からKEEP_ALIVE以下しか経過していない場合
                     if (node["alive"]):
                         # print(node)
                         data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
@@ -408,8 +409,10 @@ def init_nodecnt_dict():
 
 def make_nodecnt_dict(node_history, get_time_no, nodecnt_dict):
     """
+    @param node_history: pastdata["pastlist"]
+    @param get_time_no: 取得時刻
     nodecnt_dictを更新
-    (過去のデータ[node_history]から、過去1分間に入っていないデータ分のカウントを減らす)
+    (過去のデータ[node_history]から、過去30秒間に入っていないデータ分のカウントを減らす)
     """
     remove_list = []
     loop_cnt = 0
@@ -420,7 +423,7 @@ def make_nodecnt_dict(node_history, get_time_no, nodecnt_dict):
                 tmp_id   = history["node"][h_num]["pcwl_id"]
                 tmp_floor = history["node"][h_num]["floor"]
                 nodecnt_dict[tmp_floor].update({str(tmp_id) : nodecnt_dict[tmp_floor][str(tmp_id)]-1})
-                if nodecnt_dict[tmp_floor][str(tmp_id)] == -1:
+                if nodecnt_dict[tmp_floor][str(tmp_id)] == -1:  # error: nodecnt_dictの出現回数がマイナスになった場合
                     print("---------! nodecnt_dict -1 error !---------")
                     pass
             node_history.remove(history)
@@ -434,7 +437,7 @@ def update_nodecnt_dict(node_cnt, min_interval, data, nodecnt_dict):
         tmp_id   = data["nodelist"][num]["pcwl_id"]
         tmp_floor = data["nodelist"][num]["floor"]
         nodecnt_dict[tmp_floor].update({str(tmp_id) : nodecnt_dict[tmp_floor][str(tmp_id)]+1})
-        if nodecnt_dict[tmp_floor][str(tmp_id)] > int_time_range / min_interval + 1:
+        if nodecnt_dict[tmp_floor][str(tmp_id)] > int_time_range / min_interval + 1:  # error: 過去データ取得期間30秒/データ取得間隔5秒=6回以上出現している場合
             print("---------! nodecnt_dict > 7 error !---------")
             pass
 
@@ -443,6 +446,7 @@ def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists
     data_lists(移動データ保存リスト)にse_data[Start and End data]を追加するために
     se_dataを作成する関数
     @return se_data:dict
+    @return se_data: start_nodeとend_nodeは[node情報]
     """
     if tmp_enddt < tmp_startdt:
         print("---------! ed > st error !---------")
@@ -486,14 +490,18 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
     """
     data_lists(移動データ保存リスト)にse_data[Start and End data]を追加するために
     se_dataを作成する関数
-    [行き来した場合をstayにするときに使用]
+    [行き来した場合やデータが取れていない場合をstayにするときに使用]
+    append_data_lists_stayとは引数が異なるが、機能は類似
+    @oaram tmp_startdt: 最新過去データの取得時刻
+    @param tmp_enddt: 取得データの時刻
+    @oaram tmp_node_id: 最新過去データのノード情報(ex: "start_node" : {"floor" : "W2-6F","pcwl_id" : 14,"rssi" : -55})
     @return se_data:dict
     """
-    if tmp_enddt < tmp_startdt:
+    if tmp_enddt < tmp_startdt:  #  error:取得データの時刻 < 最新過去データの時刻の場合
         print("---------! ed > st error !---------")
-    if (tmp_enddt - tmp_startdt).seconds > int_time_range:
-        print("---------! stay ed-st>60 error !---------")
-    if (tmp_enddt - tmp_startdt).seconds > min_interval:
+    if (tmp_enddt - tmp_startdt).seconds > int_time_range:  # error: 最新過去データの時刻より離れすぎている場合
+        print("---------! stay ed-st>30 error !---------")
+    if (tmp_enddt - tmp_startdt).seconds > min_interval:  # 取得データの時刻-最新過去データの時刻が取得間隔(5s)を超えている場合
         return None
     se_data =  {"mac":mac,
                 "start_time":tmp_startdt,
@@ -506,10 +514,12 @@ def append_data_lists_stay_alt(mac, tmp_startdt, tmp_enddt, tmp_node_id, data_li
     return se_data
 
 # pastlistの更新用関数
+# dt: 取得時刻、start_node: dtの時の存在node情報、node: nodelist(RSSI上位3つまでのPRデータ)、arrive_intersection：分岐点を通過し、止められた場合
 def update_pastlist(pastd, get_time_no, num, nodelist):
     past_dict = {"dt":get_time_no, "start_node":nodelist[num], "node":nodelist, "alive":True, "arrive_intersection":False} 
     pastd["pastlist"].append(past_dict)
 
+# 分岐点で止められた時用
 def update_pastlist_intersection(pastd, get_time_no, num, nodelist, start_node):
     past_dict = {"dt":get_time_no, "start_node":start_node, "node":nodelist, "alive":True, "arrive_intersection":True} 
     pastd["pastlist"].append(past_dict)
@@ -527,7 +537,7 @@ def update_pastlist_keep_alive(pastd, get_time_no, num, nodelist, start_node):
 def save_pastd(pastd,update_dt):
     """
     pastd(過去データ)更新用
-    各macに対する最終更新時刻を保存しておく
+    各macに対する最終更新時刻update_dtを更新する
     @param  pastd:dict
     @param  update_dt:datetime
     """
@@ -541,6 +551,7 @@ def save_pastd(pastd,update_dt):
 
 def fix_velocity(floor, interval):
     """
+    TODO: 上限値の修正、妥当性の検証
     各フロアでの移動速度制限を設定
     110[px] = 14.4[m] に相当
     5sec or 10sec over で分けているが、現状5secしか機能していない...
@@ -566,7 +577,7 @@ def fix_velocity(floor, interval):
         velocity = velocity_dict[floor]["gte10"]
     return velocity
 
-def route_partial_match(current_route, past_route):
+def route_partial_match0(current_route, past_route):
     """
     逆経路と部分一致しているかの判定をする関数
     @param  current_route:list

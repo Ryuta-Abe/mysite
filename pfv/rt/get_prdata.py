@@ -46,7 +46,7 @@ search_floor = ["W2-7F"] # 7Fのみデータ取得の環境時
 #search_floor = ["kaiyo"]
 
 for floor in search_floor:
-	pcwliplist.extend(db.pcwliplist.find({"floor":floor,"parallel_num":{"$ne":999}},{"_id":False, "node_id":False}).sort("parallel_num",1))
+    pcwliplist.extend(db.pcwliplist.find({"floor":floor,"parallel_num":{"$ne":999}},{"_id":False, "node_id":False}).sort("parallel_num",1))
 
 ### using functions ###
 def make_empty_maccache(num):
