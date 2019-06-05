@@ -91,7 +91,7 @@ def query_examine_route(query):
 		if len(data[i]["via_dts_list"]) == 2:
 			via_dts_list = []
 		else:
-			via_dts_list = list(map(int,data[i]["via_dts_list"].split("[")[1].split("]")[0].split(",")))
+			via_dts_list = list(data[i]["via_dts_list"].split("[")[1].split("]")[0].split(","))
 
 		print("== exp_id:" + str(exp_id) + " ==\nmac:" + str(mac) + "\nst:" + str(st_dt) + "\ned:" + str(ed_dt))
 		for j in range(len(via_dts_list)):

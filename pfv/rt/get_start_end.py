@@ -28,7 +28,7 @@ repeat_cnt = 99
 INT_KEEP_ALIVE = 15
 KEEP_ALIVE = timedelta(seconds=INT_KEEP_ALIVE)
 # 分岐点で止める機能
-INTERSECTION_FUNCTION = False
+INTERSECTION_FUNCTION = True
 # 分岐点で止めたあとに5sec stayさせる機能(上がTrueのときのみ利用可)
 STAY_AFTER_INTERSECTION = False
 min_interval = 5
@@ -351,7 +351,7 @@ def get_start_end_mod(all_st_time):
         make_nodecnt_dict(pastmacdata["pastlist"], all_st_time, pastmacdata["nodecnt_dict"])
         if (len(pastmacdata["pastlist"]) != 0):
             for node in pastmacdata["pastlist"]:
-                if(all_st_time - node["dt"] <= KEEP_ALIVE):　# 現在のデータが取れていないが、最新取得時刻からKEEP_ALIVE以下しか経過していない場合
+                if(all_st_time - node["dt"] <= KEEP_ALIVE): # 現在のデータが取れていないが、最新取得時刻からKEEP_ALIVE以下しか経過していない場合
                     if (node["alive"]):
                         # print(node)
                         data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, node["start_node"], data_lists_stay))
@@ -577,7 +577,7 @@ def fix_velocity(floor, interval):
         velocity = velocity_dict[floor]["gte10"]
     return velocity
 
-def route_partial_match0(current_route, past_route):
+def route_partial_match(current_route, past_route):
     """
     逆経路と部分一致しているかの判定をする関数
     @param  current_route:list

@@ -5,3 +5,8 @@
 __pycache__/
 .idea/
 pfv.zip
+
+# working folder(作業用ディレクトリ)を無視
+working/
+
+

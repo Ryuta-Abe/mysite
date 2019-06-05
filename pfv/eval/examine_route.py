@@ -351,7 +351,7 @@ def add_adjacent_nodes(floor,node,adjacent_flag):
 	pcwlnode = {}
 	adjacent_nodes = [node]
 
-	node_info = db.pcwlnode_test.find_one({"floor":floor,"pcwl_id":node})
+	node_info = db.pcwlnode.find_one({"floor":floor,"pcwl_id":node})
 	adjacent_nodes.extend(node_info["next_id"])
 	if len(adjacent_nodes) >= 3:
 		return adjacent_nodes
