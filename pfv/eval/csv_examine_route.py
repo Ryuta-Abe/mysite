@@ -34,9 +34,11 @@ db = client.nm4bd
 
 ## 直接実行前に指定 ##
 DROP_DP = True # 過去の結果を削除するか
-common_exp_id = "170127_"
+date = "190413"  # 解析日時()
 st_exp_id = 1
-ed_exp_id = 75
+ed_exp_id = 96
+
+common_exp_id = date + "_"
 ####################
 if DROP_DP:
 	db.examine_summary.drop()
@@ -118,3 +120,11 @@ def query_examine_route(query):
 if __name__ == '__main__':
 	query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
 	csv_examine_route(query_list)
+	
+
+	# 結果を出力
+	path = "../../working/"
+	output_file_name = date + ".csv"
+	output_file = path + output_file_name
+	command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
+	os.system(command)

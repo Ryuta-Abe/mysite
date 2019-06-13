@@ -13,8 +13,13 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
+# (exp_param.csvにタグのMACアドレスではなく、tag_idを用いている場合)
 # 0. python C:\Users\Ryuta\Desktop\my_script\csv_reform.py
-# 1. mongoimport -d nm4bd -c csvtest --headerline --type csv C:\Users\Ryuta\Desktop\analyze_data\exp_param_conv.csv --drop
+
+# exp_param(教師データ取得stay実験のデータ)のインポート
+# 1. mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param.csv --drop
+
+# jsonファイルからタグのmacアドレスに対応するデータのみを抽出する
 # 2-1. python C:\Users\Ryuta\Desktop\my_script\extract_tag.py rttmp_yyyymmdd.json
 # 2-2. mongoimport -d nm4bd -c test2 rttmp_yyyymmdd.json
 
@@ -29,6 +34,8 @@ db = client.nm4bd
 # 6. python C:\Users\Ryuta\workspace_env3\mysite\pfv\scripts\make_tmpcol.py
 # 7.mongoexport実行
 #   mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o dbm19_1c.csv --csv --fieldFile dbm_field.txt
+
+db.test2.create_index([("mac", ASCENDING),("get_time_no", ASCENDING),("ip",ASCENDING)])
 
 
 def make_dbmlog(exp_info):
@@ -134,10 +141,11 @@ def append_train(input_file, train_file):
 
 
 if __name__ == '__main__':
-    # common_id_list = ["161207_0", "161208_0"]
-    common_id_list = ["170127_"]
+    # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
+    common_id_list = ["190611_"]
+    Num_of_query = 104 #全PCWLの数
     for common_id in common_id_list:
-        for id_num in range(1,76):
+        for id_num in range(1,Num_of_query):
             id_str = common_id + ("00" + str(id_num))[-3:]
             exp_info = db.csvtest.find_one({"exp_id":id_str})
             print("\n=== " + id_str + " ===")
@@ -172,7 +180,7 @@ if __name__ == '__main__':
 
             os.remove(tmp_file_name)
             # 1行目削除 & ラベルデータ作成
-            # replace_and_make_label(file_name, label_file, exp_info["st_node"])
+            replace_and_make_label(out_file_name, label_file, exp_info["st_node"])
 
             # trainデータ作成
-            # append_train(file_name, train_file)
+            append_train(out_file_name, train_file)

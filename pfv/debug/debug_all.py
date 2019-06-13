@@ -40,6 +40,7 @@ if __name__ == '__main__':
 	date = "20190413"
 	st_dt = date + "2149"
 	ed_dt = date + "2334" ## 解析終了時刻
+	
 	st_exp_id = 1  # 開始クエリ番号
 	ed_exp_id = 96 # 終了クエリ番号
 	###
@@ -51,7 +52,7 @@ if __name__ == '__main__':
 	json_file = path + json_file_name
 
 	os.system("mongoimport -d nm4bd -c trtmp " + json_file)
-	os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type csv " + path + "exp_param.csv --drop")
+	os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + path + "exp_param.csv --drop")
 	
 	# 準備終了、デバック開始
 	debug_all(json_file,st_dt,ed_dt,query_list)
@@ -60,7 +61,7 @@ if __name__ == '__main__':
 	output_file_name = date + ".csv"
 	output_file = path + output_file_name
 
-	command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --csv --fieldFile ../../mlfile/txt/exp_result.txt'
+	command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
 	os.system(command)
 
 # 	init_db()
