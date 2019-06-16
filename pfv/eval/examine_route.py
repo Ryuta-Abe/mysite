@@ -178,11 +178,11 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 		correct_nodes = stay_correct_nodes
 	else:
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
-	pos_x,pos_y = get_position(floor,actual_position_list)
+	pos_x,pos_y = get_position(floor,actual_position_list)  #  正解位置
 	
 	# get_coord_from_info(floor, mac, dt)
 	analyzed_data = db.analy_coord.find_one({"datetime":dt, "mac":mac})
-	if analyzed_data is None:
+	if analyzed_data is None:  ## 測位位置が存在しない場合
 		judgement = "F(None)"
 		moment_error_dist = None
 	else:
