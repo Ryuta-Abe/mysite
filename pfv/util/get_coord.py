@@ -48,10 +48,10 @@ def get_coord_from_info(floor, mac, dt):
 	staydata = db.staymacinfo.find_one(query)
 	stay_bfr = db.staymacinfo.find_one(q_bfr)
 
-	if (flowdata != None):  # flow(移動)の場合
-		node_num = flowdata["route"][-1][1]  # flowによる最終到着地点のpcwl_id
+	if (flowdata != None):
+		node_num = flowdata["route"][-1][1] 
 		insert_coord_from_node(floor, mac, node_num, dt)
-		if (CONSIDER_BEFORE and stay_bfr != None):
+		if (CONSIDER_BEFORE and stay_bfr != None):  # 直前がstayで、その後flowの場合、中点を測位位置とする
 			node_num_bfr = stay_bfr["pcwl_id"]
 			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
 			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
@@ -76,8 +76,8 @@ def insert_coord_from_node(floor, mac, node_num, dt):
 	next_dist = db.idealroute.find_one({"$and": [{"floor" : floor},
 										{"query" : node_num}, {"query" : next_num}]})["total_distance"]
 
-	position = [node_num, 0, next_dist, next_num]  # position = [P,a,b,Q]: 線分PQをa:bに内分する点
-	mlist = []  # margin(正解とみなせる境界)の位置:mag_posを要素として持つリスト
+	position = [node_num, 0, next_dist, next_num]
+	mlist = []  # marginの位置のlist
 	for n_node in next_list:
 		distance = get_distance(floor, node_num, n_node)
 		margin = distance/4
@@ -99,7 +99,7 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 	mid_len = total_d / 2
 
 	path_list = []
-	if (route_info["dlist"][0]["direction"][0] != all_st_num):
+	if (route_info["dlist"][0]["direction"][0] != all_st_num): ## ex: all_ed_num = 5, [0]["direction"][0] = 5
 		route_info["dlist"].reverse()
 		for path in route_info["dlist"]:
 			path["direction"].reverse()
@@ -108,7 +108,7 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 
 	# get midpoint
 	rem_len = mid_len
-	for path in route_info["dlist"]:
+	for path in route_info["dlist"]:  # 全経路の中点を含むようなpathを探索
 		ref_len = path["distance"]
 		st_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][0]})
 		ed_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][1]})
@@ -181,7 +181,7 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 
 
 
-		# make path_list (移動経路と不一致の経路のみ)
+		# make path_list (移動経路と不一致の経路のみ追加)
 		for tmp_path in path_list:
 			rev_path = list(tmp_path)
 			rev_path.reverse()
