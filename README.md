@@ -234,6 +234,7 @@
 
 ## pfvmacinfo
 ### 各MACアドレス・取得時間に対応する移動経路
+### (datetime - min_interval) ~ datetimeまでの移動経路
 ```
 {
         "datetime" : ISODate("2018-12-26T01:35:25Z"),

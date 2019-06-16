@@ -143,7 +143,7 @@ def append_train(input_file, train_file):
 if __name__ == '__main__':
     # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
     common_id_list = ["190611_"]
-    Num_of_query = 104 #全PCWLの数
+    Num_of_query = 104 #全queryの数
     for common_id in common_id_list:
         for id_num in range(1,Num_of_query):
             id_str = common_id + ("00" + str(id_num))[-3:]

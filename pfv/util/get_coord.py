@@ -48,8 +48,8 @@ def get_coord_from_info(floor, mac, dt):
 	staydata = db.staymacinfo.find_one(query)
 	stay_bfr = db.staymacinfo.find_one(q_bfr)
 
-	if (flowdata != None):
-		node_num = flowdata["route"][-1][1] 
+	if (flowdata != None):  # flow(移動)の場合
+		node_num = flowdata["route"][-1][1]  # flowによる最終到着地点のpcwl_id
 		insert_coord_from_node(floor, mac, node_num, dt)
 		if (CONSIDER_BEFORE and stay_bfr != None):
 			node_num_bfr = stay_bfr["pcwl_id"]
@@ -76,8 +76,8 @@ def insert_coord_from_node(floor, mac, node_num, dt):
 	next_dist = db.idealroute.find_one({"$and": [{"floor" : floor},
 										{"query" : node_num}, {"query" : next_num}]})["total_distance"]
 
-	position = [node_num, 0, next_dist, next_num]
-	mlist = []
+	position = [node_num, 0, next_dist, next_num]  # position = [P,a,b,Q]: 線分PQをa:bに内分する点
+	mlist = []  # margin(正解とみなせる境界)の位置:mag_posを要素として持つリスト
 	for n_node in next_list:
 		distance = get_distance(floor, node_num, n_node)
 		margin = distance/4

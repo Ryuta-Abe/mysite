@@ -107,7 +107,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m,"avg_direct_err_dist[m]":average_direct_error_distance_m,
 		"match_rate":match_rate, "adjacent_rate":adjacent_rate, "middle_rate":middle_rate, "wrong_node_rate":wrong_node_rate})
 
-def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):
+def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):  # 経路の端以外に交差点を持たないようなrouteにおける測位精度の算出
 	ideal_one_route = {}
 	total_distance = 0
 	delta_distance = 0
