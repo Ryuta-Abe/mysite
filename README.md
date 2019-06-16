@@ -255,7 +255,7 @@
 
 ```
 
-## pfvstaymacinfo
+## qstaymacinfo
 ### 各MACアドレス・取得時間に対応する滞留位置
 ```
 {

@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+###
+pfvmacinfo(移動経路データ{"route":[[1 2][3 4]]), staymacinfo(滞留位置データ)を用いて、
+誤差距離の算出に必要な測位位置 positionや marginをDB:analy_coordに追加する
+###
 from datetime import datetime
 from convert_datetime import *
 from pymongo import *
@@ -54,11 +59,7 @@ def get_coord_from_info(floor, mac, dt):
 		if (CONSIDER_BEFORE and stay_bfr != None):  # 直前がstayで、その後flowの場合、中点を測位位置とする
 			node_num_bfr = stay_bfr["pcwl_id"]
 			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
-			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
-								  {"$set": {"pos_x":mid_coord_dict["pos_x"],
-								  			"pos_y":mid_coord_dict["pos_y"],
-								  			"position":position,
-								  			"mlist":mlist}}, True)
+			db.analy_coord.update(, True)
 
 
 	elif (staydata != None):
@@ -181,7 +182,7 @@ def get_midpoint(floor, all_st_num, all_ed_num):
 
 
 
-		# make path_list (移動経路と不一致の経路のみ追加)
+		# make path_list (マージン内に存在する交差点から延びる経路の中で、移動経路と不一致の経路のみ追加)
 		for tmp_path in path_list:
 			rev_path = list(tmp_path)
 			rev_path.reverse()

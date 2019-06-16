@@ -88,7 +88,7 @@ def get_start_end_mod(all_st_time):
                 if largest_floor != "Unknown":
                     break
                 
-            floor_node_list = []
+            floor_node_list = []  # pcwl_idはとびとびの値であるから、[1,2,3,5,7]のようなpcwl_idを昇順に並べたリスト
             floor_node_col = db.pcwlnode.find({"floor":largest_floor}).sort("pcwl_id",ASCENDING)
             for node in floor_node_col:
                 floor_node_list.append(node["pcwl_id"])
@@ -122,7 +122,7 @@ def get_start_end_mod(all_st_time):
                 desc_index = classify(largest_floor, floor_rssi_list)
                 tmp_list = []
                 for x in range(0,3):
-                    predict_dict = {"floor":largest_floor, "pcwl_id":floor_node_list[desc_index[x]], "rssi":-60-x*10}
+                    predict_dict = {"floor":largest_floor, "　":floor_node_list[desc_index[x]], "rssi":-60-x*10}
                     tmp_list.append(predict_dict)
                 # 判定されたノード候補を表示
                 # print("1st : "+str(floor_node_list[desc_index[0]]))

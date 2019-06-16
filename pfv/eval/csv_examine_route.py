@@ -14,7 +14,7 @@ from convert_to_mac import convert_to_mac
 client = MongoClient()
 db = client.nm4bd
 
-### How to use ###
+"""
 # 1. pfvmacinfo, staymacinfoデータをDBに入れる
 # 
 # 2. 実験の条件をformatに従って "CSV形式" で作成する 
@@ -30,7 +30,7 @@ db = client.nm4bd
 # (! debug用のprint文は、
 # 　　　examine_route.py の DEBUG_PRINT = True とすると使える)
 # 
-###################
+"""
 
 ## 直接実行前に指定 ##
 DROP_DP = True # 過去の結果を削除するか
@@ -56,7 +56,8 @@ def make_exp_id(common_exp_id, st_exp_id, ed_exp_id):
 
 def csv_examine_route(query_list):
 	for query in query_list:
-		# 解析データによる座標を作る場合は　get_analy_coord　を使う
+		# 解析データに基づく、examine_routeに必要な正解座標を作る場合は　get_analy_coord　を使う
+		# {"mac","floor","datetime","pos_x","pos_y","position","mlist"}
 		get_analy_coord(query)
 
 		# 評価のみの場合は下の行のみ実行
@@ -82,15 +83,15 @@ def query_examine_route(query):
 		ed_node = data[i]["ed_node"]
 		exp_id = data[i]["exp_id"]
 
-		if len(data[i]["via_nodes_list"]) == 2:
+		if len(data[i]["via_nodes_list"]) == 2 or len(data[i]["via_nodes_list"]) == 0:  # [](空の場合)
 			via_nodes_list = []
 		else:
-			via_nodes_list = list(map(int,data[i]["via_nodes_list"].split("[")[1].split("]")[0].split(",")))
+			via_nodes_list = list(map(int,data[i]["via_nodes_list"].split("[")[1].split("]")[0].split(",")))  # "[2,3]" → [2,3]
 		
 		common_dt = str(data[i]["common_dt"]) # 測定時刻における先頭の共通部分
 		st_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["st_dt"]))
 		ed_dt = dt_from_14digits_to_iso(common_dt + str(data[i]["ed_dt"]))
-		if len(data[i]["via_dts_list"]) == 2:
+		if len(data[i]["via_dts_list"]) == 2 or len(data[i]["via_dts_list"]) == 0:
 			via_dts_list = []
 		else:
 			via_dts_list = list(data[i]["via_dts_list"].split("[")[1].split("]")[0].split(","))
@@ -99,13 +100,13 @@ def query_examine_route(query):
 		for j in range(len(via_dts_list)):
 			via_dts_list[j] = dt_from_14digits_to_iso(common_dt + str(via_dts_list[j]))
 
-		if ":" in data[i]["stay_pos_list"]:
+		if ":" in data[i]["stay_pos_list"]:  # 2:1等→st_node,ed_nodeを2:1に内分する点
 			ratio1 = float(data[i]["stay_pos_list"].split(":")[0])
-			ratio2 = float(data[i]["stay_pos_list"].split(":")[1])		
+			ratio2 = float(data[i]["stay_pos_list"].split(":")[1])
 			stay_pos_list = get_dividing_point(floor,st_node,ed_node,ratio1,ratio2)
-		elif len(data[i]["stay_pos_list"]) == 2:
+		elif len(data[i]["stay_pos_list"]) == 2 or len(data[i]["stay_pos_list"]) == 0:  # [](空の場合)
 			stay_pos_list = []
-		else:
+		else:  # position指定  ex: [2,12.5,21.6,5]
 			temp_list = data[i]["stay_pos_list"].split("[")[1].split("]")[0].split(",")
 			stay_pos_list = [0,0.0,0.0,0]
 			stay_pos_list = [int(temp_list[x]) if x == 0 or x == 3 else float(temp_list[x]) for x in range(len(temp_list))]

@@ -179,7 +179,7 @@ if __name__ == '__main__':
                 w.writerows(doc)
 
             os.remove(tmp_file_name)
-            # 1行目削除 & ラベルデータ作成
+            # 1行目削除 & 教師学習用正解ラベルデータ作成
             replace_and_make_label(out_file_name, label_file, exp_info["st_node"])
 
             # trainデータ作成
