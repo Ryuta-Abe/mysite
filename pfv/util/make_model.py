@@ -5,6 +5,11 @@ import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score,StratifiedShuffleSplit
+from sklearn import preprocessing
+
+# le = preprocessing.LabelEncoder()
+# result = le.fit_transform([1,2,3,"1,1,1,2","2-3","3-4"])
+# print(result)
 
 #FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F"]
 # 7F　only ver.

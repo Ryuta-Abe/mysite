@@ -159,7 +159,7 @@ def get_start_end_mod(all_st_time):
                 update_nodecnt_dict(node_cnt, min_interval ,data, pastd[0]["nodecnt_dict"])
                 if (pastlist != []):
                     pastlist = reverse_list(pastlist, "dt")
-                    tmp_startdt = pastlist[0]["dt"]  #  tmp_startdt: 最新過去データの取得時刻, start -> end に移動するs
+                    tmp_startdt = pastlist[0]["dt"]  #  tmp_startdt: 最新過去データの取得時刻, start -> end に移動する
 
                     # stay after intersection (分岐点で止めたあとに5sec stayさせる機能)
                     if (STAY_AFTER_INTERSECTION and pastlist[0]["arrive_intersection"]):
