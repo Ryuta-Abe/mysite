@@ -5,6 +5,8 @@
 import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
+from sklearn import preprocessing
+import pickle
 
 MODEL_DIR = "../../mlmodel/"
 # MODEL_DIR = "/home/murakami2/mlmodel/"
@@ -12,6 +14,8 @@ MODEL_DIR = "../../mlmodel/"
 def classify(floor, rssi_list):
     # import model
     clf = joblib.load(MODEL_DIR+floor+"_model.pkl") 
+    with open(MODEL_DIR + floor + "_label.p", 'rb') as f:
+        le = pickle.load(f)
 
     # testFeature = np.genfromtxt('test_1213.csv', delimiter = ',') 
     tmp = rssi_list
@@ -19,7 +23,6 @@ def classify(floor, rssi_list):
     # testFeature = scaler.transform(tmp)
 
     result = clf.predict_proba(testFeature)[0]
-    print(result)
     desc_indexes = result.argsort()[::-1]
     # print(desc_indexes)
     # for data in result:
@@ -27,15 +30,20 @@ def classify(floor, rssi_list):
     #print(clf.classes_)
     # print(result)
     for i in range(3):
-        print(str(i+1) + "th: " + str(desc_indexes[i]))
-        label = clf.classes_[desc_indexes[i]]
-        print(label)
-    return (desc_indexes,clf.classes_)
+        print(str(i+1) + "th: ",end = "")
+        label = le.inverse_transform([desc_indexes[i]])
+        print("label encoder:", label)
+    print("----------")
+    label_list = le.inverse_transform(desc_indexes)
+
+    # return (desc_indexes,clf.classes_)
+    return desc_indexes, label_list
 
 if __name__ == "__main__":
     rssi_list = [-36,-61,-58,-86,-99,-99,-32,-99,-99,-99,-99,-99,-99,-99,-99,-99,-99,-99,-99,-99,-92,-99,-99,-99,-99,-99]
-    desc_indexes = classify("W2-7F",rssi_list)
+    desc_indexes,label_list = classify("W2-7F",rssi_list)
     print(desc_indexes)
+    print(label_list)
 
 
     

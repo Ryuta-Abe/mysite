@@ -37,13 +37,12 @@ db = client.nm4bd
 
 db.test2.create_index([("mac", ASCENDING),("get_time_no", ASCENDING),("ip",ASCENDING)])
 
-
 def make_dbmlog(exp_info):
-    """
-    test2コレクション(仮)に入れた、PRデータから
-    各時刻におけるRSSIパターンデータが入ったコレクション(dbmlog)を作成する
-    @param  exp_info:dict
-    """
+    # """
+    # test2コレクション(仮)に入れた、PRデータから
+    # 各時刻におけるRSSIパターンデータが入ったコレクション(dbmlog)を作成する
+    # @param  exp_info:dict
+    # """
     db.dbmlog.drop()
 
     floor = exp_info["floor"]
@@ -140,47 +139,49 @@ def append_train(input_file, train_file):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param.csv --drop")
     # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
-    common_id_list = ["190611_"]
-    Num_of_query = 104 #全queryの数
+    common_id_list = ["190611_","190617_"]
+    Num_of_query = 108 #全queryの数
     for common_id in common_id_list:
         for id_num in range(1,Num_of_query):
             id_str = common_id + ("00" + str(id_num))[-3:]
-            exp_info = db.csvtest.find_one({"exp_id":id_str})
-            print("\n=== " + id_str + " ===")
+            if db.csvtest.find_one({"exp_id":id_str}) is not None:
+                exp_info = db.csvtest.find_one({"exp_id":id_str})
+                print("\n=== " + id_str + " ===")
 
-            ### floor_numは1桁のみ!  ###
-            floor = exp_info["floor"]
-            # if floor == "W2-8F":
-            #     continue
-            floor_num = floor[3:4]
-            ##########################
-            print(exp_info)
-            # 実験データ一回分まとめ
-            make_dbmlog(exp_info)
+                ### floor_numは1桁のみ!  ###
+                floor = exp_info["floor"]
+                # if floor == "W2-8F":
+                #     continue
+                floor_num = floor[3:4]
+                ##########################
+                print(exp_info)
+                # 実験データ一回分まとめ
+                make_dbmlog(exp_info)
 
-            tmp_file_name = './../../mlfile/csv/tmp_' + id_str +'.csv'
-            out_file_name = './../../mlfile/csv/' + id_str +'.csv'
-            label_file = './../../mlfile/csv/' + common_id + floor +'_label.csv'
-            train_file = './../../mlfile/csv/' + common_id + floor +'_train.csv'
-            command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ tmp_file_name +' --csv --fieldFile ./../../mlfile/txt/dbm_field'+ floor_num +'.txt'
+                tmp_file_name = './../../mlfile/csv/tmp_' + id_str +'.csv'
+                out_file_name = './../../mlfile/csv/' + id_str +'.csv'
+                label_file = './../../mlfile/csv/' + common_id + floor +'_label.csv'
+                train_file = './../../mlfile/csv/' + common_id + floor +'_train.csv'
+                command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ tmp_file_name +' --csv --fieldFile ./../../mlfile/txt/dbm_field'+ floor_num +'.txt'
 
-            # RSSIデータCSV出力
-            os.system(command)
+                # RSSIデータCSV出力
+                os.system(command)
 
-            # 1行目削除
-            with open(tmp_file_name, 'r') as f:
-                doc = [row for row in csv.reader(f, delimiter='\t')]
-            del doc[0]
+                # 1行目削除
+                with open(tmp_file_name, 'r') as f:
+                    doc = [row for row in csv.reader(f, delimiter='\t')]
+                del doc[0]
 
-            with open(out_file_name, 'w') as f:
-                w = csv.writer(f, delimiter='\t', lineterminator='\n')  #列区切りと行区切りの文字を指定
-                w.writerows(doc)
+                with open(out_file_name, 'w') as f:
+                    w = csv.writer(f, delimiter='\t', lineterminator='\n')  #列区切りと行区切りの文字を指定
+                    w.writerows(doc)
 
-            os.remove(tmp_file_name)
-            # 1行目削除 & 教師学習用正解ラベルデータ作成
-            replace_and_make_label(out_file_name, label_file, exp_info["st_node"])
+                os.remove(tmp_file_name)
+                # 1行目削除 & 教師学習用正解ラベルデータ作成
+                replace_and_make_label(out_file_name, label_file, str(exp_info["st_node"]))
 
-            # trainデータ作成
-            append_train(out_file_name, train_file)
+                # trainデータ作成
+                append_train(out_file_name, train_file)

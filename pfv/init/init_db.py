@@ -4,7 +4,7 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
-REMOVE_RAWDATA = True
+REMOVE_RAWDATA = False
 
 def init_db():
 	if REMOVE_RAWDATA:

@@ -103,7 +103,7 @@ def query_examine_route(query):
 		if ":" in data[i]["stay_pos_list"]:  # 2:1等→st_node,ed_nodeを2:1に内分する点
 			ratio1 = float(data[i]["stay_pos_list"].split(":")[0])
 			ratio2 = float(data[i]["stay_pos_list"].split(":")[1])
-			stay_pos_list = get_dividing_point(floor,st_node,ed_node,ratio1,ratio2)
+			stay_pos_list = get_dividing_point(floor,st_node,ratio1,ratio2,ed_node)
 		elif len(data[i]["stay_pos_list"]) == 2 or len(data[i]["stay_pos_list"]) == 0:  # [](空の場合)
 			stay_pos_list = []
 		else:  # position指定  ex: [2,12.5,21.6,5]

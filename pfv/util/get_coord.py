@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-###
+"""
 pfvmacinfo(移動経路データ{"route":[[1 2][3 4]]), staymacinfo(滞留位置データ)を用いて、
 誤差距離の算出に必要な測位位置 positionや marginをDB:analy_coordに追加する
-###
+"""
 from datetime import datetime
 from convert_datetime import *
 from pymongo import *
-from examine_route import *
+from Class import Position
 client = MongoClient()
 db = client.nm4bd
 
@@ -59,9 +59,11 @@ def get_coord_from_info(floor, mac, dt):
 		if (CONSIDER_BEFORE and stay_bfr != None):  # 直前がstayで、その後flowの場合、中点を測位位置とする
 			node_num_bfr = stay_bfr["pcwl_id"]
 			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
-			db.analy_coord.update(, True)
-
-
+			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
+                                  {"$set": {"pos_x":mid_coord_dict["pos_x"],
+								  "pos_y":mid_coord_dict["pos_y"],
+								  "position":position,
+								  "mlist":mlist}}, True)
 	elif (staydata != None):
 		node_num = staydata["pcwl_id"]
 		insert_coord_from_node(floor, mac, node_num, dt)
@@ -232,7 +234,7 @@ def get_position(floor,position_list):
 
 	return pos_x, pos_y
 
-def get_dividing_point(floor,prev_node,next_node,prev_ratio,next_ratio):
+def get_dividing_point(floor,prev_node,prev_ratio,next_ratio,next_node):
 	# below: returns pos_x, pos_y ver.
 	# prev_node_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":prev_node)
 	# next_node_info = db.pcwlnode.find_one("floor":floor,"pcwl_id":next_node)
@@ -248,6 +250,70 @@ def get_dividing_point(floor,prev_node,next_node,prev_ratio,next_ratio):
 	prev_distance = distance * prev_ratio / (prev_ratio + next_ratio)
 	next_distance = distance * next_ratio / (prev_ratio + next_ratio)
 	return [prev_node,prev_distance,next_distance,next_node]
+
+
+def get_distance_between_points(floor,position_list1,position_list2,is_Position_Class = False):
+	"""
+	2点間の距離を算出するとともに、最小ルートの向きを求める
+	@return[0] distance: 最小距離
+	@return[1] route_index: 最小ルートがどのようなルートか
+	position_list1 = P(A1,prev1,next1,B1), position_list2 = Q(A2,prev2,next2,B2)
+	-4: B1 = B2の時　　　　　　 A1-P-B1====B2-Q-A2
+	-3: A1 = B2の時　　　　　　 B1-P-A1====B2-Q-A2
+	-2: B1 = A2の時　　　　　　 A1-P-B1====A2-Q-B2
+	-1: A1 = A2の時　　　　　　 B1-P-A1====A2-Q-B2
+	0: 同一線分上に存在(A1=A2とA1=B2のパターン有り)
+	1:同一経路上に⇒のように並ぶ B1-P-A1----A2-Q-B2
+	2:同一経路上に⇒のように並ぶ A1-P-B1----A2-Q-B2
+	3:同一経路上に⇒のように並ぶ B1-P-A1----B2-Q-A2
+	4:同一経路上に⇒のように並ぶ A1-P-B1----B2-Q-A2
+	"""
+	if is_Position_Class:
+		position_list1 = position_list1.position
+		position_list2 = position_list2.position
+	prev1_prev2 = 0
+	next1_prev2 = 0
+	prev1_next2 = 0
+	next1_next2 = 0
+	prev_node1,prev_distance1,next_distance1,next_node1 = position_list1
+	prev_node2,prev_distance2,next_distance2,next_node2 = position_list2
+	if prev_node1 == prev_node2 and next_node1 == next_node2:
+		distance = abs(prev_distance1 - prev_distance2)
+		return distance, 0
+	if prev_node1 == next_node2 and prev_node2 == next_node1:
+		distance = abs(prev_distance1 - next_distance2)
+		return distance, 0
+	else:
+		prev1_prev2 = prev_distance1 + get_distance(floor, prev_node1, prev_node2) + prev_distance2
+		next1_prev2 = next_distance1 + get_distance(floor, next_node1, prev_node2) + prev_distance2
+		prev1_next2 = prev_distance1 + get_distance(floor, prev_node1, next_node2) + next_distance2
+		next1_next2 = next_distance1 + get_distance(floor, next_node1, next_node2) + next_distance2
+		distance_list = [prev1_prev2, next1_prev2, prev1_next2, next1_next2]
+		distance = min(distance_list)
+		if (get_distance(floor, prev_node1, prev_node2) == 0):
+			route_index = -1
+		elif (get_distance(floor, next_node1, prev_node2) == 0):
+			route_index = -2
+		elif (get_distance(floor, prev_node1, next_node2) == 0):
+			route_index = -3
+		elif (get_distance(floor, next_node1, next_node2) == 0):
+			route_index = -4
+		else:
+			route_index = distance_list.index(distance) + 1
+		return distance, route_index 
+	# dist_list = [prev_prev, next_prev, prev_next, next_next]
+	# min_dist = min(dist_list)
+	# min_index = dist_list.index(min_dist)
+	# if min_index == 0 or min_index == 1:
+	# 	return min_dist,"prev"
+	# elif min_index == 2 or min_index == 3:
+	# 	return min_dist,"next"
+	# else:
+	# 	print("二点間の距離の計算失敗")
+	# 	return 0,None
+
+def get_direct_distance_between_points(pos_x1,pos_y1,pos_x2,pos_y2):
+	return (pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)
 
 if __name__ == '__main__':
 	st_dt = dt_from_14digits_to_iso(st_dt)

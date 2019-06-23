@@ -10,7 +10,8 @@ Env()
 
 from convert_datetime import *
 from aggregate import *
-from get_start_end import get_start_end_mod
+# from get_start_end import get_start_end_mod
+from new_get_start_end import get_start_end
 from aggregate_raw100 import aggregate_raw100
 
 from pymongo import *
@@ -36,7 +37,8 @@ def analyze_mod(st_dt, ed_dt):
         ### execute following all process ###
         aggregate_mod(tmp_st, after_5s)
         aggregate_raw100(after_5s)
-        get_start_end_mod(tmp_st)
+        # get_start_end_mod(tmp_st)
+        get_start_end(tmp_st)
         tmp_st = after_5s
         #####################################
         # print(time.time()-loop_st)

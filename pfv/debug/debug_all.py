@@ -30,11 +30,12 @@ def debug_all(json_file, st_dt, ed_dt, query_list):
 	st_dt = dt_from_14digits_to_iso(st_dt)
 	ed_dt = dt_from_14digits_to_iso(ed_dt)
 	analyze_mod(st_dt,ed_dt)
-	csv_examine_route(query_list)
+	# csv_examine_route(query_list)  ## TODO: examine_route系の変更
 
 if __name__ == '__main__':
 	init_db()
 	path = "../../working/"
+	import_flag = False
 
 	### TODO:以下を実行前に入力 ###
 	date = "20190413"
@@ -50,9 +51,9 @@ if __name__ == '__main__':
 
 	json_file_name = "rttmp3_" + date + ".json" 
 	json_file = path + json_file_name
-
-	os.system("mongoimport -d nm4bd -c trtmp " + json_file)
-	os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + path + "exp_param.csv --drop")
+	if import_flag:
+		os.system("mongoimport -d nm4bd -c trtmp " + json_file + " --drop")
+		os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + path + "exp_param.csv --drop")
 	
 	# 準備終了、デバック開始
 	debug_all(json_file,st_dt,ed_dt,query_list)

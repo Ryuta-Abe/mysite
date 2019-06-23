@@ -206,12 +206,13 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 				# if analyzed_actual_dist < mlist[i]["margin"]:
 				# 	moment_error_dist = 0
 				# 	break
-				if isinside(analyzed_data["pos_x"],pos_x,mlist[i]["pos_x"]) and isinside(analyzed_data["pos_y"],pos_y,mlist[i]["pos_y"]):
+				if isinside(floor,analyzed_data["pos_x"],pos_x,mlist[i]["pos_x"]) and isinside(floor,analyzed_data["pos_y"],pos_y,mlist[i]["pos_y"]):
 					moment_error_dist = 0
 					break
 				else:
 					temp_dist = mlist[i]["margin"]
-					temp_dist += get_distance_between_points(floor,mlist[i]["pos"],actual_position_list)
+					min_distance ,_ = get_distance_between_points(floor,mlist[i]["pos"],actual_position_list)
+					temp_dist += min_distance
 				if temp_dist < min_dist:
 					min_dist = temp_dist
 					moment_error_dist = rounding(min_dist - mlist[i]["margin"],2)
@@ -276,11 +277,31 @@ def update_partial_count(judgement):
 		else:
 			print("unexpected judgement error!")
 
-def isinside(end1_coord,target_coord,end2_coord):
-	if end1_coord <= target_coord <= end2_coord or end1_coord >= target_coord >= end2_coord:
-		return True
-	else:
-		return False
+def isinside(end1_coord,target_coord,end2_coord,position_flag = False, floor = "W2-7F"):
+	"""
+	target_coordがend1_coordとend2_coordの間に存在しているかどうか返す関数
+	マージンの内側判定など、end1_coordとend2_coordを結ぶ直線が経路と一致する場合のみ使用可能
+	結ぶ直線に凹凸がある場合等は誤る可能性あり
+	when position_flag = False
+	@param end1_coord: float 一つ目の点のx or y座標の値 
+	@param target_coord: float 判定対象の点のx or y座標の値 
+	@param end2_coord: float 二つ目の点のx or y座標の値 
+	when position_flag = True
+	@param end1_coord ~ end2_coord: position list from Position Class
+	@return Bool: target_coordがend1_coordとend2_coordの間に存在しているかどうか
+	"""
+	if position_flag:
+		end1_posx, end1_posy = end1_coord.get_posxy()
+		end2_posx, end2_posy = end2_coord.get_posxy()
+		target_posx, target_posy = target_coord.get_posxy()
+		if isinside(end1_posx,target_posx,end2_posx) and isinside(end1_posy,target_posy,end2_posy):
+			return True
+
+	else:	
+		if end1_coord <= target_coord <= end2_coord or end1_coord >= target_coord >= end2_coord:
+			return True
+		else:
+			return False
 
 def find_analyzed_node(mac,floor,dt):
 	analyzed_data = {}
@@ -376,35 +397,6 @@ def add_adjacent_nodes(floor,node,adjacent_flag):
 # 	via_next_distance += db.idealroute.find_one(via_next_query)["total_distance"]
 # 	return rounding(min(via_prev_distance,via_next_distance),2)
 
-def get_distance_between_points(floor,position_list1,position_list2):
-	prev1_prev2 = 0
-	next1_prev2 = 0
-	prev1_next2 = 0
-	next1_next2 = 0
-	prev_node1,prev_distance1,next_distance1,next_node1 = position_list1
-	prev_node2,prev_distance2,next_distance2,next_node2 = position_list2
-	if prev_node1 == prev_node2 and next_node1 == next_node2:
-		return abs(prev_distance1 - prev_distance2)
-	if prev_node1 == next_node2 and prev_node2 == next_node1:
-		return abs(prev_distance1 - next_distance2)
-	prev1_prev2 = prev_distance1 + get_distance(floor, prev_node1, prev_node2) + prev_distance2
-	next1_prev2 = next_distance1 + get_distance(floor, next_node1, prev_node2) + prev_distance2
-	prev1_next2 = prev_distance1 + get_distance(floor, prev_node1, next_node2) + next_distance2
-	next1_next2 = next_distance1 + get_distance(floor, next_node1, next_node2) + next_distance2
-	return min(prev1_prev2, next1_prev2, prev1_next2, next1_next2)
-	# dist_list = [prev_prev, next_prev, prev_next, next_next]
-	# min_dist = min(dist_list)
-	# min_index = dist_list.index(min_dist)
-	# if min_index == 0 or min_index == 1:
-	# 	return min_dist,"prev"
-	# elif min_index == 2 or min_index == 3:
-	# 	return min_dist,"next"
-	# else:
-	# 	print("二点間の距離の計算失敗")
-	# 	return 0,None
-
-def get_direct_distance_between_points(pos_x1,pos_y1,pos_x2,pos_y2):
-	return (pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)
 
 
 

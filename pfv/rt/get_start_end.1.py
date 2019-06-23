@@ -137,7 +137,7 @@ def get_start_end_mod(all_st_time):
             pastd = []
             pastd += db.pastdata.find({"mac":data["id"]["mac"]})
 
-            # update_dtを下回る以上データがいるか確認
+            # update_dtを下回る異常データがいるか確認
             if (pastd != []) and (data["id"]["get_time_no"] <= pastd[0]["update_dt"]):
                 print("0:(dt > update_dt)or(pastd==[])")
                 pass
@@ -333,7 +333,7 @@ def get_start_end_mod(all_st_time):
                             ins_flag = True
                             break
 
-            count_all += 1
+            # count_all += 1
             if (ins_flag):
                 update_maclist(data["id"]["mac"])
 
@@ -445,7 +445,8 @@ def append_data_lists(num, data, tmp_startdt, tmp_enddt, tmp_node_id, data_lists
     """
     data_lists(移動データ保存リスト)にse_data[Start and End data]を追加するために
     se_dataを作成する関数
-    @return se_data:dict
+    
+    n se_data:dict
     @return se_data: start_nodeとend_nodeは[node情報]
     """
     if tmp_enddt < tmp_startdt:

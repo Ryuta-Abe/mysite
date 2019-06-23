@@ -1,0 +1,14 @@
+diff a/pfv/util/get_coord.py b/pfv/util/get_coord.py	(rejected hunks)
+@@ -59,11 +59,7 @@
+ 		if (CONSIDER_BEFORE and stay_bfr != None):  # 直前がstayで、その後flowの場合、中点を測位位置とする
+ 			node_num_bfr = stay_bfr["pcwl_id"]
+ 			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
+-			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
+-								  {"$set": {"pos_x":mid_coord_dict["pos_x"],
+-								  			"pos_y":mid_coord_dict["pos_y"],
+-								  			"position":position,
+-								  			"mlist":mlist}}, True)
++			db.analy_coord.update(, True)
+ 
+ 
+ 	elif (staydata != None):
