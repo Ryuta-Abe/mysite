@@ -8,6 +8,7 @@ from datetime import datetime
 from convert_datetime import *
 from pymongo import *
 from Class import Position
+from math import sqrt
 client = MongoClient()
 db = client.nm4bd
 
@@ -313,7 +314,7 @@ def get_distance_between_points(floor,position_list1,position_list2,is_Position_
 	# 	return 0,None
 
 def get_direct_distance_between_points(pos_x1,pos_y1,pos_x2,pos_y2):
-	return (pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)
+	return sqrt((pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)^2)
 
 if __name__ == '__main__':
 	st_dt = dt_from_14digits_to_iso(st_dt)

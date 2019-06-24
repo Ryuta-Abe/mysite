@@ -99,7 +99,8 @@ def replace_and_make_label(input_file, label_file, node_id):
     f_label = open(label_file, "a",newline='')
     label_writer = csv.writer(f_label)
     with open(input_file, "r") as f_in:
-        csv_reader = csv.reader(f_in, delimiter=",", quotechar='"')
+        # csv_reader = csv.reader(f_in, delimiter=",",)
+        csv_reader = csv.reader(f_in, delimiter=",", quotechar='"',quoting = csv.QUOTE_ALL)
         f = open(output_file, 'w',newline='')
         writer = csv.writer(f)
 
@@ -140,9 +141,10 @@ def append_train(input_file, train_file):
 
 
 if __name__ == "__main__":
-    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param.csv --drop")
+    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param_0611.csv --drop")
     # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
-    common_id_list = ["190611_","190617_"]
+    # common_id_list = ["190611_","190617_"]  # 0611: Node前、0617: 中点
+    common_id_list = ["190611"]
     Num_of_query = 108 #全queryの数
     for common_id in common_id_list:
         for id_num in range(1,Num_of_query):

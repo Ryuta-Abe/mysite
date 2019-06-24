@@ -13,7 +13,7 @@ from pymongo import *
 from Class import *
 from datetime import *
 from examine_route import isinside
-from get_coord import get_distance_between_points, get_dividing_point
+from new_get_coord import get_distance_between_points, get_dividing_point
 import numpy as np
 
 client = MongoClient()
@@ -47,25 +47,37 @@ def get_start_end(all_st):
     開始・終了の時刻・地点を決定するモジュール
     @param  all_st : datetime 開始時刻
     """
-    # global flow_list
-    # global stay_list
-    # flow_list = []
+    global flow_count
+    global stay_count
+    flow_count = 0
+    stay_count = 0
 
     # 希望のPRデータのみ抽出
     pr_data_list = db.tmpcol.find({"_id.mac":{"$regex":MAC_HEAD}}).sort([("_id.mac",ASCENDING),("_id.get_time_no",ASCENDING)])
     make_pastmaclist()
+    tag_count = db.pastmaclist.count()
     if(pr_data_list.count() != 0):
+        pr_data_list_tmp = []
         for pr_data in pr_data_list:  # 各タグのある時刻のPRデータに対して処理を行う
+            pr_data_list_tmp.append(pr_data)
             # PRデータの加工を行い、RSSIを抽出する
-            pr_data,largest_floor, pcwl_id_list, rssi_list = remake_pr_data(pr_data) 
-            if get_analyzed_pos(pr_data, largest_floor, pcwl_id_list, rssi_list) == 0:
+            pr_data,largest_floor, pcwl_id_list, rssi_list = remake_pr_data(pr_data)
+            result = get_analyzed_pos(pr_data, largest_floor, rssi_list)
+            if result == 0:
                 update_maclist(pr_data["id"]["mac"])
+            else:
+                print("plz step in to investigate")
+                result = get_analyzed_pos(pr_data, largest_floor, rssi_list)
+                print("result(get_analyzed_pos): ", result)
+                print("pr_data",pr_data)
     
     if (db.pastmaclist.find() != 0): #  当該タグのPRデータが取得できなかった場合（ex:電源断・ネットワークエラー）
+        lost_mac_list = []
         for unavailable_mac in db.pastmaclist.find():
             mac = unavailable_mac["_id"]["mac"]
             pastd = db.pastdata.find_one({"mac":mac})
             pastlist = reverse_list(pastd["pastlist"], "dt")
+            pastlist = pastd["pastlist"]
             if (len(pastlist) != 0):
                 for past in pastlist:
                     if(all_st - past["dt"] <= KEEP_ALIVE) and (past["alive"]): # 現在のデータが取れていないが、最新取得時刻からKEEP_ALIVE以下しか経過していない場合
@@ -75,40 +87,63 @@ def get_start_end(all_st):
                         pastlist.append({"dt":all_st, "floor":past["floor"], "position":past["position"],"nodelist":[], "alive":False, "arrive_intersection":False})  # TODO: dt -> datetime
                         save_pastd(pastd)
                         make_staymacinfo(past["floor"],mac,all_st,past["position"])
+                        stay_count += 1
                         break
+                else: # 現在のデータがとれておらず、最新取得時刻からKEEP_ALIVEも経過しており、どこにいるか分からない場合
+                    lost_mac_list.append(mac)
 
     # make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
     # make_staymacinfo(data_lists_stay,db.staymacinfo,min_interval)
 
-def get_analyzed_pos(pr_data, floor, pcwl_id_list, rssi_list):
+    print("----",all_st,"----",end="")
+
+    if(flow_count + stay_count != tag_count):
+        print("flow: ", flow_count, " / ", tag_count)
+        print("stay: ", stay_count, " / ", tag_count)        
+        print("Error: Data Lost:", lost_mac_list)
+    else:
+        print("was analyzed successfully!")
+
+
+def get_analyzed_pos(pr_data, floor, rssi_list):
+    global flow_count
+    global stay_count
     # RSSI上位3つまでPRデータを参照するため、ノード数node_cnt(3以下)を算出
     node_cnt = min(len(pr_data["nodelist"]), 3)
     nodelist = pr_data["nodelist"]
     dt = pr_data["id"]["get_time_no"]  #  現在時刻
     mac = pr_data["id"]["mac"]
 
+    # nodelistを機械学習を適応し整形({"floor","position","rssi"})に
     if USE_ML:
         nodelist = []
         desc_index, label_list = classify(floor, rssi_list)
         for i in range(3):
             # label = label_list[desc_index[i]]
             label = label_list[i]
+
             if abs(np.round(label)- label) < 0.001:
                 pcwl_id = int(np.round(label))
                 node = Node(floor, pcwl_id)
                 position = node.position.position
             else:
                 label = float(label)
-                prev_node = int(label)
-                next_node = round((label - prev_node)*100)
-                if next_node % 10 == 0:  # next_nodeが10の倍数⇒next_nodeの桁数が1桁
-                    next_node = next_node / 10
+                if label == 9.1:
+                    prev_node = 9
+                    next_node = 10
+                elif label == 18.2:
+                    prev_node = 18
+                    next_node = 20
+                else:
+                    prev_node = int(label)
+                    next_node = round((label - prev_node)*100)
+                    if next_node % 10 == 0:  # next_nodeが10の倍数⇒next_nodeの桁数が1桁
+                        next_node = round(next_node / 10)
                 position = [prev_node,1,1,next_node]
                 position = get_dividing_point(floor,position[0],position[1],position[2],position[3])
             
-            predict_dict = {"floor":floor, "position":position, "rssi":-60-i*10}
+            predict_dict = {"floor":floor, "position":position, "rssi":-50-i*10}
             nodelist.append(predict_dict)
-
     else:
         for node in nodelist:
             node_class = Node(node["floor"],node["pcwl_id"])
@@ -121,10 +156,15 @@ def get_analyzed_pos(pr_data, floor, pcwl_id_list, rssi_list):
 
     # update_dtを下回る異常データがいるか確認
     if(pastd != []): 
-        pastlist = reverse_list(pastd[0]["pastlist"], "dt")
+        # pastlist = pastd[0]["pastlist"]
+        # pastlist = reverse_list(pastlist,"dt")
+        pastd[0]["pastlist"] = reverse_list(pastd[0]["pastlist"],"dt")
         pastlist = pastd[0]["pastlist"]
+
+        # pastlist = reverse_list(pastd[0]["pastlist"], "dt")
+        # pastlist = pastd[0]["pastlist"]
         if(dt <= pastlist[0]["dt"]):
-            print("0:(dt < update_dt)or(pastd==[])")
+            print("0:(dt < update_dt)")
             return -1
 
     # 無ければ初期nodecnt_dict, 初期pastlistを作成
@@ -138,7 +178,6 @@ def get_analyzed_pos(pr_data, floor, pcwl_id_list, rssi_list):
                 past_data = {"dt":dt, "floor":floor, "position":nodelist[num]["position"],"nodelist":nodelist, "alive":True, "arrive_intersection":False}
                 pastlist.append(past_data)
                 save_pastd(pastd[0])
-
                 return 0
         else:  # 全てのRSSIが閾値を下回った場合
             return -1
@@ -162,10 +201,10 @@ def get_analyzed_pos(pr_data, floor, pcwl_id_list, rssi_list):
     
     recent = pastlist[0]  # 直近の(MIN_INTERVAL前の)pastlist
     recent_pos = recent["position"]
-    before_dt = recent["dt"]
     if STAY_AFTER_INTERSECTION and recent["arrive_intersection"]:  # 交差点到着又は交差点滞留フィルタ適応後に交差点STAYがONでかつ、前回到着した場合
         pastlist.append({"dt":dt,"floor":floor, "position":recent_pos,"nodelist":nodelist, "alive":True, "arrive_intersection":False})  # TODO: 名前の変更
         make_staymacinfo(floor,mac,dt,recent_pos)
+        stay_count += 1
         save_pastd(pastd[0])
         return 0
     # 過去の所在位置データのpastlistを取得（TODO:廃止）
@@ -176,61 +215,41 @@ def get_analyzed_pos(pr_data, floor, pcwl_id_list, rssi_list):
         position = node["position"]  # 仮の測位位置position_listを決定
         ## flowの場合
         if not is_same_position(floor,position,recent_pos) and (floor == recent["floor"]):
-            if is_move_too_far(floor,Position(recent_pos,floor),Position(position,floor)):  # 移動距離フィルタ
-                break
+            if recent["alive"] and is_move_too_far(floor,Position(recent_pos,floor),Position(position,floor)):  # 移動距離フィルタ
+                continue
             pfv_route = get_pfvmacinfo(floor,mac,dt,Position(recent_pos,floor),Position(position,floor))  # 仮のpfv_route（flowをノードを境に分解したもので、ex: [[[1,10.5,17,2],[2,0,54,3]],[[2,0,54,3],[2,14,40,3]]]）
-            if is_back_and_forth(floor,mac,dt,position):
+            if is_back_and_forth(floor,mac,dt,position):  # 逆行防止フィルタ
                 pastlist.append({"dt":dt,"floor":floor, "position":recent_pos,"nodelist":nodelist, "alive":True, "arrive_intersection":False})  # TODO: 名前の変更
                 save_pastd(pastd[0])
                 make_staymacinfo(floor,mac,dt,recent_pos)
+                stay_count += 1
                 return 0
             new_pfv_route = find_intersection_and_update_route(floor,pfv_route)
-            if STOP_AT_INTERSECTION and new_pfv_route is not None:
+            if STOP_AT_INTERSECTION and new_pfv_route is not None:  # 交差点通過時にstayとする
                 intersection = new_pfv_route[-1][-1]
                 pastlist.append({"dt":dt,"floor":floor, "position":intersection,"nodelist":nodelist, "alive":True, "arrive_intersection":True})  # TODO: pfvmacinfo
                 save_pastd(pastd[0])
                 make_pfvmacinfo(floor,mac,dt,new_pfv_route)
-                return 0
+                flow_count += 1
             else:  # 普通にflow
                 pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
                 save_pastd(pastd[0])
                 make_pfvmacinfo(floor,mac,dt,pfv_route)
-                return 0
+                flow_count += 1
+            return 0
 
                 
-
-            # is_back_and_forth = is_back_and_forth(floor,mac,before_dt,Position(recent_pos,floor),Position(position,floor))
-            # is_back_and_forth, intersection = is_back_and_forth_and_get_intersection(floor,mac,before_dt,Position(recent_pos,floor),Position(position,floor))  # 逆行防止フィルタと交差点のPosition（通過していれば）を取得
-            # if is_back_and_forth:  # 逆行時は滞留
-            #     pastlist.append({"dt":dt,"floor":floor, "position":recent_pos,"nodelist":nodelist, "alive":True, "arrive_intersection":False})  # TODO: 名前の変更
-            #     save_pastd(pastd[0])
-            #     make_staymacinfo(floor,mac,dt,recent_pos)
-            #     return 0
-            # if STOP_AT_INTERSECTION:  # 交差点滞留フィルタがONの時、
-            #     if intersection is not None:  # 交差点を通過した時
-            #         pastlist.append({"dt":dt,"floor":floor, "position":intersection.position,"nodelist":nodelist, "alive":True, "arrive_intersection":True})  # TODO: pfvmacinfo
-            #         save_pastd(pastd[0])
-            #         make_pfvmacinfo(floor,mac,dt,Position(recent_pos,floor),intersection)
-            #         return 0
-            # if Position(position,floor).is_intersection():  # 交差点に移動の結果到着した時
-            #     pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":True})
-            # else:  # 普通にflow
-            #     pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
-            # save_pastd(pastd[0])
-            # make_pfvmacinfo(floor,mac,dt,Position(recent_pos,floor),Position(position,floor))
-            # return 0
         # stayの場合
         elif is_same_position(floor,position,recent_pos) and (floor == recent["floor"]):  
             pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
             save_pastd(pastd[0])
             make_staymacinfo(floor,mac,dt,position)
-            return 0
-
+            stay_count += 1
         # 新しいフロアの場合
         else:
             pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
             save_pastd(pastd[0])
-            return 0
+        return 0
 
 def remake_pr_data(pr_data):
     """

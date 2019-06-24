@@ -8,6 +8,7 @@ from datetime import datetime
 from convert_datetime import *
 from pymongo import *
 from Class import Position
+from math import sqrt
 client = MongoClient()
 db = client.nm4bd
 
@@ -29,10 +30,11 @@ def get_analy_coord(query_id):
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
 	data = db.csvtest.find_one(query_id)
+
 	mac = data["mac"]
-	floor = data["floor"]
-	st_node = data["st_node"]
-	ed_node = data["ed_node"]
+	# floor = data["floor"]
+	# st_node = data["st_node"]
+	# ed_node = data["ed_node"]
 	exp_id = data["exp_id"]
 
 	common_dt = str(data["common_dt"]) # 測定時刻における先頭の共通部分
@@ -48,28 +50,30 @@ def get_analy_coord(query_id):
 		st_dt = shift_seconds(st_dt, 5)
 
 def get_coord_from_info(floor, mac, dt):
+	aft_5s = shift_seconds(dt, 5)
 	bfr_5s = shift_seconds(dt, -5)
-	query = {"floor":floor, "mac":mac, "datetime":dt}
-	q_bfr = {"floor":floor, "mac":mac, "datetime":bfr_5s}
+	query = {"floor":floor, "mac":mac, "datetime":{"$gte":dt,"$lt":aft_5s}}
+	# q_bfr = {"floor":floor, "mac":mac, "datetime":{"$gte":bfr_5s,"$lt":dt}}
 	flowdata = db.pfvmacinfo.find_one(query)
 	staydata = db.staymacinfo.find_one(query)
-	stay_bfr = db.staymacinfo.find_one(q_bfr)
+	# stay_bfr = db.staymacinfo.find_one(q_bfr)
 
-	if (flowdata != None):
+	if (flowdata is not None):
 		position = flowdata["route"][-1][1] 
 		insert_coord_from_node(floor, mac, position, dt)
-		if (CONSIDER_BEFORE and stay_bfr != None):  # 直前がstayで、その後flowの場合、中点を測位位置とする
-			node_num_bfr = stay_bfr["pcwl_id"]
-			mid_coord_dict, position, mlist = get_midpoint(floor, node_num_bfr, node_num)
-			db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
-                                  {"$set": {"pos_x":mid_coord_dict["pos_x"],
-								  "pos_y":mid_coord_dict["pos_y"],
-								  "position":position,
-								  "mlist":mlist}}, True)
-	elif (staydata != None):
+		# if (CONSIDER_BEFORE and stay_bfr is not None None):  # 直前がstayで、その後flowの場合、中点を測位位置とする
+		# 	position_bfr = stay_bfr["position"]
+		# 	mid_coord_dict, position, mlist = get_midpoint(floor, position_bfr, position)
+		# 	db.analy_coord.update({"mac":mac,"floor":floor,"datetime":dt},
+        #                           {"$set": {"pos_x":mid_coord_dict["pos_x"],
+		# 						  "pos_y":mid_coord_dict["pos_y"],
+		# 						  "position":position,
+		# 						  "mlist":mlist}}, True)
+	elif (staydata is not None):
 		position = staydata["position"]
 		insert_coord_from_node(floor, mac, position, dt)
 	else:
+		print("Error:","Not found")
 		pass
 
 def insert_coord_from_node(floor, mac, position, dt):
@@ -77,31 +81,52 @@ def insert_coord_from_node(floor, mac, position, dt):
 	prev_node, prev_dist, next_dist, next_node = position
 	mlist = [] # marginのリスト
 
-	route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
-										{"query" : prev_node}, {"query" : next_node}]})
-	route_distance = route_info["total_distance"]
-	margin = route_distance/ MARGIN_RATIO
-	if margin < prev_dist:
-		prev_margin_prev_dist = prev_dist - margin
-		prev_margin_next_dist = next_dist + margin
-		mag_pos = [prev_node,prev_margin_prev_dist,prev_margin_next_dist,next_node]
-		p_x, p_y = get_position(floor, mag_pos)
-		margin_dist = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
-		mlist.append(margin_dist)
-	else:
-		surplus = margin - prev_dist
-		mlist = get_mlist_in_surplus(floor,prev_node,surplus,mlist)
+	def append_in_mlist(floor,margin_position,mlist,margin_dist):
+		pos_x, pos_y = get_position(floor, margin_position)
+		margin_dict = {"margin":margin_dist, "pos":margin_position, "pos_x":pos_x, "pos_y":pos_y}
+		mlist.append(margin_dict)
+		return mlist
 	
-	if margin < next_dist:
-		next_margin_prev_dist = prev_dist + margin
-		next_margin_next_dist = next_dist - margin
-		mag_pos = [prev_node,next_margin_prev_dist,next_margin_next_dist,next_node]
-		p_x, p_y = get_position(floor, mag_pos)
-		margin_dist = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
-		mlist.append(margin_dist)
-	else:
-		surplus = margin - prev_dist
-		mlist = get_mlist_in_surplus(floor,prev_node,surplus,mlist)
+	# positionがnodeの場合
+	if next_dist == 0:
+		position = Position(position).reverse_order()
+	if prev_dist == 0:  
+		node_info = db.pcwlnode.find_one({"floor":floor,"pcwl_id":prev_node})
+		next_list = node_info["next_id"]
+		for next_node in next_list:
+			distance = get_distance(floor, prev_node, next_node)
+			margin = distance/MARGIN_RATIO
+			mag_pos = [prev_node, margin, distance - margin, next_node]
+			mlist = append_in_mlist(floor,mag_pos,mlist,margin)
+
+	# positionがnodeでない(node間)である場合
+	else: 
+		route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
+											{"query" : prev_node}, {"query" : next_node}]})
+		route_distance = route_info["total_distance"]
+		margin = route_distance/ MARGIN_RATIO
+		# prev側のmarginを算出
+		if margin < prev_dist:  # marginがpositionの両端(prev,next_node)からはみ出ない場合
+			prev_margin_prev_dist = prev_dist - margin
+			prev_margin_next_dist = next_dist + margin
+			mag_pos = [prev_node,prev_margin_prev_dist,prev_margin_next_dist,next_node]
+			p_x, p_y = get_position(floor, mag_pos)
+			margin_dict = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
+			mlist.append(margin_dict)
+		else:  # marginがpositionの両端(prev,next_node)からはみ出る場合
+			surplus = margin - prev_dist
+			mlist = get_mlist_in_surplus(floor,prev_node,surplus,mlist,margin)
+		# next側のmarginを算出
+		if margin < next_dist:
+			next_margin_prev_dist = prev_dist + margin
+			next_margin_next_dist = next_dist - margin
+			mag_pos = [prev_node,next_margin_prev_dist,next_margin_next_dist,next_node]
+			p_x, p_y = get_position(floor, mag_pos)
+			margin_dict = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
+			mlist.append(margin_dict)
+		else:
+			surplus = margin - prev_dist
+			mlist = get_mlist_in_surplus(floor,prev_node,surplus,mlist,margin)
 	pos_x, pos_y = get_position(floor, position)
 
 	coord_data = {"mac":mac,"floor":floor,"datetime":dt,"pos_x":pos_x,"pos_y":pos_y,
@@ -109,7 +134,7 @@ def insert_coord_from_node(floor, mac, position, dt):
 	# print(coord_data)
 	db.analy_coord.insert(coord_data)
 
-def get_mlist_in_surplus(floor,pcwl,surplus,mlist):
+def get_mlist_in_surplus(floor,pcwl_id,surplus,mlist,margin):
 	node_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":pcwl_id})
 	next_list = node_info["next_id"]
 	for next_node in next_list:
@@ -119,116 +144,6 @@ def get_mlist_in_surplus(floor,pcwl,surplus,mlist):
 		margin_dist = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
 		mlist.append(margin_dist)
 	return mlist
-
-
-
-# def get_midpoint(floor, all_st_num, all_ed_num):
-# 	from examine_route import rounding
-# 	route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
-# 										{"query" : all_st_num},{"query" : all_ed_num}]})
-# 	total_d = route_info["total_distance"]
-# 	mid_len = total_d / 2
-
-# 	path_list = []
-# 	if (route_info["dlist"][0]["direction"][0] != all_st_num): ## ex: all_ed_num = 5, [0]["direction"][0] = 5
-# 		route_info["dlist"].reverse()
-# 		for path in route_info["dlist"]:
-# 			path["direction"].reverse()
-# 	for path in route_info["dlist"]:		
-# 		path_list.append(path["direction"])
-
-# 	# get midpoint
-# 	rem_len = mid_len
-# 	for path in route_info["dlist"]:  # 全経路の中点を含むようなpathを探索
-# 		ref_len = path["distance"]
-# 		st_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][0]})
-# 		ed_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][1]})
-
-# 		st_x, st_y = st_node["pos_x"],st_node["pos_y"]
-# 		ed_x, ed_y = ed_node["pos_x"],ed_node["pos_y"]
-# 		if (ref_len >= rem_len):
-# 			mid_coord_dict = {"pos_x":((ref_len - rem_len)*st_x + rem_len*ed_x) / ref_len,
-# 						 	  "pos_y":((ref_len - rem_len)*st_y + rem_len*ed_y) / ref_len
-# 						 	 }
-
-# 			mid_coord_dict["pos_x"] = rounding(mid_coord_dict["pos_x"],1)
-# 			mid_coord_dict["pos_y"] = rounding(mid_coord_dict["pos_y"],1)
-# 			position = [st_node["pcwl_id"], rounding(rem_len,1), rounding(path["distance"]-rem_len,1), ed_node["pcwl_id"]]
-# 			break
-# 		else:
-# 			rem_len = rem_len - path["distance"]
-
-# 	# get quarter-point
-# 	margin = total_d / 4
-# 	# quarter 1st and quarter 3rd
-# 	margin_list = [margin, total_d - margin]
-# 	mlist = []
-# 	for mgn_len in margin_list:
-# 		via_list = []
-# 		rem_len = mgn_len
-# 		for path in route_info["dlist"]:
-# 			ref_len = path["distance"]
-# 			st_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][0]})
-# 			ed_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":path["direction"][1]})
-# 			st_num = st_node["pcwl_id"]
-# 			ed_num = ed_node["pcwl_id"]
-# 			if (st_num not in via_list and st_num != all_st_num):
-# 				via_list.append(st_num)
-# 			if (ed_num not in via_list and ed_num != all_ed_num):
-# 				via_list.append(ed_num)
-
-# 			st_x, st_y = st_node["pos_x"],st_node["pos_y"]
-# 			ed_x, ed_y = ed_node["pos_x"],ed_node["pos_y"]
-# 			if (ref_len >= rem_len):
-# 				mag_coord_dict = {"pos_x":((ref_len - rem_len)*st_x + rem_len*ed_x) / ref_len,
-# 							 	  "pos_y":((ref_len - rem_len)*st_y + rem_len*ed_y) / ref_len}
-
-# 				mag_coord_dict["pos_x"] = rounding(mag_coord_dict["pos_x"],1)
-# 				mag_coord_dict["pos_y"] = rounding(mag_coord_dict["pos_y"],1)
-# 				mag_pos = [st_node["pcwl_id"], rounding(rem_len,1), rounding(path["distance"]-rem_len,1), ed_node["pcwl_id"]]
-# 				break
-# 			else:
-# 				rem_len = rem_len - path["distance"]
-
-# 		p_x, p_y = get_position(floor, mag_pos)
-# 		margin_dist = {"margin":margin, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
-# 		mlist.append(margin_dist)
-
-# 	m_edge_list = []
-# 	for mag_data in mlist:
-# 		m_edge_list.append([mag_data["pos"][0], mag_data["pos"][3]])
-# 	if (m_edge_list[0] != m_edge_list[1]):
-# 		plist = []
-# 		via_list = [m_edge_list[0][1], m_edge_list[1][0]]
-# 		if (via_list[0] == via_list[1]):
-# 			via_list.remove(via_list[1])
-
-# 		# get_via_point
-# 		tmp_path_list = []
-# 		for via_num in via_list:
-# 			via_node = db.pcwlnode.find_one({"floor":floor, "pcwl_id":via_num})
-# 			for next_num in via_node["next_id"]:
-# 				tmp_path_list.append([via_node["pcwl_id"], next_num])
-
-
-
-# 		# make path_list (マージン内に存在する交差点から延びる経路の中で、移動経路と不一致の経路のみ追加)
-# 		for tmp_path in path_list:
-# 			rev_path = list(tmp_path)
-# 			rev_path.reverse()
-# 			if (tmp_path in tmp_path_list):
-# 				tmp_path_list.remove(tmp_path)
-# 			if (rev_path in tmp_path_list):
-# 				tmp_path_list.remove(rev_path)
-
-# 		for tmp_path in tmp_path_list:
-# 			distance = get_distance(floor, tmp_path[0], tmp_path[1])
-# 			mag_pos = [tmp_path[0], 0, distance, tmp_path[1]]
-# 			p_x, p_y = get_position(floor, mag_pos)
-# 			margin_dist = {"margin":0, "pos":mag_pos, "pos_x":p_x, "pos_y":p_y}
-# 			mlist.append(margin_dist)
-
-# 	return mid_coord_dict, position, mlist
 
 def get_distance(floor, node1, node2):
 	if node1 == node2:
@@ -329,20 +244,9 @@ def get_distance_between_points(floor,position_list1,position_list2,isPositionCl
 		else:
 			route_index = distance_list.index(distance) + 1
 		return distance, route_index 
-	# dist_list = [prev_prev, next_prev, prev_next, next_next]
-	# min_dist = min(dist_list)
-	# min_index = dist_list.index(min_dist)
-	# if min_index == 0 or min_index == 1:
-	# 	return min_dist,"next"
-	# elif min_index == 2nextmin_index == 3:
-	# 	return min_dinexy
-next"
-	# else:
-	# 	print("二点間の距離の計算失敗")
-	# 	return 0,None
 
 def get_direct_distance_between_points(pos_x1,pos_y1,pos_x2,pos_y2):
-	return (pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)
+	return sqrt((pos_x1 - pos_x2)^2 + (pos_y1 - pos_y2)^2)
 
 
 if __name__ == '__main__':

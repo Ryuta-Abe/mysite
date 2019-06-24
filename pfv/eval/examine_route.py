@@ -8,7 +8,8 @@ Env()
 from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
-from get_coord import *
+from new_get_coord import get_position, get_distance_between_points
+# from new_get_coord import *
 client = MongoClient()
 db = client.nm4bd
 
@@ -180,7 +181,7 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 		correct_nodes,actual_position_list = find_correct_nodes_and_position(floor,dlist,delta_distance)
 	pos_x,pos_y = get_position(floor,actual_position_list)  #  正解位置
 	
-	# get_coord_from_info(floor, mac, dt)
+	# get_coord_from_info(floor, mac, dt)、測位位置を取得
 	analyzed_data = db.analy_coord.find_one({"datetime":dt, "mac":mac})
 	if analyzed_data is None:  ## 測位位置が存在しない場合
 		judgement = "F(None)"
@@ -206,7 +207,7 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 				# if analyzed_actual_dist < mlist[i]["margin"]:
 				# 	moment_error_dist = 0
 				# 	break
-				if isinside(floor,analyzed_data["pos_x"],pos_x,mlist[i]["pos_x"]) and isinside(floor,analyzed_data["pos_y"],pos_y,mlist[i]["pos_y"]):
+				if isinside(analyzed_pos_x,pos_x,mlist[i]["pos_x"]) and isinside(analyzed_pos_y,pos_y,mlist[i]["pos_y"]):
 					moment_error_dist = 0
 					break
 				else:
@@ -318,7 +319,7 @@ def find_analyzed_node(mac,floor,dt):
 	# 同一フロアのstayに解析データが存在
 	analyzed_data = db.staymacinfo.find_one(same_floor_query)
 	if analyzed_data is not None:
-		analyzed_node = analyzed_data["pcwl_id"]
+		analyzed_node = analyzed_data["position"]
 		return floor,analyzed_node
 
 	# 違うフロアのflowに解析データが存在
@@ -331,7 +332,7 @@ def find_analyzed_node(mac,floor,dt):
 	# 違うフロアのstayに解析データが存在
 	analyzed_data = db.staymacinfo.find_one(all_floors_query)
 	if analyzed_data is not None:
-		analyzed_node = analyzed_data["pcwl_id"]
+		analyzed_node = analyzed_data["position"]
 		floor = analyzed_data["floor"]
 		return floor,analyzed_node
 

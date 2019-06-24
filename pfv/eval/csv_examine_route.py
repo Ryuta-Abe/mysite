@@ -9,18 +9,18 @@ from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
 from examine_route  import *
-from get_coord import *
+from new_get_coord import get_analy_coord 
 from convert_to_mac import convert_to_mac
 client = MongoClient()
 db = client.nm4bd
 
 """
-# 1. pfvmacinfo, staymacinfoデータをDBに入れる
+# 1. get_start_endを回し、pfvmacinfo, staymacinfoデータをDBに入れる
 # 
 # 2. 実験の条件をformatに従って "CSV形式" で作成する 
 #    (exp_id, mac, floor, st_node, ed_node, common_dt, st_dt, ed_dt, via_nodes_list, via_dts_list, stay_pos_list)
 # 
-# 3. mongoimport -d nm4bd -c csvtest --headerline --type csv exp_param.csv --drop
+# 3. mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv exp_param.csv --drop
 #    上記コマンドでCSVファイルをDBに取り込む。 (--dropオプションを利用可)
 # 
 # 4. 全データを解析すると時間がかかるので、 query に条件を入れて件数を絞ると良い

@@ -28,8 +28,8 @@ param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
 for floor in FLOOR_LIST:
 	path = "../../working/"
 
-	X = np.genfromtxt(path + floor + "_" + 'train.csv', delimiter = ',')
-	y = np.genfromtxt(path + floor + "_" + 'label.csv', delimiter = ',')
+	X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
+	y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
 	print(y)
 	le = preprocessing.LabelEncoder()
 	le.fit(y)

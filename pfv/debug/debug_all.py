@@ -30,7 +30,7 @@ def debug_all(json_file, st_dt, ed_dt, query_list):
 	st_dt = dt_from_14digits_to_iso(st_dt)
 	ed_dt = dt_from_14digits_to_iso(ed_dt)
 	analyze_mod(st_dt,ed_dt)
-	# csv_examine_route(query_list)  ## TODO: examine_route系の変更
+	csv_examine_route(query_list)  ## TODO: examine_route系の変更
 
 if __name__ == '__main__':
 	init_db()

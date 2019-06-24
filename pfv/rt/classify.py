@@ -30,10 +30,10 @@ def classify(floor, rssi_list):
     #print(clf.classes_)
     # print(result)
     for i in range(3):
-        print(str(i+1) + "th: ",end = "")
+        # print(str(i+1) + "th: ",end = "")
         label = le.inverse_transform([desc_indexes[i]])
-        print("label encoder:", label)
-    print("----------")
+        # print("label encoder:", label)
+    # print("----------")
     label_list = le.inverse_transform(desc_indexes)
 
     # return (desc_indexes,clf.classes_)
