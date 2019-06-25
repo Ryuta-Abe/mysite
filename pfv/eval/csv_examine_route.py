@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
 	# 結果を出力
 	path = "../../working/"
-	output_file_name = date + ".csv"
+	output_file_name = "20" + date + ".csv"
 	output_file = path + output_file_name
 	command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
 	os.system(command)

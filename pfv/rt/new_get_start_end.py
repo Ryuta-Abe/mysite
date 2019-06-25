@@ -40,7 +40,7 @@ STAY_ROUNDING_ERROR = 1.01
 MAC_HEAD = "00:11:81:10:01:"
 
 # use Machine-Learning
-USE_ML = True
+USE_ML = False
 
 def get_start_end(all_st):
     """
