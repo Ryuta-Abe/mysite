@@ -355,15 +355,27 @@ def is_back_and_forth(floor,mac,dt,position):
 
 
     """
+    ## TODO: rounding
+    def isinside_ne(start_position,target_position,end_position): # isinsideのposition_list版で、条件が>=でなく>にした版
+        start_posx, start_posy = start_position.get_pos_xy()
+        end_posx, end_posy = end_position.get_pos_xy()
+        target_posx, target_posy = target_position.get_pos_xy()
+        if (start_posx <= target_posx < end_posx) and (start_posy <= target_posy < end_posy):
+            return True
+        if (start_posx >= target_posx > end_posx) and (start_posy >= target_posy > end_posy):
+            return True
+        else:
+            return False
+
     past_st_dt = shift_seconds(dt,- 2 * MIN_INTERVAL)
-    past_ed_dt = shift_seconds(dt, MIN_INTERVAL)
+    past_ed_dt = shift_seconds(dt, - MIN_INTERVAL)
     past_pfvmacinfo = db.pfvmacinfo.find_one({"mac":mac, "datetime":{"$gte":past_st_dt,"$lt":past_ed_dt}})
     if past_pfvmacinfo is None:
         return None
 
     past_pfv_route = past_pfvmacinfo["route"]
     for past_route in past_pfv_route:
-        if isinside(past_route[0],position,past_route[1]):
+        if isinside_ne(Position(past_route[0],floor),Position(position,floor),Position(past_route[1],floor)):  #通常のisinsideではなく、isinside_neを用いる
             return True
     else:
         return False
