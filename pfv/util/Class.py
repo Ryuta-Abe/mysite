@@ -23,7 +23,7 @@ class Position():
     def reverse_order(self):
         self.prev_node, self.next_node = self.next_node, self.prev_node
         self.prev_dist, self.next_dist = self.next_dist, self.prev_dist
-        self.update_position()
+        self.update_position()  # 行わないと、別変数であるpositionが更新されない
         return self.position
 
     def is_intersection(self):

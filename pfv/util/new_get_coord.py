@@ -90,6 +90,7 @@ def insert_coord_from_node(floor, mac, position, dt):
 	# positionがnodeの場合
 	if next_dist == 0:
 		position = Position(position).reverse_order()
+		prev_node, prev_dist, next_dist, next_node = position
 	if prev_dist == 0:  
 		node_info = db.pcwlnode.find_one({"floor":floor,"pcwl_id":prev_node})
 		next_list = node_info["next_id"]

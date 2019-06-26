@@ -36,11 +36,11 @@ STOP_AT_INTERSECTION = True
 STAY_AFTER_INTERSECTION = False
 MIN_INTERVAL = 5
 MAX_SPEED = 60
-STAY_ROUNDING_ERROR = 1.01
+STAY_ROUNDING_ERROR = 0.01
 MAC_HEAD = "00:11:81:10:01:"
 
 # use Machine-Learning
-USE_ML = False
+USE_ML = True
 
 def get_start_end(all_st):
     """
@@ -213,10 +213,18 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
         if (node["rssi"] < TH_RSSI):  # 一件目のnodeでRSSI小⇒いずれも小
             return -1
         position = node["position"]  # 仮の測位位置position_listを決定
+
+        # stayの場合
+        if is_same_position(position,recent_pos) and (floor == recent["floor"]):  
+            pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
+            save_pastd(pastd[0])
+            make_staymacinfo(floor,mac,dt,position)
+            stay_count += 1
+
         ## flowの場合
-        if not is_same_position(floor,position,recent_pos) and (floor == recent["floor"]):
+        elif not is_same_position(position,recent_pos) and (floor == recent["floor"]):
             pfv_route = get_pfvmacinfo(floor,mac,dt,Position(recent_pos,floor),Position(position,floor))  # 仮のpfv_route（flowをノードを境に分解したもので、ex: [[[1,10.5,17,2],[2,0,54,3]],[[2,0,54,3],[2,14,40,3]]]）
-            if not recent["alive"]:
+            if not recent["alive"]:  # 前回の場所が存在しない場合は、フィルタを適応せずに保存
                 pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
                 save_pastd(pastd[0])
                 make_pfvmacinfo(floor,mac,dt,pfv_route)
@@ -244,13 +252,6 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
                 flow_count += 1
             return 0
 
-                
-        # stayの場合
-        elif is_same_position(floor,position,recent_pos) and (floor == recent["floor"]):  
-            pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
-            save_pastd(pastd[0])
-            make_staymacinfo(floor,mac,dt,position)
-            stay_count += 1
         # 新しいフロアの場合
         else:
             pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
@@ -306,7 +307,13 @@ def remake_pr_data(pr_data):
 
         
 
-def is_same_position(floor,position_list1,position_list2):
+def is_same_position(position_list1,position_list2):
+    """
+    2つのposition_listが同一かどうか（移動していないかどうか）判定
+    @param position_list1: 1つめのposition_list([prev_node,prev_dist,next_dist,next_node])
+    @param position_list2: 2つめのposition_list([prev_node,prev_dist,next_dist,next_node])
+    @return is_same_position: Bool 2つのposition_listが同一かどうか
+    """
     prev_node1,prev_distance1,next_distance1,next_node1 = position_list1
     prev_node2,prev_distance2,next_distance2,next_node2 = position_list2
 
@@ -419,8 +426,10 @@ def get_pfvmacinfo(floor, mac, datetime, start_position,end_position):
         via_position = Node(floor,start_position.prev_node).position.position
 
     if(route_index < 0): # 上記4パターンに共通の処理
-        pfv_route.append([start_position.position,via_position])
-        pfv_route.append([via_position, end_position.position])
+        if not is_same_position(start_position.position,via_position):
+            pfv_route.append([start_position.position,via_position])
+        if not is_same_position(via_position,end_position.position):
+            pfv_route.append([via_position, end_position.position])
     
     # 0: 同一線分上に存在(A1=A2とA1=B2のパターン有り)
     if(route_index == 0):
