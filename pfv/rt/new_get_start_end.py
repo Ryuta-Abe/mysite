@@ -67,7 +67,7 @@ def get_start_end(all_st):
                 update_maclist(pr_data["id"]["mac"])
             else:
                 print("plz step in to investigate")
-                result = get_analyzed_pos(pr_data, largest_floor, rssi_list)
+                # result = get_analyzed_pos(pr_data, largest_floor, rssi_list)
                 print("result(get_analyzed_pos): ", result)
                 print("pr_data",pr_data)
     
@@ -76,7 +76,7 @@ def get_start_end(all_st):
         for unavailable_mac in db.pastmaclist.find():
             mac = unavailable_mac["_id"]["mac"]
             pastd = db.pastdata.find_one({"mac":mac})
-            pastlist = reverse_list(pastd["pastlist"], "dt")
+            # pastlist = reverse_list(pastd["pastlist"], "dt")
             pastlist = pastd["pastlist"]
             if (len(pastlist) != 0):
                 for past in pastlist:
@@ -158,12 +158,12 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
     if(pastd != []): 
         # pastlist = pastd[0]["pastlist"]
         # pastlist = reverse_list(pastlist,"dt")
-        pastd[0]["pastlist"] = reverse_list(pastd[0]["pastlist"],"dt")
+        # pastd[0]["pastlist"] = reverse_list(pastd[0]["pastlist"],"dt")
         pastlist = pastd[0]["pastlist"]
 
         # pastlist = reverse_list(pastd[0]["pastlist"], "dt")
         # pastlist = pastd[0]["pastlist"]
-        if(dt <= pastlist[0]["dt"]):
+        if(dt <= pastlist[-1]["dt"]):
             print("0:(dt < update_dt)")
             return -1
 
@@ -186,7 +186,7 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
 
     # pastlist = pastd[0]["pastlist"]
     # pastlist = reverse_list(pastlist, "dt")
-    # pastlist = pastd[0]["pastlist"]
+    pastlist = pastd[0]["pastlist"]
 
     # if pastlist == []:  #  過去の位置情報が存在しない場合
     #     for num in range(0, node_cnt):
@@ -199,7 +199,7 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
     #         return -1
 
     
-    recent = pastlist[0]  # 直近の(MIN_INTERVAL前の)pastlist
+    recent = pastlist[-1]  # 直近の(MIN_INTERVAL前の)pastlist
     recent_pos = recent["position"]
     if STAY_AFTER_INTERSECTION and recent["arrive_intersection"]:  # 交差点到着又は交差点滞留フィルタ適応後に交差点STAYがONでかつ、前回到着した場合
         pastlist.append({"dt":dt,"floor":floor, "position":recent_pos,"nodelist":nodelist, "alive":True, "arrive_intersection":False})  # TODO: 名前の変更
@@ -215,9 +215,15 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
         position = node["position"]  # 仮の測位位置position_listを決定
         ## flowの場合
         if not is_same_position(floor,position,recent_pos) and (floor == recent["floor"]):
+            pfv_route = get_pfvmacinfo(floor,mac,dt,Position(recent_pos,floor),Position(position,floor))  # 仮のpfv_route（flowをノードを境に分解したもので、ex: [[[1,10.5,17,2],[2,0,54,3]],[[2,0,54,3],[2,14,40,3]]]）
+            if not recent["alive"]:
+                pastlist.append({"dt":dt,"floor":floor, "position":position,"nodelist":nodelist, "alive":True, "arrive_intersection":False})
+                save_pastd(pastd[0])
+                make_pfvmacinfo(floor,mac,dt,pfv_route)
+                flow_count += 1
+                return 0
             if recent["alive"] and is_move_too_far(floor,Position(recent_pos,floor),Position(position,floor)):  # 移動距離フィルタ
                 continue
-            pfv_route = get_pfvmacinfo(floor,mac,dt,Position(recent_pos,floor),Position(position,floor))  # 仮のpfv_route（flowをノードを境に分解したもので、ex: [[[1,10.5,17,2],[2,0,54,3]],[[2,0,54,3],[2,14,40,3]]]）
             if is_back_and_forth(floor,mac,dt,position):  # 逆行防止フィルタ
                 pastlist.append({"dt":dt,"floor":floor, "position":recent_pos,"nodelist":nodelist, "alive":True, "arrive_intersection":False})  # TODO: 名前の変更
                 save_pastd(pastd[0])
@@ -311,17 +317,17 @@ def is_same_position(floor,position_list1,position_list2):
             return True
     return False
             
-def save_pastd(pastd):
-    """
-    pastd(過去データ)更新用
-    各macに対する最終更新時刻update_dtを更新する
-    @param  pastd:dict
-    @param  update_dt:datetime
-    """
-    pastd = {"mac":pastd["mac"],
-             "pastlist":pastd["pastlist"]}
-    db.pastdata.remove({"mac":pastd["mac"]})
-    db.pastdata.save(pastd)
+# def save_pastd(pastd):
+#     """
+#     pastd(過去データ)更新用
+#     各macに対する最終更新時刻update_dtを更新する
+#     @param  pastd:dict
+#     @param  update_dt:datetime
+#     """
+#     pastd = {"mac":pastd["mac"],
+#              "pastlist":pastd["pastlist"]}
+#     db.pastdata.remove({"mac":pastd["mac"]})
+#     db.pastdata.save(pastd)
 
 def is_move_too_far(floor,recent_pos,position):
     """
@@ -333,88 +339,6 @@ def is_move_too_far(floor,recent_pos,position):
         return True
     else:
         return False
-
-# def is_back_and_forth_and_get_intersection(floor,mac,before_dt,recent_pos,target_position):
-#     """
-#     逆走防止フィルタと交差点滞留フィルタの判定用関数
-#     @param before_dt: datetime 前回のPRデータ取得時刻・移動終了時刻、現在の移動の開始時刻
-#     @param recent_pos: Position list 前回の到着Position、現在の移動の出発Position
-#     @param target_position: Position list  現在の移動の到着Position、判定を行う対象となるPosition
-#     @return(0) is_back_and_forth:Bool 逆走防止フィルタを適応すべきかどうか、前回の移動ベクトル∋今回の移動ベクトル（包含されるときTrue）
-#     @return(1) intersection: Position Class or None  交差点を通過した場合は交差点のPosition、しなかった場合はNone
-#     """
-
-#     ## TODO: 逆行防止はlen(pastlist)>=2だからふたつを分けるべきでは？
-#     ## past_route is not 
-#     past_st_dt = shift_seconds(before_dt,-MIN_INTERVAL)
-#     past_route = db.pfvmacinfo.find_one({"mac":mac, "datetime":{"$gte":past_st_dt,"$lt":before_dt}})
-#     if past_route is None:
-#         is_back_and_forth = False
-#     else: ## TODO: インデント
-#     past_start_pos = past_route["route"][0][0]
-#     past_end_pos = past_route["route"][-1][-1]
-#     # Position Class化
-#     past_start_pos = Position(past_start_pos,floor)
-#     past_end_pos  = position(past_end_pos)
-#     target_position = Position(target_position,floor)
-#     intersection = None
-#     if not is_same_position(floor,past_end_pos, recent_pos):
-#         print("Error: past_end_pos != recent_pos")
-#         return None, None
-#     # 以下の分岐の意味は以下の通り
-#     # past_start_pos = P(A1,?,?,B1), past_end_pos = Q(A2,?,?,B2)とする。
-#     _,route_index = get_distance_between_points(past_start_pos,past_end_pos)
-
-#     #-4: B1 = B2の時　　　　　　 A1-P-B1====B2-Q-A2
-#     if(route_index == -4):
-#         border_node = Node(floor,past_start_pos.next_node)
-#         if border_node.is_intersection():
-#             intersection = border_node.position
-#         return (isinside(past_start_pos, target_position, past_start_pos.next_node, True) or isinside(past_end_pos.next_node, target_position, past_end_pos, True) ), intersection
-
-#     #-3: A1 = B2の時　　　　　　 B1-P-A1====B2-Q-A2
-#     if(route_index == -3):
-#         border_node = Node(floor,past_start_pos.prev_node)
-#         if border_node.is_intersection():
-#             intersection = border_node.position
-#         return (isinside(past_start_pos, target_position, past_start_pos.prev_node, True) or isinside(past_end_pos.next_node, target_position, past_end_pos, True) ), intersection
-
-#     #-2: B1 = A2の時　　　　　　 A1-P-B1====A2-Q-B2
-#     if(route_index == -2):
-#         border_node = Node(floor,past_start_pos.next_node)
-#         if border_node.is_intersection():
-#             intersection = border_node.position        
-#         return (isinside(past_start_pos, target_position, past_start_pos.next_node, True) or isinside(past_end_pos.prev_node, target_position, past_end_pos, True) ), intersection
-
-#     #-1: A1 = A2の時　　　　　　 B1-P-A1====A2-Q-B2
-#     if(route_index == -1):
-#         border_node = Node(floor,past_start_pos.prev_node)
-#         if border_node.is_intersection():
-#             intersection = border_node.position                
-#         return (isinside(past_start_pos, target_position, past_start_pos.prev_node, True) or isinside(past_end_pos.prev_node, target_position, past_end_pos, True) ), intersection
-
-# 	#-1: 同一線分上に存在(A1=A2とA1=B2のパターン有り)
-#     if(route_index == 0):
-#         return isinside(floor,past_start_pos,target_position,past_end_pos, True), None
-
-#     # 0:同一経路上に⇒のように並ぶ B1-P-A1----A2-Q-B2       
-#     if(route_index == 1):
-#         ideal_route_info = db.idealroute.find_one({"$and":[{"floor" : floor},{"query" : past_start_pos.prev_node}, {"query" : past_end_pos.prev_node}]})
-
-#     # 1:同一経路上に⇒のように並ぶ A1-P-B1----A2-Q-B2
-#     if(route_index == 2):
-#         ideal_route_info = db.idealroute.find_one({"$and":[{"floor" : floor},{"query" : past_start_pos.next_node}, {"query" : past_end_pos.prev_node}]})
-
-#     # 2:同一経路上に⇒のように並ぶ B1-P-A1----B2-Q-A2
-#     if(route_index == 3):
-#         ideal_route_info = db.idealroute.find_one({"$and":[{"floor" : floor},{"query" : past_start_pos.prev_node}, {"query" : past_end_pos.next_node}]})
-
-#     # 3:同一経路上に⇒のように並ぶ B1-P-A1----A2-Q-B2
-#     if(route_index == 4):
-#         ideal_route_info = db.idealroute.find_one({"$and":[{"floor" : floor},{"query" : past_start_pos.next_node}, {"query" : past_end_pos.next_node}]})
-    
-#     via_positions, intersection = get_via_positions_and_intersection(floor,ideal_route_info)
-#     return isinside_route(past_start_pos,target_position,past_end_pos,via_positions), intersection
 
 def is_back_and_forth(floor,mac,dt,position):
     """
@@ -550,9 +474,6 @@ def get_reverse_dlist(dlist):
         direction["direction"].reverse()
     return dlist
 
-
-
-
 # def isinside_route(start_position,target_position,end_position,via_positions):
 #     """
 #     target_positionがstart_positionとend_positionの内側にあるか判定する関数で、isinside()の改良版
@@ -606,6 +527,24 @@ def update_maclist(mac):
     """
     if (db.pastmaclist.find({"_id.mac":mac}).count() == 1):
         db.pastmaclist.remove({"_id.mac":mac})
+
+def save_pastd(pastdata):
+    """
+    pastd(過去データ)更新用
+    各macに対する最終更新時刻update_dtを更新する
+    @param  pastd:dict
+    @param  update_dt:datetime
+    """
+    db.pastdata.remove({"mac":pastdata["mac"]})
+    
+    pastlist = pastdata["pastlist"]
+    update_dt = pastlist[-1]["dt"]
+    # pastdata["pastlist"] = [past for past in pastlist if ((update_dt - past["dt"]).seconds >= (INT_KEEP_ALIVE * 2))]
+    for i,past in enumerate(pastlist[:]):
+        if((update_dt - past["dt"]).seconds >= (INT_KEEP_ALIVE * 2)):
+            pastlist.remove(past)
+    
+    db.pastdata.save(pastdata)
 
 
 # def init_nodecnt_dict():

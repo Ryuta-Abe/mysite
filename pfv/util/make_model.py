@@ -30,11 +30,11 @@ for floor in FLOOR_LIST:
 
 	X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
 	y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
-	print(y)
-	le = preprocessing.LabelEncoder()
-	le.fit(y)
-	y = le.transform(y)
-	print(y)
+	# print(y)
+	# le = preprocessing.LabelEncoder()
+	# le.fit(y)
+	# y = le.transform(y)
+	# print(y)
 	clf = svm.SVC(C = param[floor]["C"], gamma = param[floor]["gamma"],probability = True)
 	clf.fit(X,y)
 
@@ -49,8 +49,8 @@ for floor in FLOOR_LIST:
 	
 	# output model
 	joblib.dump(clf, path + floor + "_model.pkl")
-	with open(path + floor + '_label.p', 'wb') as f:
-  		pickle.dump(le, f)
+	# with open(path + floor + '_label.p', 'wb') as f:
+  	# 	pickle.dump(le, f)
 
 print("Time to make model", end=":")
 print(time.time()-st)

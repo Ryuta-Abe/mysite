@@ -216,8 +216,8 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 					temp_dist += min_distance
 				if temp_dist < min_dist:
 					min_dist = temp_dist
-					# moment_error_dist = rounding(min_dist - mlist[i]["margin"],2)  # マージンからの距離から
-					moment_error_dist = rounding(min_dist, 2) # 小数点2桁目までに
+					moment_error_dist = rounding(min_dist - mlist[i]["margin"],2)  # マージンからの距離から
+					# moment_error_dist = rounding(min_dist, 2) # 小数点2桁目までに
 			error_distance += moment_error_dist
 
 			moment_direct_error_distance = math.sqrt(pow((pos_x - analyzed_pos_x),2) + pow((pos_y - analyzed_pos_y),2))
