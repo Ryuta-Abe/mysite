@@ -38,9 +38,9 @@ MIN_INTERVAL = 5
 MAX_SPEED = 60
 STAY_ROUNDING_ERROR = 0.01
 MAC_HEAD = "00:11:81:10:01:"
-IS_INCLUDE_MIDPOINT = True # 中点を含んだFingerprintを使用するかどうか
 # use Machine-Learning
 USE_ML = True
+IS_INCLUDE_MIDPOINT = True # 中点を含んだFingerprintを使用するかどうか
 
 def get_start_end(all_st):
     """

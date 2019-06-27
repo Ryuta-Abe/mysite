@@ -36,12 +36,16 @@ if __name__ == '__main__':
 	init_db()
 	path = "../../working/"
 	import_flag = False
-
+	"""
+	### TODO:以下を変更 ###
+	機械学習:new_get_start_endにおけるUSE_ML,IS_INCLUDE_MIDPOINTの修正
+	Fingerprint:csv_examine_routeにおけるMARGIN_RATIOの修正
+	IS_INCLUDE_MIDPOINT = TrueならMARGIN_RATIO = 4
+	IS_INCLUDE_MIDPOINT = FalseならMARGIN_RATIO = 2
 	### TODO:以下を実行前に入力 ###
 	date = "20190413"
 	st_dt = date + "2149"
-	ed_dt = date + "2334" ## 解析終了時刻
-	
+	ed_dt = date + "2334" ## 解析終了時刻 """	
 	st_exp_id = 1  # 開始クエリ番号
 	ed_exp_id = 96 # 終了クエリ番号
 	###

@@ -340,6 +340,12 @@ def find_analyzed_node(mac,floor,dt):
 	return None,None
 
 def find_correct_nodes_and_position(floor,dlist,delta_distance):
+	"""
+	dlistに従ってdelta_distanceだけ進んだときの正解位置を返す
+	@param dlist: 実際に進んでいる経路におけるidealrouteのdlist
+	@param delta_distance: UPDATE_INTERVAL(s)間に移動する距離
+
+	"""
 	temp_distance = 0 # 一次保存用
 	next_distance = 0 # 計算した場所から次ノードまでの距離
 	prev_distance = 0 # 計算した場所から前ノードまでの距離
@@ -348,8 +354,8 @@ def find_correct_nodes_and_position(floor,dlist,delta_distance):
 	for i in range(len(dlist)):
 		temp_distance += dlist[i]["distance"]
 		if temp_distance >= delta_distance:
-			next_distance = temp_distance - delta_distance
-			prev_distance = dlist[i]["distance"] - next_distance
+			next_distance = temp_distance - delta_distance  # 次に移動予定のノードまでの距離
+			prev_distance = dlist[i]["distance"] - next_distance  # 直近に通過したノードまでの距離
 			if next_distance < MATCH_NODE_THRESHOLD:
 				correct_nodes = add_adjacent_nodes(floor,dlist[i]["direction"][1],ADJACENT_FLAG)
 				break

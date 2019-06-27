@@ -31,13 +31,14 @@ db = client.nm4bd
 # 　　　examine_route.py の DEBUG_PRINT = True とすると使える)
 # 
 """
+## TODO:debug_all実行時に変更 ##
+MARGIN_RATIO = 4  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 ## 直接実行前に指定 ##
 DROP_DP = True # 過去の結果を削除するか
 date = "190413"  # 解析日時()
 st_exp_id = 1
 ed_exp_id = 96
-
 common_exp_id = date + "_"
 ####################
 if DROP_DP:
@@ -58,7 +59,7 @@ def csv_examine_route(query_list):
 	for query in query_list:
 		# 解析データに基づく、examine_routeに必要な正解座標を作る場合は　get_analy_coord　を使う
 		# {"mac","floor","datetime","pos_x","pos_y","position","mlist"}
-		get_analy_coord(query)
+		get_analy_coord(query,)
 
 		# 評価のみの場合は下の行のみ実行
 		query_examine_route(query)
