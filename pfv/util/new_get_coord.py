@@ -24,7 +24,7 @@ ed_dt = 20161020134630
 # Trueの場合, 1つ前の時刻(stay)を考慮する
 CONSIDER_BEFORE = False
 
-MARGIN_RATIO = 2
+MARGIN_RATIO = 4  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 def get_analy_coord(query_id):
 	# 解析データ抽出クエリ

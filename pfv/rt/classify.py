@@ -12,7 +12,7 @@ MODEL_DIR = "../../mlmodel/"
 # IS_REGULAR = True
 # MODEL_DIR = "/home/murakami2/mlmodel/"
 
-def classify(floor, rssi_list,is_regular):
+def classify(floor, rssi_list,is_midpoint):
     # import model
     clf = joblib.load(MODEL_DIR+floor+"_model.pkl") 
     # with open(MODEL_DIR + floor + "_label.p", 'rb') as f:
@@ -35,15 +35,16 @@ def classify(floor, rssi_list,is_regular):
     #     label = le.inverse_transform([desc_indexes[i]])
     #     # print("label encoder:", label)
     # # print("----------")
-    label_list = []
-    if is_regular:
-        for desc_index in desc_indexes:
-            label = clf.classes_[desc_index]
-            label_list.append(label)
-    else:
+    
+    if is_midpoint:
         with open(MODEL_DIR + floor + "_label.p", 'rb') as f:
             le = pickle.load(f)
             label_list = le.inverse_transform(desc_indexes)
+
+    else:
+        for desc_index in desc_indexes:
+            label = clf.classes_[desc_index]
+            label_list.append(label)
 
     # return (desc_indexes,clf.classes_)
     return desc_indexes, label_list
