@@ -21,10 +21,11 @@ ed_dt = 20161020134630
 
 # db.analy_coord.remove({})
 
-# Trueの場合, 1つ前の時刻(stay)を考慮する
-CONSIDER_BEFORE = False
+# # Trueの場合, 1つ前の時刻(stay)を考慮する
+# CONSIDER_BEFORE = False
 
-MARGIN_RATIO = 4  # 中点を含めたFingerprintの際は4、ノードのみの時は2
+## TODO:debug_all実行時に変更 ##
+MARGIN_RATIO = 2  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 def get_analy_coord(query_id):
 	# 解析データ抽出クエリ

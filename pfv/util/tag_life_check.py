@@ -152,16 +152,16 @@ def tag_life_check(exp_info):
                 break
         else:
             timeout_count += 1
-    if timeout_count != 0
+    if timeout_count != 0:
         print(timeout_count)
 
 
 if __name__ == "__main__":
-    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param.csv --drop")
+    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param_0628.csv --drop")
     # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
     # common_id_list = ["190611_","190617_"]  # 0611: Node前、0617: 中点
     ### TODO: 以下を変更 ###
-    common_id_list = ["190611_"]  # _を忘れない
+    common_id_list = ["190628_"]  # _を忘れない
     Num_of_query = 108 #全queryの数
 
     for common_id in common_id_list:
