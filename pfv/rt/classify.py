@@ -7,7 +7,7 @@ from sklearn import svm
 from sklearn.externals import joblib
 from sklearn import preprocessing
 import pickle
-
+# TODO: scikit-learnのupdate,モデル再作成
 MODEL_DIR = "../../mlmodel/"
 # IS_REGULAR = True
 # MODEL_DIR = "/home/murakami2/mlmodel/"
@@ -35,7 +35,7 @@ def classify(floor, rssi_list,is_midpoint):
     #     label = le.inverse_transform([desc_indexes[i]])
     #     # print("label encoder:", label)
     # # print("----------")
-    
+    label_list = []
     if is_midpoint:
         with open(MODEL_DIR + floor + "_label.p", 'rb') as f:
             le = pickle.load(f)
