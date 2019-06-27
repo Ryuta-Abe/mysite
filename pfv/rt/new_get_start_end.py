@@ -79,6 +79,8 @@ def get_start_end(all_st):
             # pastlist = reverse_list(pastd["pastlist"], "dt")
             pastlist = pastd["pastlist"]
             if (len(pastlist) != 0):
+                pastd["pastlist"] = reverse_list(pastd["pastlist"],"dt")
+                pastlist = pastd["pastlist"]
                 for past in pastlist:
                     if(all_st - past["dt"] <= KEEP_ALIVE) and (past["alive"]): # 現在のデータが取れていないが、最新取得時刻からKEEP_ALIVE以下しか経過していない場合
                         # data_lists_stay.append(append_data_lists_stay_alt(mac, shift_seconds(all_st_time, -5), all_st_time, past["start_past"], data_lists_stay))
