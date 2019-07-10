@@ -4,7 +4,7 @@ st = time.time()
 import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
-from sklearn.model_selection import cross_val_score,StratifiedShuffleSplit
+from sklearn.model_selection import cross_val_score,StratifiedShuffleSplit, GridSearchCV
 from sklearn import preprocessing
 import pickle
 
@@ -25,37 +25,58 @@ param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
 指定パラメータで分類モデル作成
 評価スコア出力
 """
-for floor in FLOOR_LIST:
-	path = "../../working/"
 
+def get_best_param():
+	floor = "W2-7F"
+	# parameters = {"C":list(range(1,11)), "gamma": np.linspace(0.0001,0.001,10)}
+	parameters = {"kernel":["linear", "rbf"],"C":list(range(1,11)), "gamma": np.linspace(0.0001,0.001,10)}
+	# print("PARAMs to be evaluated:",parameters)
+	path = "../../working/"
 	X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
 	y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
-	# print(y)
-	# le = preprocessing.LabelEncoder()
-	# le.fit(y)
-	# y = le.transform(y)
-	# print(y)
-	clf = svm.SVC(C = param[floor]["C"], gamma = param[floor]["gamma"],probability = True)
+	clf = GridSearchCV(svm.SVC(), parameters, cv = 5,n_jobs=-1)
 	clf.fit(X,y)
+	params = clf.cv_results_["params"]
+	rank = clf.cv_results_["rank_test_score"]
+	print(params,":",rank)
+	best_param = clf.best_params_
+	print(best_param)
+	return clf.best_params_
 
-	# calc. accuracy of the model
-	cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
-	scores = cross_val_score(clf, X, y, cv=cv)
-	print(floor + ":" + str (param[floor]))
-	print(scores)
-    # scores.std() * 2 要調査
-	print("Accuracy: %0.5f (+/- %0.5f)" % (scores.mean(), scores.std() * 2))
-	print("\n")
-	
-	# output model
-	joblib.dump(clf, path + floor + "_model.pkl")
-	# with open(path + floor + '_label.p', 'wb') as f:
-  	# 	pickle.dump(le, f)
+def make_model():
 
-print("Time to make model", end=":")
-print(time.time()-st)
+	for floor in FLOOR_LIST:
+		path = "../../working/"
+
+		X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
+		y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
+		# print(y)
+		# le = preprocessing.LabelEncoder()
+		# le.fit(y)
+		# y = le.transform(y)
+		# print(y)
+		clf = svm.SVC(C = param[floor]["C"], gamma = param[floor]["gamma"],probability = True)
+		clf.fit(X,y)
+
+		# calc. accuracy of the model
+		cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+		scores = cross_val_score(clf, X, y, cv=cv)
+		print(floor + ":" + str (param[floor]))
+		print(scores)
+		# scores.std() * 2 要調査
+		print("Accuracy: %0.5f (+/- %0.5f)" % (scores.mean(), scores.std() * 2))
+		print("\n")
+		
+		# output model
+		joblib.dump(clf, path + floor + "_model.pkl")
+		# with open(path + floor + '_label.p', 'wb') as f:
+		# 	pickle.dump(le, f)
+
+	print("Time to make model", end=":")
+	print(time.time()-st)
 
 """
+MEMO:
 LabelEncoderの保存法
 pickle.dump(le, 'foo.txt')
 with open('foo.p', 'wb') as f:
@@ -66,3 +87,6 @@ with open('foo.p', 'rb') as f:
 le2.inverse_transform([2, 1, 0, 2, 3, 1])
   #=> array(['tokyo', 'osaka', 'nagoya', 'tokyo', 'yokohama', 'osaka'], dtype='<U8')
 """
+
+if __name__ == "__main__":
+	get_best_param()
