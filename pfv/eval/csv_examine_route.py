@@ -11,6 +11,7 @@ from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seco
 from examine_route  import *
 from new_get_coord import get_analy_coord 
 from convert_to_mac import convert_to_mac
+from statistics import mean
 client = MongoClient()
 db = client.nm4bd
 
@@ -38,6 +39,8 @@ date = "190413"  # 解析日時()
 st_exp_id = 1
 ed_exp_id = 96
 common_exp_id = date + "_"
+err_dist_file_name = "err_dist_report.csv"  # PRデータの取得間隔毎の誤差距離の出力ファイル名
+ANALYZE_MODE = False  # PRデータの取得間隔毎の誤差距離の統計を出力したい時にTrue
 ####################
 if DROP_DP:
 	db.examine_summary.drop()
@@ -61,6 +64,10 @@ def csv_examine_route(query_list):
 
 		# 評価のみの場合は下の行のみ実行
 		query_examine_route(query)
+
+	# PRデータの取得間隔毎の誤差距離の統計を出力したい時に実行
+	if ANALYZE_MODE:
+		analyze_err_dist()
 
 def query_examine_route(query):
 	data = []
@@ -116,6 +123,18 @@ def query_examine_route(query):
 			# 		stay_pos_list[x] = float(temp_list[x])
 		examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_list,stay_pos_list,query)
 		print("---------------------------------------------")
+
+	def analyze_err_dist():
+		examine_route_info = db.examine_route.find()
+		data_count = 0
+		exist_data_list = []
+		for examine_data in examine_route_info:
+			if(examine_data["err_dist"] != null):
+				exist_data_list.append(int(examine_data["err_dist"]))
+			else:
+				print("null")
+		average_distance = mean(exist_data_list)
+		os.command("mongoexport -d nm4bd -c examine_route --type=csv -o " + err_dist_file_name + " -f err_dist,position,analyzed,mac,datetime")
 
 if __name__ == '__main__':
 	query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
