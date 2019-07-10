@@ -31,14 +31,12 @@ db = client.nm4bd
 # 　　　examine_route.py の DEBUG_PRINT = True とすると使える)
 # 
 """
-# ## TODO:debug_all実行時に変更 ##
-# MARGIN_RATIO = 2  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 ## 直接実行前に指定 ##
 DROP_DP = True # 過去の結果を削除するか
-date = "190628"  # 解析日時()
+date = "190413"  # 解析日時()
 st_exp_id = 1
-ed_exp_id = 45
+ed_exp_id = 96
 common_exp_id = date + "_"
 ####################
 if DROP_DP:

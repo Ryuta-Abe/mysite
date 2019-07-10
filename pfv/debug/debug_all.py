@@ -39,15 +39,15 @@ if __name__ == '__main__':
 	"""
 	### TODO:以下を変更 ###
 	機械学習:new_get_start_endにおけるUSE_ML,IS_INCLUDE_MIDPOINTの修正
-	Fingerprint:csv_examine_routeにおけるMARGIN_RATIOの修正
+	Fingerprint:new_get_coordにおけるMARGIN_RATIOの修正
 	IS_INCLUDE_MIDPOINT = TrueならMARGIN_RATIO = 4
 	IS_INCLUDE_MIDPOINT = FalseならMARGIN_RATIO = 2"""
 	### TODO:以下を実行前に入力 ###
-	date = "20190628"
-	st_dt = date + "0115"
-	ed_dt = date + "0150" ## 解析終了時刻 """	
+	date = "20190413"
+	st_dt = date + "2149"
+	ed_dt = date + "2334" ## 解析終了時刻 """
 	st_exp_id = 1  # 開始クエリ番号
-	ed_exp_id = 45 # 終了クエリ番号
+	ed_exp_id = 96 # 終了クエリ番号
 	###
 
 	short_date = date[2:]
@@ -55,9 +55,12 @@ if __name__ == '__main__':
 
 	json_file_name = "rttmp3_" + date + ".json" 
 	json_file = path + json_file_name
+	param_file_name = "exp_param_" + date + ".csv" 
+	param_file = path + param_file_name
+
 	if import_flag:
 		os.system("mongoimport -d nm4bd -c trtmp " + json_file + " --drop")
-		os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + path + "exp_param_0628.csv --drop")
+		os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + param_file + " --drop")
 	
 	# 準備終了、デバック開始
 	debug_all(json_file,st_dt,ed_dt,query_list)
