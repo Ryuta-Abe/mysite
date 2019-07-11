@@ -20,7 +20,7 @@ param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
          "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
     	 "W2-8F":{"C" : 20.0, "gamma" : 0.0002},
 		 "W2-9F":{"C" : 4.0, "gamma" : 0.0008}}
-
+IS_INCLUDE_MIDPOINT = True
 """
 指定パラメータで分類モデル作成
 評価スコア出力
@@ -29,19 +29,25 @@ param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
 def get_best_param():
 	floor = "W2-7F"
 	parameters = {"kernel":"rbf","C":np.linspace(10,100,10), "gamma": np.linspace(0.0001,0.001,10)}
-	parameters = [{'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-    {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}]
+	parameters = [
+		{'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+    {'C': [1, 10, 100, 1000],"gamma": [0.0001,0.001,0.01],'kernel': ['rbf']}]
 	print("PARAMs to be evaluated:",parameters)
 	path = "../../working/"
 	X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
 	y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
+	if IS_INCLUDE_MIDPOINT:
+		X = np.genfromtxt(path + floor + "_" + 'train.csv', delimiter = ',')
+		y = np.genfromtxt(path + floor + "_" + 'label.csv', delimiter = ',')
+		le = preprocessing.LabelEncoder()
+		le.fit(y)
+		y = le.transform(y)
 	clf = GridSearchCV(svm.SVC(), parameters, cv = 5,n_jobs=-2)
 	clf.fit(X,y)
 	params = clf.cv_results_["params"]
 	ranks = clf.cv_results_["rank_test_score"]
 	scores = clf.cv_results_["mean_test_score"]
 	stds = clf.cv_results_["std_test_score"]
-	# print(params,":",ranks)
 	result_list = []
 	for i,param in enumerate(params):
 		result = {"param":param,"rank":ranks[i],"score":scores[i]}
@@ -53,7 +59,6 @@ def get_best_param():
 		writer.writerow([result["param"] for result in sorted_result_list])    # list（1次元配列）の場合
 		writer.writerow([result["rank"] for result in sorted_result_list]) 
 		writer.writerow([result["score"] for result in sorted_result_list]) 
-		# writer.writerow()
 		# writer.writerows(array2d) # 2次元配列も書き込める
 
 
@@ -107,4 +112,7 @@ le2.inverse_transform([2, 1, 0, 2, 3, 1])
 """
 
 if __name__ == "__main__":
+	st = time.time()
 	get_best_param()
+	ed = time.time()
+	print("Time to find best param:", ed-st)
