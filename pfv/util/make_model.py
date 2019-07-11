@@ -6,7 +6,7 @@ from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score,StratifiedShuffleSplit, GridSearchCV
 from sklearn import preprocessing
-import pickle
+import pickle,csv
 
 # le = preprocessing.LabelEncoder()
 # result = le.fit_transform([1,2,3,"1,1,1,2","2-3","3-4"])
@@ -28,19 +28,37 @@ param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
 
 def get_best_param():
 	floor = "W2-7F"
-	# parameters = {"C":list(range(1,11)), "gamma": np.linspace(0.0001,0.001,10)}
-	parameters = {"kernel":["linear", "rbf"],"C":list(range(1,11)), "gamma": np.linspace(0.0001,0.001,10)}
-	# print("PARAMs to be evaluated:",parameters)
+	parameters = {"kernel":"rbf","C":np.linspace(10,100,10), "gamma": np.linspace(0.0001,0.001,10)}
+	parameters = [{'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+    {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}]
+	print("PARAMs to be evaluated:",parameters)
 	path = "../../working/"
 	X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
 	y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
-	clf = GridSearchCV(svm.SVC(), parameters, cv = 5,n_jobs=-1)
+	clf = GridSearchCV(svm.SVC(), parameters, cv = 5,n_jobs=-2)
 	clf.fit(X,y)
 	params = clf.cv_results_["params"]
-	rank = clf.cv_results_["rank_test_score"]
-	print(params,":",rank)
+	ranks = clf.cv_results_["rank_test_score"]
+	scores = clf.cv_results_["mean_test_score"]
+	stds = clf.cv_results_["std_test_score"]
+	# print(params,":",ranks)
+	result_list = []
+	for i,param in enumerate(params):
+		result = {"param":param,"rank":ranks[i],"score":scores[i]}
+		result_list.append(result)
+	sorted_result_list = sorted(result_list,key=lambda x:x["score"],reverse=True)
+	print(sorted_result_list)
+	with open('param result.csv', 'w') as f:
+		writer = csv.writer(f, lineterminator='\n') # 改行コード（\n）を指定しておく
+		writer.writerow([result["param"] for result in sorted_result_list])    # list（1次元配列）の場合
+		writer.writerow([result["rank"] for result in sorted_result_list]) 
+		writer.writerow([result["score"] for result in sorted_result_list]) 
+		# writer.writerow()
+		# writer.writerows(array2d) # 2次元配列も書き込める
+
+
 	best_param = clf.best_params_
-	print(best_param)
+	print("best_param:",best_param)
 	return clf.best_params_
 
 def make_model():
