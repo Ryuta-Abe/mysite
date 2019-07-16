@@ -40,7 +40,7 @@ STAY_ROUNDING_ERROR = 0.01
 MAC_HEAD = "00:11:81:10:01:"
 # use Machine-Learning
 USE_ML = True
-IS_INCLUDE_MIDPOINT = True # 中点を含んだFingerprintを使用するかどうか
+CONTAINS_MIDPOINT = True # 中点を含んだFingerprintを使用するかどうか
 
 def get_start_end(all_st):
     """
@@ -119,7 +119,7 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
     # nodelistを機械学習を適応し整形({"floor","position","rssi"})に
     if USE_ML:
         nodelist = []
-        desc_index, label_list = classify(floor, rssi_list,IS_INCLUDE_MIDPOINT)
+        desc_index, label_list = classify(floor, rssi_list,CONTAINS_MIDPOINT)
         for i in range(3):
             # label = label_list[desc_index[i]]
             label = label_list[i]

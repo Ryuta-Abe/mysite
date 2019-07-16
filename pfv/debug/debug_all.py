@@ -38,10 +38,11 @@ if __name__ == '__main__':
 	import_flag = True
 	"""
 	### TODO:以下を変更 ###
-	機械学習:new_get_start_endにおけるUSE_ML,IS_INCLUDE_MIDPOINTの修正
+	機械学習:new_get_start_endにおけるUSE_ML,CONTAINS_MIDPOINTの修正
 	Fingerprint:new_get_coordにおけるMARGIN_RATIOの修正
-	IS_INCLUDE_MIDPOINT = TrueならMARGIN_RATIO = 4
-	IS_INCLUDE_MIDPOINT = FalseならMARGIN_RATIO = 2"""
+	CONTAINS_MIDPOINT = TrueならMARGIN_RATIO = 4
+	CONTAINS_MIDPOINT = FalseならMARGIN_RATIO = 2
+	"""
 	### TODO:以下を実行前に入力 ###
 	date = "20190413"
 	st_dt = date + "2149"

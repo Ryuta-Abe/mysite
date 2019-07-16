@@ -17,10 +17,11 @@ import pickle,csv
 FLOOR_LIST = ["W2-7F"]
 
 param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
-         "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
+        #  "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
+         "W2-7F":{"C" : 10.0, "gamma" : 0.0007},
     	 "W2-8F":{"C" : 20.0, "gamma" : 0.0002},
 		 "W2-9F":{"C" : 4.0, "gamma" : 0.0008}}
-IS_INCLUDE_MIDPOINT = True
+CONTAINS_MIDPOINT = True
 """
 指定パラメータで分類モデル作成
 評価スコア出力
@@ -36,7 +37,7 @@ def get_best_param():
 	path = "../../working/"
 	X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
 	y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
-	if IS_INCLUDE_MIDPOINT:
+	if CONTAINS_MIDPOINT:
 		X = np.genfromtxt(path + floor + "_" + 'train.csv', delimiter = ',')
 		y = np.genfromtxt(path + floor + "_" + 'label.csv', delimiter = ',')
 		le = preprocessing.LabelEncoder()
