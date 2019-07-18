@@ -68,17 +68,21 @@ def get_best_param():
 	return clf.best_params_
 
 def make_model():
-
+	CONTAINS_MIDPOINT = True
 	for floor in FLOOR_LIST:
 		path = "../../working/"
+		## TODO: train, label ファイルの指定
+		# y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
+		# y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
 
-		X = np.genfromtxt(path + "190611_" + floor + "_" + 'train.csv', delimiter = ',')
-		y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
-		# print(y)
-		# le = preprocessing.LabelEncoder()
-		# le.fit(y)
-		# y = le.transform(y)
-		# print(y)
+		X = np.genfromtxt(path + "AP13_FP53_" + floor + "_" + 'train.csv', delimiter = ',')
+		y = np.genfromtxt(path + "" + floor + "_" + 'label.csv', delimiter = ',')
+		if CONTAINS_MIDPOINT:
+			print("before label encoding: ",y)
+			le = preprocessing.LabelEncoder()
+			le.fit(y)
+			y = le.transform(y)
+			print("after label encoding: ",y)
 		clf = svm.SVC(C = param[floor]["C"], gamma = param[floor]["gamma"],probability = True)
 		clf.fit(X,y)
 
@@ -93,8 +97,9 @@ def make_model():
 		
 		# output model
 		joblib.dump(clf, path + floor + "_model.pkl")
-		# with open(path + floor + '_label.p', 'wb') as f:
-		# 	pickle.dump(le, f)
+		if CONTAINS_MIDPOINT:
+			with open(path + floor + '_label.p', 'wb') as f:  # Label encoding用のファイルを保存
+				pickle.dump(le, f)
 
 	print("Time to make model", end=":")
 	print(time.time()-st)
@@ -113,8 +118,8 @@ le2.inverse_transform([2, 1, 0, 2, 3, 1])
 """
 
 if __name__ == "__main__":
-	st = time.time()
+	# st = time.time()
 	# get_best_param()
 	make_model()
-	ed = time.time()
-	print("Time to execute:", ed-st)
+	# ed = time.time()
+	# print("Time to execute:", ed-st)

@@ -145,7 +145,9 @@ def make_pcwlnode():
 def del_half_nodes(floor):
     # 消去するPCWL_id
     print("pcwl_num before: ",db.pcwlnode.find({"floor":floor}).count())
-    pcwl_id_list = [2,4,6,8,9,11,24,26,21,18,16,14,13]
+    # pcwl_id_list = [2,4,6,8,9,11,24,26,21,18,16,14,13]
+    # 消去対象のPCWL_id(index: 2,4,6,8,9,11,13,14,16,18,20,23,25)
+    pcwl_id_list = [2,4,6,8,9,11,13,14,16,18,21,24,26]
     pcwl_id_query = []
     for pcwl_id in pcwl_id_list:
         pcwl_id_query.append({"pcwl_id":pcwl_id}) 

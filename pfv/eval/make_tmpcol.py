@@ -7,7 +7,7 @@ Env()
 
 from convert_ip import *
 from convert_datetime import *
-import csv
+import csv,glob
 
 from pymongo import *
 client = MongoClient()
@@ -52,6 +52,7 @@ def make_dbmlog(exp_info):
     ed_dt = str(exp_info["ed_dt"])
     iso_st = dt_from_14digits_to_iso(common_dt + st_dt)
     iso_ed = dt_from_14digits_to_iso(common_dt + ed_dt)
+    print(iso_ed - iso_st)
 
     print("from:" + str(iso_st))
     print("to  :" + str(iso_ed) + "\n")
@@ -75,7 +76,6 @@ def make_dbmlog(exp_info):
                 exist_flag = True
             else:
                 data_5s[ip_data["log_key"]] = -99
-
         db.dbmlog.insert(data_5s)
 
         # if exist_flag:
@@ -140,11 +140,21 @@ def append_train(input_file, train_file):
 
 
 
-if __name__ == "__main__":
-    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param_0611.csv --drop")
+if __name__ == "__main__":    
+    target_dir = "./../../mlfile/csv/"
+    os.makedirs(target_dir, exist_ok=True) # 結果を出力するフォルダ(pathで指定)が存在しなければ新規作成
+    # 重複防止の為、以前取得したcsvファイルを削除
+    file_list = glob.glob(target_dir + "*.csv")
+    for file in file_list:
+        os.remove(file)
+    # shutil.rmtree(target_dir)
+    # os.mkdir(target_dir)
+
+    # os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param_0611.csv --drop")
     # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
     # common_id_list = ["190611_","190617_"]  # 0611: Node前、0617: 中点
-    common_id_list = ["190611"]
+    ### TODO: 日程と最大クエリ数を指定
+    common_id_list = ["190617_"]
     Num_of_query = 108 #全queryの数
     for common_id in common_id_list:
         for id_num in range(1,Num_of_query):
@@ -164,9 +174,9 @@ if __name__ == "__main__":
                 make_dbmlog(exp_info)
 
                 tmp_file_name = './../../mlfile/csv/tmp_' + id_str +'.csv'
-                out_file_name = './../../mlfile/csv/' + id_str +'.csv'
-                label_file = './../../mlfile/csv/' + common_id + floor +'_label.csv'
-                train_file = './../../mlfile/csv/' + common_id + floor +'_train.csv'
+                out_file_name = target_dir + id_str +'.csv'
+                label_file = target_dir + common_id + floor +'_label.csv'
+                train_file = target_dir + common_id + floor +'_train.csv'
                 command = 'mongoexport --sort {"datetime":1} -d nm4bd -c dbmlog -o '+ tmp_file_name +' --csv --fieldFile ./../../mlfile/txt/dbm_field'+ floor_num +'.txt'
 
                 # RSSIデータCSV出力

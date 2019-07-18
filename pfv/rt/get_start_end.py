@@ -7,7 +7,6 @@ from convert_ip import convert_ip
 from convert_nodeid import convert_nodeid
 from convert_datetime import shift_seconds
 from classify import classify
-from mongoengine import *
 from pymongo import *
 from Class import *
 from datetime import *
@@ -39,8 +38,8 @@ STAY_ROUNDING_ERROR = 0.01
 MAC_HEAD = "00:11:81:10:01:"
 # use Machine-Learning
 USE_ML = True
-CONTAINS_MIDPOINT = False # 中点を含んだFingerprintを使用するかどうか
-
+CONTAINS_MIDPOINT = True # 中点を含んだFingerprintを使用するかどうか
+DELETES_AP = True
 def get_start_end(all_st):
     """
     開始・終了の時刻・地点を決定するモジュール
@@ -118,7 +117,7 @@ def get_analyzed_pos(pr_data, floor, rssi_list):
     # nodelistを機械学習を適応し整形({"floor","position","rssi"})に
     if USE_ML:
         nodelist = []
-        desc_index, label_list = classify(floor, rssi_list,CONTAINS_MIDPOINT)
+        desc_index, label_list = classify(floor, rssi_list,CONTAINS_MIDPOINT,DELETES_AP)
         for i in range(3):
             # label = label_list[desc_index[i]]
             label = label_list[i]
