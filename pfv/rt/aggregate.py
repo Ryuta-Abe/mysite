@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from convert_nodeid import *
-from make_pcwltime import *
-
 from mongoengine import *
 from pymongo import *
 
@@ -37,3 +35,12 @@ def aggregate_mod(startdt_iso, enddt_iso):
                             )
 
     make_pcwltime(startdt_iso)
+
+
+def make_pcwltime(iso_date):
+    """
+    処理済みの時刻をpcwltimeコレクションに追加
+    @param  iso_date : datetime
+    """
+    ins_data = {"datetime":iso_date}
+    db.pcwltime.insert(ins_data)

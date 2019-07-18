@@ -25,7 +25,7 @@ ed_dt = 20161020134630
 # CONSIDER_BEFORE = False
 
 ## TODO:debug_all実行時に変更 ##
-MARGIN_RATIO = 4  # 中点を含めたFingerprintの際は4、ノードのみの時は2
+MARGIN_RATIO = 2  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 def get_analy_coord(query_id):
 	# 解析データ抽出クエリ

@@ -142,5 +142,17 @@ def make_pcwlnode():
     save_node(26,245,290,[12,15],"W2-9F")
     save_node(27,535,275,[8,18],"W2-9F")
 
+def del_half_nodes(floor):
+    # 消去するPCWL_id
+    print("pcwl_num before: ",db.pcwlnode.find({"floor":floor}).count())
+    pcwl_id_list = [2,4,6,8,9,11,24,26,21,18,16,14,13]
+    pcwl_id_query = []
+    for pcwl_id in pcwl_id_list:
+        pcwl_id_query.append({"pcwl_id":pcwl_id}) 
+    db.pcwlnode.remove({"floor":floor,"$or":pcwl_id_query})
+    print("pcwl_num after : ",db.pcwlnode.find({"floor":floor}).count())
+
 if __name__ == '__main__':
     make_pcwlnode()
+    # floor = "W2-7F"
+    # del_half_nodes(floor)

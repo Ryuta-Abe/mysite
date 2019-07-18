@@ -38,8 +38,8 @@ if __name__ == '__main__':
 	import_flag = True
 	"""
 	### TODO:以下を変更 ###
-	機械学習:new_get_start_endにおけるUSE_ML,CONTAINS_MIDPOINTの修正
-	Fingerprint:new_get_coordにおけるMARGIN_RATIOの修正
+	機械学習:get_start_endにおけるUSE_ML,CONTAINS_MIDPOINTの修正
+	Fingerprint:get_coordにおけるMARGIN_RATIOの修正
 	CONTAINS_MIDPOINT = TrueならMARGIN_RATIO = 4
 	CONTAINS_MIDPOINT = FalseならMARGIN_RATIO = 2
 	"""

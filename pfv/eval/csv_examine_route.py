@@ -9,7 +9,7 @@ from pymongo import *
 from datetime import datetime
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
 from examine_route  import *
-from new_get_coord import get_analy_coord 
+from get_coord import get_analy_coord 
 from convert_to_mac import convert_to_mac
 from statistics import mean
 client = MongoClient()
