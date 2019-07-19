@@ -6,7 +6,7 @@ from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score,StratifiedShuffleSplit, GridSearchCV
 from sklearn import preprocessing
-import pickle,csv
+import pickle,csv,glob,os
 
 # le = preprocessing.LabelEncoder()
 # result = le.fit_transform([1,2,3,"1,1,1,2","2-3","3-4"])
@@ -17,8 +17,8 @@ import pickle,csv
 FLOOR_LIST = ["W2-7F"]
 
 param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
-        #  "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
-         "W2-7F":{"C" : 10.0, "gamma" : 0.0007},
+         "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
+        #  "W2-7F":{"C" : 10.0, "gamma" : 0.0007},
     	 "W2-8F":{"C" : 20.0, "gamma" : 0.0002},
 		 "W2-9F":{"C" : 4.0, "gamma" : 0.0008}}
 CONTAINS_MIDPOINT = True
@@ -68,15 +68,18 @@ def get_best_param():
 	return clf.best_params_
 
 def make_model():
-	CONTAINS_MIDPOINT = True
+	CONTAINS_MIDPOINT = False
 	for floor in FLOOR_LIST:
 		path = "../../working/"
 		## TODO: train, label ファイルの指定
 		# y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
 		# y = np.genfromtxt(path + "190611_" + floor + "_" + 'label.csv', delimiter = ',')
+		file_list = glob.glob(path + floor + "_model.pkl")
+		for file in file_list:
+			os.remove(file)
 
-		X = np.genfromtxt(path + "AP13_FP53_" + floor + "_" + 'train.csv', delimiter = ',')
-		y = np.genfromtxt(path + "" + floor + "_" + 'label.csv', delimiter = ',')
+		X = np.genfromtxt(path + "AP13_FP13_" + floor + "_" + 'train.csv', delimiter = ',')
+		y = np.genfromtxt(path + "AP26_FP13_" + floor + "_" + 'label.csv', delimiter = ',')
 		if CONTAINS_MIDPOINT:
 			print("before label encoding: ",y)
 			le = preprocessing.LabelEncoder()

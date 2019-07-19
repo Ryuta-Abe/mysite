@@ -54,7 +54,7 @@ if __name__ == '__main__':
         else:
             print(exp_info)
             floor_node_list = []
-            floor_node_col = db.pcwlnode.find({"floor":exp_info["floor"]}).sort("pcwl_id",ASCENDING)
+            floor_node_col = db.reg_pcwlnode.find({"floor":exp_info["floor"]}).sort("pcwl_id",ASCENDING)
             correct_node = exp_info["st_node"]
             for node in floor_node_col:
                 floor_node_list.append(node["pcwl_id"])

@@ -209,6 +209,7 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 				# 	break
 				if isinside(analyzed_pos_x,pos_x,mlist[i]["pos_x"]) and isinside(analyzed_pos_y,pos_y,mlist[i]["pos_y"]):
 					moment_error_dist = 0
+					judgement = "T(Match)"
 					break
 				else:
 					temp_dist = mlist[i]["margin"]
@@ -218,22 +219,25 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 					min_dist = temp_dist
 					# moment_error_dist = rounding(min_dist - mlist[i]["margin"],2)  # マージンからの距離から
 					moment_error_dist = rounding(min_dist, 2) # 小数点2桁目までに
+			else:
+				judgement = "F(Wrong Node)"
+
 			error_distance += moment_error_dist
 
 			moment_direct_error_distance = math.sqrt(pow((pos_x - analyzed_pos_x),2) + pow((pos_y - analyzed_pos_y),2))
 			direct_error_distance += moment_direct_error_distance
+			## TODO: 分岐改良
+			# if not (analyzed_node in correct_nodes):
+			# 	judgement = "F(Wrong Node)"
 
-			if not (analyzed_node in correct_nodes):
-				judgement = "F(Wrong Node)"
+			# elif len(correct_nodes) == 2:
+			# 	judgement = "T(Middle)"
 
-			elif len(correct_nodes) == 2:
-				judgement = "T(Middle)"
+			# elif analyzed_node == correct_nodes[0]:
+			# 	judgement = "T(Match)"
 
-			elif analyzed_node == correct_nodes[0]:
-				judgement = "T(Match)"
-
-			else:
-				judgement = "T(Adjacent)"
+			# else:
+			# 	judgement = "T(Adjacent)"
 	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
 		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"err_dist":moment_error_dist,"direct_err_dist":moment_direct_error_distance})
 	db.actual_position.insert({"floor": floor, "mac": mac, "datetime":dt,"pos_x":pos_x,"pos_y":pos_y})

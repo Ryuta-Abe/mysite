@@ -8,22 +8,38 @@ from time import time
 st = time()
 
 # import Env
-import os, sys,getpass
+import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
 from env import Env
 Env()
-
+from pymongo import *
+client = MongoClient()
+db = client.nm4bd
 from init_db import init_db
+from init_all import init_all
 from analyze import analyze_mod
 from convert_datetime import dt_from_14digits_to_iso
 from csv_examine_route import csv_examine_route, make_exp_id
-
+from make_pcwlnode import make_half_pcwlnode, make_pcwlnode
+import config
 from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 
-def debug_all(json_file, st_dt, ed_dt, query_list):
+### TODO:以下を変更 ###
+### config.pyの各種パラメーターを変更  ###
+import_flag = True  # trtmp, csvtestにインポートしなおすかどうか
+date = "20190413"
+st_dt = date + "2149"
+ed_dt = date + "2334" ## 解析終了時刻 """
+st_exp_id = 1  # 開始クエリ番号
+ed_exp_id = 96 # 終了クエリ番号
+###
+DELETES_FP = config.DELETES_FP
 
+def debug_all(json_file, st_dt, ed_dt, query_list):
+	if DELETES_FP:
+		make_half_pcwlnode()
 	db.trtmp.create_index([("get_time_no", ASCENDING),("mac", ASCENDING)])
 	# db.trtmp.create_index([("get_time_no", ASCENDING)])
 	db.trtmp.create_index([("mac", ASCENDING)])
@@ -33,23 +49,9 @@ def debug_all(json_file, st_dt, ed_dt, query_list):
 	csv_examine_route(query_list)  ## TODO: examine_route系の変更
 
 if __name__ == '__main__':
-	init_db()
+	# init_db()
+	init_all()
 	path = "../../working/"
-	import_flag = True
-	"""
-	### TODO:以下を変更 ###
-	機械学習:get_start_endにおけるUSE_ML,CONTAINS_MIDPOINTの修正
-	Fingerprint:get_coordにおけるMARGIN_RATIOの修正
-	CONTAINS_MIDPOINT = TrueならMARGIN_RATIO = 4
-	CONTAINS_MIDPOINT = FalseならMARGIN_RATIO = 2
-	"""
-	### TODO:以下を実行前に入力 ###
-	date = "20190413"
-	st_dt = date + "2149"
-	ed_dt = date + "2334" ## 解析終了時刻 """
-	st_exp_id = 1  # 開始クエリ番号
-	ed_exp_id = 96 # 終了クエリ番号
-	###
 
 	short_date = date[2:]
 	query_list = make_exp_id(short_date + '_', st_exp_id, ed_exp_id)  
@@ -72,27 +74,4 @@ if __name__ == '__main__':
 
 	command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
 	os.system(command)
-
-# 	init_db()
-# 	debug_all(json_file,st_dt,ed_dt,query_list)
-# 　　
-
-	
-# 	# query_list = make_exp_id("161213_", 79, 88)
-# 	# debug_all("C:/Users/Ryuta/Desktop/backup_data/rttmp/rttmp_20161214_flow.json", 201612131826, 201612131835, query_list)
-# 	# query_list = make_exp_id("161221_", 5, 8)
-# 	# debug_all("C:/Users/Ryuta/Desktop/backup_data/rttmp/rttmp_20161222.json", 201612211838, 201612211841, query_list)
-# 	# query_list = make_exp_id("170127_", 1, 75)
-# 	# debug_all("C:/Users/KENTO/workspace_env1/rttmp_20170127.json", 201701271746, 201701271835, query_list)
-# 	# query_list = make_exp_id("170128_", 1, 3)
-# 	# debug_all("C:/Users/Ryuta/Desktop/backup_data/rttmp/rttmp_20170129.json", 201701281814, 201701281815, query_list)
-
-	
-# 	# # output = "C:/Users/Ryuta/exp_result_FF_F.csv"
-# 	# output = "C:/Users/KENTO/exp_result170127_TT_T.csv"
-# 	# # output = "C:/Users/Ryuta/exp_result170128_TF_T.csv"
-# 	# command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output+' --csv --fieldFile C:/Users/KENTO/exp_result.txt'
-# 	# os.system(command)
-# 	os.system('mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+ '../../mlfile/csv/exp_result_' + short_date + '.csv' + ' --csv --fieldFile ../../mlfile/txt/exp_result_new.txt')
-# 	print(time() - st)
 	

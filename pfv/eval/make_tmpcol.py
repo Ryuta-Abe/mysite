@@ -150,11 +150,11 @@ if __name__ == "__main__":
     # shutil.rmtree(target_dir)
     # os.mkdir(target_dir)
 
-    # os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param_0611.csv --drop")
+    os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv ../../working/exp_param_.csv --drop")
     # common_id_list = ["161207_0", "161208_0"]  # 日を跨いだ時
     # common_id_list = ["190611_","190617_"]  # 0611: Node前、0617: 中点
     ### TODO: 日程と最大クエリ数を指定
-    common_id_list = ["190617_"]
+    common_id_list = ["190611_"]
     Num_of_query = 108 #全queryの数
     for common_id in common_id_list:
         for id_num in range(1,Num_of_query):

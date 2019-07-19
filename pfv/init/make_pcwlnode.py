@@ -3,11 +3,64 @@
 from pymongo import *
 client = MongoClient()
 db = client.nm4bd
-
+from make_pcwlroute import make_pcwlroute
 def save_node(id,x,y,n,f):
-    db.pcwlnode.insert({"pcwl_id" : id, "pos_x" : x, "pos_y" : y, "next_id" : n, "floor" : f}) 
+    db.pcwlnode.insert({"pcwl_id" : id, "pos_x" : x, "pos_y" : y, "next_id" : n, "floor" : f})
+
+def save_regular_node(id,x,y,n,f):
+    db.reg_pcwlnode.insert({"pcwl_id" : id, "pos_x" : x, "pos_y" : y, "next_id" : n, "floor" : f}) 
+
+def make_regular_pcwlnode():
+    db.reg_pcwlnode.drop()
+    save_regular_node(1,990,130,[2],"W2-7F")
+    save_regular_node(2,920,150,[1,3],"W2-7F")
+    save_regular_node(3,925,225,[2,4],"W2-7F")
+    save_regular_node(4,860,200,[3,5],"W2-7F")
+    save_regular_node(5,800,200,[4,6,23],"W2-7F")
+    save_regular_node(6,700,190,[5,7,24],"W2-7F")
+    save_regular_node(7,590,180,[6,8],"W2-7F")
+    save_regular_node(8,470,180,[7,25,27],"W2-7F")
+    save_regular_node(9,300,180,[10,25,26],"W2-7F")
+    save_regular_node(10,190,200,[9,11],"W2-7F")
+    save_regular_node(11,130,200,[10],"W2-7F")
+    save_regular_node(12,300,350,[13,14,26],"W2-7F")
+    save_regular_node(13,180,340,[12],"W2-7F")
+    save_regular_node(14,350,340,[12,15],"W2-7F")
+    save_regular_node(15,410,330,[14,16],"W2-7F")
+    save_regular_node(16,475,350,[15,17,27],"W2-7F")
+    save_regular_node(17,540,330,[16,18],"W2-7F")
+    save_regular_node(18,630,325,[17,20],"W2-7F")
+    save_regular_node(20,670,340,[18,21],"W2-7F")
+    save_regular_node(21,790,350,[20,22,23],"W2-7F")
+    save_regular_node(22,900,350,[21],"W2-7F")
+    save_regular_node(23,790,275,[5,21],"W2-7F")
+    save_regular_node(24,700,250,[6],"W2-7F")
+    save_regular_node(25,400,180,[8,9],"W2-7F")
+    save_regular_node(26,300,275,[9,12],"W2-7F")
+    save_regular_node(27,480,275,[8,16],"W2-7F")
+
+def make_half_pcwlnode():
+    make_pcwlnode()
+    db.pcwlnode.remove({"floor":"W2-7F"})
+    save_node(1,990,130,[3],"W2-7F")
+    save_node(3,925,225,[1,5],"W2-7F")
+    save_node(5,800,200,[3,7,21],"W2-7F")
+    save_node(7,590,180,[5,8],"W2-7F")
+    save_node(8,470,180,[7,9,16],"W2-7F")
+    save_node(9,300,180,[8,11,12],"W2-7F")
+    save_node(11,130,200,[9],"W2-7F")
+    save_node(12,300,350,[9,13,16],"W2-7F")
+    save_node(13,180,340,[12],"W2-7F")
+    save_node(16,475,350,[8,12,18],"W2-7F")
+    save_node(18,630,325,[16,21],"W2-7F")
+    save_node(21,790,350,[5,18,22],"W2-7F")
+    save_node(22,900,350,[21],"W2-7F")
+    db.pcwlroute.drop()
+    db.idealroute.drop()
+    make_pcwlroute()
 
 def make_pcwlnode():
+    make_regular_pcwlnode()
     db.pcwlnode.drop()
     # W2-6F nodes
     save_node(1,990,130,[2],"W2-6F")
@@ -142,19 +195,19 @@ def make_pcwlnode():
     save_node(26,245,290,[12,15],"W2-9F")
     save_node(27,535,275,[8,18],"W2-9F")
 
-def del_half_nodes(floor):
-    # 消去するPCWL_id
-    print("pcwl_num before: ",db.pcwlnode.find({"floor":floor}).count())
-    # pcwl_id_list = [2,4,6,8,9,11,24,26,21,18,16,14,13]
-    # 消去対象のPCWL_id(index: 2,4,6,8,9,11,13,14,16,18,20,23,25)
-    pcwl_id_list = [2,4,6,8,9,11,13,14,16,18,21,24,26]
-    pcwl_id_query = []
-    for pcwl_id in pcwl_id_list:
-        pcwl_id_query.append({"pcwl_id":pcwl_id}) 
-    db.pcwlnode.remove({"floor":floor,"$or":pcwl_id_query})
-    print("pcwl_num after : ",db.pcwlnode.find({"floor":floor}).count())
+# def del_half_nodes(floor):
+#     # 消去するPCWL_id
+#     print("pcwl_num before: ",db.pcwlnode.find({"floor":floor}).count())
+#     # pcwl_id_list = [2,4,6,8,9,11,24,26,21,18,16,14,13]
+#     # 消去対象のPCWL_id(index: 2,4,6,8,9,11,13,14,16,18,20,23,25)
+#     pcwl_id_list = [2,4,6,8,9,11,13,14,16,18,21,24,26]
+#     pcwl_id_query = []
+#     for pcwl_id in pcwl_id_list:
+#         pcwl_id_query.append({"pcwl_id":pcwl_id}) 
+#     db.pcwlnode.remove({"floor":floor,"$or":pcwl_id_query})
+#     print("pcwl_num after : ",db.pcwlnode.find({"floor":floor}).count())
 
 if __name__ == '__main__':
     make_pcwlnode()
     # floor = "W2-7F"
-    # del_half_nodes(floor)
+    make_half_pcwlnode()

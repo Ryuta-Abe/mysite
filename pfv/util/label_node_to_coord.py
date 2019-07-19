@@ -17,7 +17,7 @@ for floor in floor_list:
     datas = []
     for row in csv_reader:
         pcwl_id = int(row[0])
-        node_info = db.pcwlnode.find_one({"floor":floor,"pcwl_id":pcwl_id})
+        node_info = db.reg_pcwlnode.find_one({"floor":floor,"pcwl_id":pcwl_id})
         if node_info != None:
             pos_row = [node_info["pos_x"], node_info["pos_y"]]
             datas.append(pos_row)

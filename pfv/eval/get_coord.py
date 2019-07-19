@@ -9,9 +9,13 @@ from convert_datetime import *
 from pymongo import *
 from Class import Position
 from math import sqrt
+import sys,os
 client = MongoClient()
 db = client.nm4bd
-
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
+from env import Env
+Env()
+import config
 mac = "00:11:81:10:01:1c"
 floor = "W2-7F"
 st_dt = 20161020134250
@@ -25,7 +29,7 @@ ed_dt = 20161020134630
 # CONSIDER_BEFORE = False
 
 ## TODO:debug_all実行時に変更 ##
-MARGIN_RATIO = 2  # 中点を含めたFingerprintの際は4、ノードのみの時は2
+MARGIN_RATIO = config.MARGIN_RATIO  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 def get_analy_coord(query_id):
 	# 解析データ抽出クエリ

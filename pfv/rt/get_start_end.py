@@ -13,7 +13,7 @@ from datetime import *
 from examine_route import isinside
 from get_coord import get_distance_between_points, get_dividing_point
 import numpy as np
-
+import config
 client = MongoClient()
 db = client.nm4bd
 db.tmpcol.create_index([("_id.get_time_no", ASCENDING), ("_id.mac", ASCENDING)])
@@ -37,9 +37,9 @@ MAX_SPEED = 60
 STAY_ROUNDING_ERROR = 0.01
 MAC_HEAD = "00:11:81:10:01:"
 # use Machine-Learning
-USE_ML = True
-CONTAINS_MIDPOINT = True # 中点を含んだFingerprintを使用するかどうか
-DELETES_AP = True
+USE_ML = config.USE_ML
+CONTAINS_MIDPOINT = config.CONTAINS_MIDPOINT # 中点を含んだFingerprintを使用するかどうか
+DELETES_AP = config.DELETES_AP
 def get_start_end(all_st):
     """
     開始・終了の時刻・地点を決定するモジュール
@@ -276,7 +276,7 @@ def remake_pr_data(pr_data):
             break
 
     pcwl_id_list = []  # pcwl_idはとびとびの値であるから、[1,2,3,5,7]のようなpcwl_idを昇順に並べたリスト
-    floor_node_col = db.pcwlnode.find({"floor":largest_floor}).sort("pcwl_id",ASCENDING)
+    floor_node_col = db.reg_pcwlnode.find({"floor":largest_floor}).sort("pcwl_id",ASCENDING)
     for node in floor_node_col:
         pcwl_id_list.append(node["pcwl_id"])
     rssi_list = [-99] * len(pcwl_id_list)
