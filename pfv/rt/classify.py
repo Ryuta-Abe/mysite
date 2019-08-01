@@ -22,8 +22,8 @@ MODEL_DIR = "../../mlmodel/"
 # ini = config.read_config_file(INI_FILE)
 # AP_DELETE_ORDER = ini.get("AP_FP", "AP_DELETE_ORDER")
 # AP_DELETE_NUM = ini.get("AP_FP", "AP_DELETE_NUM")
-AP_DELETE_ORDER = config.AP_DELETE_ORDER
-AP_DELETE_NUM = config.AP_DELETE_NUM
+AP_DELETE_ORDER = 0
+AP_DELETE_NUM = 0
 def get_deleted_rssi_list(floor,rssi_list):
     # pcwl_id_list = [2,4,6,8,9,11,24,26,21,18,16,14,13]
     # 消去対象のPCWL_id(index: 2,4,6,8,9,11,13,14,16,18,20,23,25)
@@ -35,6 +35,7 @@ def get_deleted_rssi_list(floor,rssi_list):
     return rssi_list
 
 def classify(floor, rssi_list,CONTAINS_MIDPOINT,DELETES_AP):
+    global AP_DELETE_ORDER, AP_DELETE_NUM
     AP_DELETE_ORDER = config.AP_DELETE_ORDER
     AP_DELETE_NUM = config.AP_DELETE_NUM
     if DELETES_AP:
