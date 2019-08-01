@@ -21,7 +21,7 @@ from classify import get_deleted_rssi_list
 from make_model import make_model
 from debug_all import debug_all
 import config
-
+from utils import get_m_from_px
 
 ### TODO:以下を変更 ###
 ### config.pyの各種パラメーターを変更  ###
@@ -29,7 +29,8 @@ import config
 # FP_RANGE = range(13,54)
 # FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
-AP_RANGE, FP_RANGE = range(13,27,2), range(13,54,3)
+# AP_RANGE, FP_RANGE = range(19,27,2), range(13,54)
+AP_RANGE, FP_RANGE = [19], range(46,54,3)
 # AP_RANGE, FP_RANGE = [16], [50]
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
@@ -184,7 +185,7 @@ def debug_APFP():
 
 		# # 結果を出力
 		output_result()
-
+## mongoexport -d nm4bd -c debug_APFP --type=csv -o result.csv -f AP,FP,avg_err_dist,avg_accuracy
 def get_theoretical_err_dist():
 	# for i, (AP, FP) in enumerate(itertools.product(AP_RANGE, FP_RANGE)):
 	# 	init_all()
@@ -196,6 +197,15 @@ def get_theoretical_err_dist():
 	# 	# 	raise ValueError
 
 	# 	if FP_delete_num >= 0:  # FPを全AP数以下にする場合
+	def exists_midpoint(FP_midpoint_list, pcwl_id_1, pcwl_id_2):
+		midpoint = str(pcwl_id_1) + "." + str(pcwl_id_2)
+		if midpoint in FP_midpoint_list:
+			return True
+		midpoint = str(pcwl_id_2) + "." + str(pcwl_id_1)
+		if midpoint in FP_midpoint_list:
+			return True
+		else:
+			return False
 
 	for FP in FP_RANGE:
 		init_all()  # DB初期化, PCWL関係DB追加
@@ -209,38 +219,47 @@ def get_theoretical_err_dist():
 				next_id_list = pcwlnode["next_id"]
 				next_distance_list = []
 				for next_id in next_id_list:
-					next_distance = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : pcwl_id},{"query" : next_id}]})["total_distance"]
+					next_distance = db.idealroute.find_one({"$and": [{"floor" : FLOOR},{"query" : pcwlnode["pcwl_id"]},{"query" : next_id}]})["total_distance"]
 					next_distance_list.append(next_distance)
 				average_distance_list.append(mean(next_distance_list))
-			average_distance = mean(average_distance_list)
+			average_distance = get_m_from_px(mean(average_distance_list))
 		else:
-			double_FP_delete_num = MIDPOINT_FP_COUNT - FP_delete_num  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
-			FP_midpoint_list = MIDPOINT_DELETE_ORDER[double_FP_delete_num:]
+			double_FP_delete_num = MIDPOINT_FP_COUNT - FP  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
+			FP_midpoint_list = MIDPOINT_DELETE_ORDER[double_FP_delete_num:]  # 残ったFPに含まれる中点のリスト
 			if len(FP_midpoint_list) != FP - AP_COUNT:
 				print("ERROR")
 			# FP_delete_list = AP_DELETE_ORDER[:FP_delete_num]
 			# delete_part_pcwlnode(FLOOR, FP_delete_list)
 			pcwlnode_list = db.reg_pcwlnode.find({"floor": FLOOR})
 			average_distance_list = []
+			if "9.1" in FP_midpoint_list:
+				index = FP_midpoint_list.index("9.1")
+				FP_midpoint_list[index] = "9.10"
+			if "18.2" in FP_midpoint_list:
+				index = FP_midpoint_list.index("18.2")
+				FP_midpoint_list[index] = "18.20"
 			for pcwlnode in pcwlnode_list:
 				next_id_list = pcwlnode["next_id"]
 				next_distance_list = []
 				for next_id in next_id_list:
-					next_distance = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : pcwl_id},{"query" : next_id}]})["total_distance"]
+					next_distance = db.idealroute.find_one({"$and": [{"floor" : FLOOR},{"query" : pcwlnode["pcwl_id"]},{"query" : next_id}]})["total_distance"]
+					if exists_midpoint(FP_midpoint_list, pcwlnode["pcwl_id"], next_id):
+						next_distance = next_distance / 2
 					next_distance_list.append(next_distance)
 				average_distance_list.append(mean(next_distance_list))
-			average_distance = mean(average_distance_list)
-
-
-
-
-
-
-
+			for midpoint in FP_midpoint_list:
+				pcwl_id_list = midpoint.split(".")
+				pcwl_id_1 = int(pcwl_id_list[0])
+				pcwl_id_2 = int(pcwl_id_list[1])
+				next_distance = db.idealroute.find_one({"$and": [{"floor" : FLOOR},{"query" : pcwl_id_1},{"query" : pcwl_id_2}]})["total_distance"]
+				average_distance_list.append(next_distance/2)  # 中点から隣接するAPまでの距離の平均
+			average_distance = get_m_from_px(mean(average_distance_list))
+		db.theo_err.insert({"FP":FP, "avg_err":average_distance})
 
 
 if __name__ == '__main__':
 	debug_APFP()
+	# get_theoretical_err_dist()
 	# input_file = "190611_W2-7F_train.csv"
 	# output_file = "APtest"  + "_" + "FPtest"  + "_W2-7F_train.csv"
 	# make_deleted_train_file(input_file,output_file,AP_DELETE_LIST,FP_DELETE_LIST)

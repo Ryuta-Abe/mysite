@@ -27,7 +27,9 @@ def get_pcwl_index(floor,pcwl_id):
         index = pcwl_id_list.index(pcwl_id)
         return index
 
-
+def get_m_from_px(px_distance):
+    distance =  px_distance * 14.4 / 110
+    return distance
 
 if __name__ == "__main__":
     index = get_pcwl_index("W2-7F",5)
