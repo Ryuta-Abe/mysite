@@ -21,7 +21,7 @@ from convert_datetime import dt_from_14digits_to_iso
 from csv_examine_route import csv_examine_route, make_exp_id
 from make_pcwlnode import make_half_pcwlnode, make_pcwlnode
 import config
-
+from configparser import ConfigParser
 ### TODO:以下を変更 ###
 ### config.pyの各種パラメーターを変更  ###
 import_flag = True  # trtmp, csvtestにインポートしなおすかどうか
@@ -31,10 +31,15 @@ ed_dt = date + "2334" ## 解析終了時刻 """
 st_exp_id = 1  # 開始クエリ番号
 ed_exp_id = 96 # 終了クエリ番号
 ###
-INI_PATH = "../config.ini"
-DELETES_FP = config.DELETES_FP
+# INI_FILE = "../config.ini"
+# ini = config.read_config_file(INI_FILE)
+# DELETES_FP = ini.getboolean("AP_FP", "DELETES_FP")
 
 def debug_all(st_dt, ed_dt, query_list):
+	DELETES_FP = config.DELETES_FP
+	# ini = config.read_config_file(INI_FILE)
+	# DELETES_FP = ini.getboolean("AP_FP", "DELETES_FP")
+	# print(DELETES_FP)
 	if DELETES_FP:
 		make_half_pcwlnode()
 	db.trtmp.create_index([("get_time_no", ASCENDING),("mac", ASCENDING)])

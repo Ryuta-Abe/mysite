@@ -37,10 +37,19 @@ MAX_SPEED = 60
 STAY_ROUNDING_ERROR = 0.01
 MAC_HEAD = "00:11:81:10:01:"
 # use Machine-Learning
-USE_ML = config.USE_ML
-CONTAINS_MIDPOINT = config.CONTAINS_MIDPOINT # 中点を含んだFingerprintを使用するかどうか
-DELETES_AP = config.DELETES_AP
+# INI_FILE = "../config.ini"
+# ini = config.read_config_file(INI_FILE)
+# USE_ML = ini.get("ML", "USE_ML")
+# CONTAINS_MIDPOINT = ini.getboolean("AP_FP", "CONTAINS_MIDPOINT")
+# DELETES_AP = ini.getboolean("AP_FP", "DELETES_AP")
+USE_ML = 0
+CONTAINS_MIDPOINT = 0 # 中点を含んだFingerprintを使用するかどうか
+DELETES_AP = 0
 def get_start_end(all_st):
+    global USE_ML, CONTAINS_MIDPOINT, DELETES_AP
+    USE_ML = config.USE_ML
+    CONTAINS_MIDPOINT = config.CONTAINS_MIDPOINT # 中点を含んだFingerprintを使用するかどうか
+    DELETES_AP = config.DELETES_AP
     """
     開始・終了の時刻・地点を決定するモジュール
     @param  all_st : datetime 開始時刻
@@ -64,10 +73,10 @@ def get_start_end(all_st):
             if result == 0:
                 update_maclist(pr_data["id"]["mac"])
             else:
-                print("plz step in to investigate")
+                # print("plz step in to investigate")
                 # result = get_analyzed_pos(pr_data, largest_floor, rssi_list)
                 print("result(get_analyzed_pos): ", result)
-                print("pr_data",pr_data)
+                # print("pr_data",pr_data)
     
     if (db.pastmaclist.find() != 0): #  当該タグのPRデータが取得できなかった場合（ex:電源断・ネットワークエラー）
         lost_mac_list = []
@@ -95,14 +104,16 @@ def get_start_end(all_st):
     # make_pfvmacinfo(data_lists,db.pfvmacinfo,min_interval)
     # make_staymacinfo(data_lists_stay,db.staymacinfo,min_interval)
 
-    print("----",all_st,"----",end="")
+    # print("----",all_st,"----",end="")
 
     if(flow_count + stay_count != tag_count):
+        print("----",all_st,"----",end="")
         print("flow: ", flow_count, " / ", tag_count)
         print("stay: ", stay_count, " / ", tag_count)        
         print("Error: Data Lost:", lost_mac_list)
     else:
-        print("was analyzed successfully!")
+        print("\r----",all_st,"----", "was analyzed successfully!", end = "")
+        # print("\rwas analyzed successfully!", end = "")
 
 
 def get_analyzed_pos(pr_data, floor, rssi_list):

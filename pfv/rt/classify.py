@@ -18,6 +18,10 @@ MODEL_DIR = "../../mlmodel/"
 # IS_REGULAR = True
 # MODEL_DIR = "/home/murakami2/mlmodel/"
 # delete_id_list = [2,4,6,10,14,15,17,20,23,24,25,26,27]
+# INI_FILE = "../config.ini"
+# ini = config.read_config_file(INI_FILE)
+# AP_DELETE_ORDER = ini.get("AP_FP", "AP_DELETE_ORDER")
+# AP_DELETE_NUM = ini.get("AP_FP", "AP_DELETE_NUM")
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 AP_DELETE_NUM = config.AP_DELETE_NUM
 def get_deleted_rssi_list(floor,rssi_list):
@@ -31,6 +35,8 @@ def get_deleted_rssi_list(floor,rssi_list):
     return rssi_list
 
 def classify(floor, rssi_list,CONTAINS_MIDPOINT,DELETES_AP):
+    AP_DELETE_ORDER = config.AP_DELETE_ORDER
+    AP_DELETE_NUM = config.AP_DELETE_NUM
     if DELETES_AP:
         rssi_list = get_deleted_rssi_list(floor,rssi_list)
     # import model

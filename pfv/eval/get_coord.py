@@ -29,9 +29,15 @@ ed_dt = 20161020134630
 # CONSIDER_BEFORE = False
 
 ## TODO:debug_all実行時に変更 ##
-MARGIN_RATIO = config.MARGIN_RATIO  # 中点を含めたFingerprintの際は4、ノードのみの時は2
+# INI_FILE = "../config.ini"
+# ini = config.read_config_file(INI_FILE)
+# MARGIN_RATIO = ini.get("AP_FP", "MARGIN_RATIO")
+
+# MARGIN_RATIO = config.MARGIN_RATIO  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 
 def get_analy_coord(query_id):
+	# MARGIN_RATIO = config.MARGIN_RATIO  # 中点を含めたFingerprintの際は4、ノードのみの時は2
+
 	# 解析データ抽出クエリ
 	# query = {"exp_id":"161020"}
 	data = db.csvtest.find_one(query_id)
@@ -82,6 +88,7 @@ def get_coord_from_info(floor, mac, dt):
 		pass
 
 def insert_coord_from_node(floor, mac, position, dt):
+	MARGIN_RATIO = config.MARGIN_RATIO  # 中点を含めたFingerprintの際は4、ノードのみの時は2
 	from examine_route import rounding
 	prev_node, prev_dist, next_dist, next_node = position
 	mlist = [] # marginのリスト

@@ -81,11 +81,11 @@ def make_model(train_file_name, label_file_name, CONTAINS_MIDPOINT):
 		# X = np.genfromtxt(path + "AP13_FP53_" + floor + "_" + 'train.csv', delimiter = ',')
 		# y = np.genfromtxt(path + "" + floor + "_" + 'label.csv', delimiter = ',')
 		if CONTAINS_MIDPOINT:
-			print("before label encoding: ",y)
+			# print("before label encoding: ",y)
 			le = preprocessing.LabelEncoder()
 			le.fit(y)
 			y = le.transform(y)
-			print("after label encoding: ",y)
+			# print("after label encoding: ",y)
 		clf = svm.SVC(C = param[floor]["C"], gamma = param[floor]["gamma"],probability = True)
 		clf.fit(X,y)
 

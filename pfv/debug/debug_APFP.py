@@ -21,20 +21,23 @@ from classify import get_deleted_rssi_list
 from make_model import make_model
 from debug_all import debug_all
 import config
-# import config
 
 
 ### TODO:以下を変更 ###
 ### config.pyの各種パラメーターを変更  ###
 AP_RANGE = range(13,27)
 FP_RANGE = range(13,54)
+# FP_RANGE = range(27, 54)
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
+MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
 # FP_DELETE_LIST = AP_DELETE_ORDER
 import_flag = True  # trtmp, csvtestにインポートしなおすかどうか
 DATE = "20190413"
 ST_DT = DATE + "2149"
+ED_DT = DATE + "2153"
 ED_DT = DATE + "2334" ## 解析終了時刻 """
 ST_EXP_ID = 1  # 開始クエリ番号
+ED_EXP_ID = 4
 ED_EXP_ID = 96 # 終了クエリ番号
 ###
 FLOOR = "W2-7F"  # TODO：一般化
@@ -43,24 +46,13 @@ MIDPOINT_FP_COUNT = 53  # 中点を含むFP数
 PATH =  "../../working/"
 AP_COUNT_TRAIN_FILE = "190611_W2-7F_train.csv"
 MIDPOINT_FP_COUNT_TRAIN_FILE = FLOOR +"_train.csv"
-MIDPOINT_FP_DELETE_LIST = []  # len: MIDPOINT_FP_COUNT - AP_COUNT
+# MIDPOINT_FP_DELETE_LIST = []  # len: MIDPOINT_FP_COUNT - AP_COUNT
+# INI_FILE = "../config.ini"
+# ini = ConfigParser()
+# if os.path.exists(INI_FILE):
+# 	ini.read(INI_FILE, encoding = "utf-8")
+# AP_DELETE_ORDER = ini.get("AP_FP", "AP_DELETE_ORDER")
 
-
-def get_MIDPOINT_FP_DELETE_LIST(floor):
-	MIDPOINT_FP_COUNT_LABEL_FILE = MIDPOINT_FP_COUNT_TRAIN_FILE.replace("train","label")
-	df = pd.read_csv(PATH + MIDPOINT_FP_COUNT_LABEL_FILE, engine='python', names=["label"],dtype = str)
-	midpoint_list = [label for label in df["label"].unique() if "." in label]
-	distance_list = [] 
-	for midpoint in midpoint_list:
-		st_node = int(midpoint.split(".")[0])
-		ed_node = int(midpoint.split(".")[1])		
-		distance = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})["total_distance"]
-		distance_list.append(distance)
-	ziped_list = zip(midpoint_list,distance_list)
-	ziped_list = sorted(ziped_list,key = lambda x:x[1])
-	MIDPOINT_FP_DELETE_LIST = [x[0] for x in ziped_list]
-	# print(MIDPOINT_FP_DELETE_LIST)
-	return MIDPOINT_FP_DELETE_LIST
 
 def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_delete_list):
 	input_label_file_name = input_file_name.replace("train","label")
@@ -92,7 +84,7 @@ def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_
 	# 	w.writerows(doc)
 
 def debug_APFP():
-	global MIDPOINT_FP_DELETE_LIST
+	# global MIDPOINT_FP_DELETE_LIST
 	def import_file():
 		short_DATE = DATE[2:]
 		query_list = make_exp_id(short_DATE + '_', ST_EXP_ID, ED_EXP_ID)  
@@ -120,10 +112,10 @@ def debug_APFP():
 		ML_FILE_PATH = "../../mlmodel/"
 		shutil.copy(ML_FILE_PATH + floor + "_model.pkl", ML_FILE_PATH + "backup/" + "AP" + str(AP) + "_FP" + str(FP) + "_" + floor + "_model.pkl")
 
-	init_all()  # DB初期化, PCWL関係DB追加
-	MIDPOINT_FP_DELETE_LIST = get_MIDPOINT_FP_DELETE_LIST(FLOOR)
+	db.debug_APFP.drop()
 	query_list = []
 	for i, (AP, FP) in enumerate(itertools.product(AP_RANGE, FP_RANGE)):
+		init_all()  # DB初期化, PCWL関係DB追加
 		print("------------ AP: ", AP,"FP: ", FP, " ------------")
 		if i == 0:  # 初回のみPRデータとexp_paramをインポート
 			query_list = import_file()
@@ -144,13 +136,17 @@ def debug_APFP():
 			# label_file = AP_COUNT_LABEL_FILE
 			contains_midpoint = False
 			config.set_CONTAINS_MIDPOINT(contains_midpoint)
+			# config.set_value(ini, "AP_FP", "CONTAINS_MIDPOINT", contains_midpoint)
+			# config.set_value(ini, "AP_FP", "MARGIN_RATIO", 2)
 		else:  # FPをAP数よりも増やす(中点を加える)場合
 			double_FP_delete_num = AP_COUNT * 2 - FP_delete_num  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
-			FP_delete_list = MIDPOINT_FP_DELETE_LIST[:double_FP_delete_num]
+			FP_delete_list = MIDPOINT_DELETE_ORDER[:double_FP_delete_num]
 			input_file = MIDPOINT_FP_COUNT_TRAIN_FILE
 			# label_file = MIDPOINT_FP_COUNT_LABEL_FILE
 			contains_midpoint = True
 			config.set_CONTAINS_MIDPOINT(contains_midpoint)
+			# config.set_value(ini, "AP_FP", "CONTAINS_MIDPOINT", contains_midpoint)
+			# config.set_value(ini, "AP_FP", "MARGIN_RATIO", 4)
 		output_file = "AP" + str(AP) + "_" + "FP" + str(FP) + "_W2-7F_train.csv"
 		make_deleted_train_file(input_file,output_file, AP_delete_list,FP_delete_list)
 		label_file = output_file.replace("train","label")
@@ -162,8 +158,14 @@ def debug_APFP():
 		if AP_delete_num > 0:
 			config.set_DELETES_AP_FP(True, False)
 			config.set_AP_DELETE_NUM(AP_delete_num)
+			# config.set_value(ini, "AP_FP", "DELETES_AP", True)
+			# config.set_value(ini, "AP_FP", "DELETES_FP", False)
+			# config.set_value(ini, "AP_FP", "AP_DELETE_NUM", AP_delete_num)
+			# config.show_config(ini)
 		else:
 			config.set_DELETES_AP_FP(False, False)
+			# config.set_value(ini, "AP_FP", "DELETES_AP", False)
+			# config.set_value(ini, "AP_FP", "DELETES_FP", False)
 
 		debug_all(ST_DT,ED_DT,query_list)
 		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$avg_err_dist[m]'}}}]
