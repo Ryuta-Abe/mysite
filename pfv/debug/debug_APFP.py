@@ -29,7 +29,8 @@ import config
 # FP_RANGE = range(13,54)
 # FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
-AP_RANGE, FP_RANGE = range(14,27,2), range(13,54,3)
+AP_RANGE, FP_RANGE = range(13,27,2), range(13,54,3)
+# AP_RANGE, FP_RANGE = [16], [50]
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
 # FP_DELETE_LIST = AP_DELETE_ORDER
@@ -60,7 +61,10 @@ def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_
 	input_label_file_name = input_file_name.replace("train","label")
 	col_names = [node["pcwl_id"] for node in db.reg_pcwlnode.find({"floor":FLOOR})] #Name the column
 	df_train = pd.read_csv(PATH + input_file_name, engine='python', names=col_names)
-	df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"], dtype = str)
+	if type(FP_delete_list[0]) is int:  # 削除
+		df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"])
+	else:	
+		df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"], dtype = str)
 	df_list = [df_train, df_label]
 	df = pd.concat(df_list, axis = 1)
 	# print(df)
