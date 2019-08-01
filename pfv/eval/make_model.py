@@ -17,11 +17,11 @@ import pickle,csv,glob,os
 FLOOR_LIST = ["W2-7F"]
 
 param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
-         "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
-        #  "W2-7F":{"C" : 10.0, "gamma" : 0.0007},
+        #  "W2-7F":{"C" : 30.0, "gamma" : 0.0006},
+         "W2-7F":{"C" : 10.0, "gamma" : 0.0007},
     	 "W2-8F":{"C" : 20.0, "gamma" : 0.0002},
 		 "W2-9F":{"C" : 4.0, "gamma" : 0.0008}}
-CONTAINS_MIDPOINT = True
+# CONTAINS_MIDPOINT = True
 """
 指定パラメータで分類モデル作成
 評価スコア出力
@@ -67,8 +67,7 @@ def get_best_param():
 	print("best_param:",best_param)
 	return clf.best_params_
 
-def make_model():
-	CONTAINS_MIDPOINT = False
+def make_model(train_file_name, label_file_name, CONTAINS_MIDPOINT):
 	for floor in FLOOR_LIST:
 		path = "../../working/"
 		## TODO: train, label ファイルの指定
@@ -77,9 +76,10 @@ def make_model():
 		file_list = glob.glob(path + floor + "_model.pkl")
 		for file in file_list:
 			os.remove(file)
-
-		X = np.genfromtxt(path + "AP13_FP13_" + floor + "_" + 'train.csv', delimiter = ',')
-		y = np.genfromtxt(path + "AP26_FP13_" + floor + "_" + 'label.csv', delimiter = ',')
+		X = np.genfromtxt(path + train_file_name, delimiter = ',')
+		y = np.genfromtxt(path + label_file_name, delimiter = ',')
+		# X = np.genfromtxt(path + "AP13_FP53_" + floor + "_" + 'train.csv', delimiter = ',')
+		# y = np.genfromtxt(path + "" + floor + "_" + 'label.csv', delimiter = ',')
 		if CONTAINS_MIDPOINT:
 			print("before label encoding: ",y)
 			le = preprocessing.LabelEncoder()
@@ -99,9 +99,14 @@ def make_model():
 		print("\n")
 		
 		# output model
-		joblib.dump(clf, path + floor + "_model.pkl")
+		ML_FILE_PATH = "../../mlmodel/"
+		# joblib.dump(clf, path + floor + "_model.pkl")
+		# if CONTAINS_MIDPOINT:
+		# 	with open(path + floor + '_label.p', 'wb') as f:  # Label encoding用のファイルを保存
+		# 		pickle.dump(le, f)
+		joblib.dump(clf, ML_FILE_PATH + floor + "_model.pkl")
 		if CONTAINS_MIDPOINT:
-			with open(path + floor + '_label.p', 'wb') as f:  # Label encoding用のファイルを保存
+			with open(ML_FILE_PATH + floor + '_label.p', 'wb') as f:  # Label encoding用のファイルを保存
 				pickle.dump(le, f)
 
 	print("Time to make model", end=":")
@@ -123,6 +128,8 @@ le2.inverse_transform([2, 1, 0, 2, 3, 1])
 if __name__ == "__main__":
 	# st = time.time()
 	# get_best_param()
-	make_model()
+	train_file_name = "AP13_FP53_W2-7F_" + 'train.csv'
+	label_file_name = "W2-7F_label.csv"
+	make_model(train_file_name, label_file_name, True)
 	# ed = time.time()
 	# print("Time to execute:", ed-st)

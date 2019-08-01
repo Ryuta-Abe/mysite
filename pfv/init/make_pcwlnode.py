@@ -39,6 +39,33 @@ def make_regular_pcwlnode():
     save_regular_node(26,300,275,[9,12],"W2-7F")
     save_regular_node(27,480,275,[8,16],"W2-7F")
 
+def delete_part_pcwlnode(floor,delete_id_list):
+    """
+    一部のPCWL_idを削除したdb.pcwl_nodeに更新する
+    @param delete_id_list: 削除対象のPCWL_id
+    """
+    make_pcwlnode()
+    for delete_id in delete_id_list:
+        next_id_list = db.pcwlnode.find_one({"floor":floor, "pcwl_id":delete_id})["next_id"]
+        if len(next_id_list) == 1:
+            next_id = next_id_list[0]
+            next_id_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":next_id})
+            next_id_info["next_id"].remove(delete_id)
+            db.pcwlnode.save(next_id_info)
+        elif len(next_id_list) == 2:
+            for i, next_id in enumerate(next_id_list):
+                next_id_info = db.pcwlnode.find_one({"floor":floor, "pcwl_id":next_id})
+                next_id_info["next_id"].remove(delete_id)
+                if i == 0:
+                    next_id_info["next_id"].append(next_id_list[1])
+                else:
+                    next_id_info["next_id"].append(next_id_list[0])
+                db.pcwlnode.save(next_id_info)
+        db.pcwlnode.remove({"floor":floor, "pcwl_id":delete_id})
+    db.pcwlroute.drop()
+    db.idealroute.drop()
+    make_pcwlroute()
+
 def make_half_pcwlnode():
     make_pcwlnode()
     db.pcwlnode.remove({"floor":"W2-7F"})
@@ -208,6 +235,7 @@ def make_pcwlnode():
 #     print("pcwl_num after : ",db.pcwlnode.find({"floor":floor}).count())
 
 if __name__ == '__main__':
-    make_pcwlnode()
-    # floor = "W2-7F"
-    make_half_pcwlnode()
+    # make_pcwlnode()
+    floor = "W2-7F"
+    # make_half_pcwlnode()
+    delete_part_pcwlnode(floor, [10,26])

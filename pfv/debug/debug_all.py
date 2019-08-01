@@ -6,7 +6,6 @@
 
 from time import time
 st = time()
-
 # import Env
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
@@ -22,9 +21,6 @@ from convert_datetime import dt_from_14digits_to_iso
 from csv_examine_route import csv_examine_route, make_exp_id
 from make_pcwlnode import make_half_pcwlnode, make_pcwlnode
 import config
-from pymongo import *
-client = MongoClient()
-db = client.nm4bd
 
 ### TODO:以下を変更 ###
 ### config.pyの各種パラメーターを変更  ###
@@ -35,9 +31,10 @@ ed_dt = date + "2334" ## 解析終了時刻 """
 st_exp_id = 1  # 開始クエリ番号
 ed_exp_id = 96 # 終了クエリ番号
 ###
+INI_PATH = "../config.ini"
 DELETES_FP = config.DELETES_FP
 
-def debug_all(json_file, st_dt, ed_dt, query_list):
+def debug_all(st_dt, ed_dt, query_list):
 	if DELETES_FP:
 		make_half_pcwlnode()
 	db.trtmp.create_index([("get_time_no", ASCENDING),("mac", ASCENDING)])
@@ -66,7 +63,7 @@ if __name__ == '__main__':
 		os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + param_file + " --drop")
 	
 	# 準備終了、デバック開始
-	debug_all(json_file,st_dt,ed_dt,query_list)
+	debug_all(st_dt,ed_dt,query_list)
 
 	# 結果を出力
 	output_file_name = date + ".csv"
