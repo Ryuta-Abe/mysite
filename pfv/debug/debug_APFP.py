@@ -5,7 +5,6 @@
 # 1. debug_all db.trtmpにインポートするjsonファイルのパス　（解析開始時刻）　（解析終了時刻）　を実行
 from time import time
 st = time()
-# import Env
 import os, sys, itertools, csv, shutil
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
 from env import Env
@@ -14,6 +13,7 @@ from pymongo import *
 client = MongoClient()
 db = client.nm4bd
 import pandas as pd
+from statistics import mean
 from init_all import init_all
 from csv_examine_route import make_exp_id
 from make_pcwlnode import delete_part_pcwlnode
@@ -25,21 +25,22 @@ import config
 
 ### TODO:以下を変更 ###
 ### config.pyの各種パラメーターを変更  ###
-AP_RANGE = range(14,27)
+# AP_RANGE = range(14,27)
 # FP_RANGE = range(13,54)
-FP_RANGE = [14, 39]
+# FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
+AP_RANGE, FP_RANGE = range(14,27,2), range(13,54,3)
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
 # FP_DELETE_LIST = AP_DELETE_ORDER
 import_flag = True  # trtmp, csvtestにインポートしなおすかどうか
 DATE = "20190413"
 ST_DT = DATE + "2149"
-ED_DT = DATE + "2153"
-# ED_DT = DATE + "2334" ## 解析終了時刻 """
+# ED_DT = DATE + "2153"
+ED_DT = DATE + "2334" ## 解析終了時刻 """
 ST_EXP_ID = 1  # 開始クエリ番号
-ED_EXP_ID = 4
-# ED_EXP_ID = 96 # 終了クエリ番号
+# ED_EXP_ID = 4
+ED_EXP_ID = 96 # 終了クエリ番号
 ###
 FLOOR = "W2-7F"  # TODO：一般化
 AP_COUNT = 26
@@ -59,7 +60,7 @@ def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_
 	input_label_file_name = input_file_name.replace("train","label")
 	col_names = [node["pcwl_id"] for node in db.reg_pcwlnode.find({"floor":FLOOR})] #Name the column
 	df_train = pd.read_csv(PATH + input_file_name, engine='python', names=col_names)
-	df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"])
+	df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"], dtype = str)
 	df_list = [df_train, df_label]
 	df = pd.concat(df_list, axis = 1)
 	# print(df)
@@ -140,7 +141,7 @@ def debug_APFP():
 			# config.set_value(ini, "AP_FP", "CONTAINS_MIDPOINT", contains_midpoint)
 			# config.set_value(ini, "AP_FP", "MARGIN_RATIO", 2)
 		else:  # FPをAP数よりも増やす(中点を加える)場合
-			double_FP_delete_num = AP_COUNT * 2 - FP_delete_num  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
+			double_FP_delete_num = MIDPOINT_FP_COUNT - FP  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
 			FP_delete_list = MIDPOINT_DELETE_ORDER[:double_FP_delete_num]
 			input_file = MIDPOINT_FP_COUNT_TRAIN_FILE
 			# label_file = MIDPOINT_FP_COUNT_LABEL_FILE
@@ -179,12 +180,60 @@ def debug_APFP():
 
 		# # 結果を出力
 		output_result()
-		# output_file_name = DATE + "_AP" + AP + "_FP" + FP + ".csv"
-		# output_file = path + output_file_name
-		# command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
-		# os.system(command)
 
-	
+def get_theoretical_err_dist():
+	# for i, (AP, FP) in enumerate(itertools.product(AP_RANGE, FP_RANGE)):
+	# 	init_all()
+	# 	# AP_delete_num = AP_COUNT - AP
+	# 	# AP_delete_list = AP_DELETE_ORDER[:AP_delete_num]
+	# 	FP_delete_num = AP_COUNT - FP
+	# 	# if AP_delete_num < 0:
+	# 	# 	print("Error: AP_delete_num < 0")
+	# 	# 	raise ValueError
+
+	# 	if FP_delete_num >= 0:  # FPを全AP数以下にする場合
+
+	for FP in FP_RANGE:
+		init_all()  # DB初期化, PCWL関係DB追加
+		FP_delete_num = AP_COUNT - FP
+		if FP_delete_num >= 0:  # FPを全AP数以下にする場合
+			FP_delete_list = AP_DELETE_ORDER[:FP_delete_num]
+			delete_part_pcwlnode(FLOOR, FP_delete_list)
+			pcwlnode_list = db.pcwlnode.find({"floor": FLOOR})
+			average_distance_list = []
+			for pcwlnode in pcwlnode_list:
+				next_id_list = pcwlnode["next_id"]
+				next_distance_list = []
+				for next_id in next_id_list:
+					next_distance = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : pcwl_id},{"query" : next_id}]})["total_distance"]
+					next_distance_list.append(next_distance)
+				average_distance_list.append(mean(next_distance_list))
+			average_distance = mean(average_distance_list)
+		else:
+			double_FP_delete_num = MIDPOINT_FP_COUNT - FP_delete_num  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
+			FP_midpoint_list = MIDPOINT_DELETE_ORDER[double_FP_delete_num:]
+			if len(FP_midpoint_list) != FP - AP_COUNT:
+				print("ERROR")
+			# FP_delete_list = AP_DELETE_ORDER[:FP_delete_num]
+			# delete_part_pcwlnode(FLOOR, FP_delete_list)
+			pcwlnode_list = db.reg_pcwlnode.find({"floor": FLOOR})
+			average_distance_list = []
+			for pcwlnode in pcwlnode_list:
+				next_id_list = pcwlnode["next_id"]
+				next_distance_list = []
+				for next_id in next_id_list:
+					next_distance = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : pcwl_id},{"query" : next_id}]})["total_distance"]
+					next_distance_list.append(next_distance)
+				average_distance_list.append(mean(next_distance_list))
+			average_distance = mean(average_distance_list)
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
 	debug_APFP()
