@@ -25,8 +25,9 @@ import config
 
 ### TODO:以下を変更 ###
 ### config.pyの各種パラメーターを変更  ###
-AP_RANGE = range(13,27)
-FP_RANGE = range(13,54)
+AP_RANGE = range(14,27)
+# FP_RANGE = range(13,54)
+FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
@@ -35,10 +36,10 @@ import_flag = True  # trtmp, csvtestにインポートしなおすかどうか
 DATE = "20190413"
 ST_DT = DATE + "2149"
 ED_DT = DATE + "2153"
-ED_DT = DATE + "2334" ## 解析終了時刻 """
+# ED_DT = DATE + "2334" ## 解析終了時刻 """
 ST_EXP_ID = 1  # 開始クエリ番号
 ED_EXP_ID = 4
-ED_EXP_ID = 96 # 終了クエリ番号
+# ED_EXP_ID = 96 # 終了クエリ番号
 ###
 FLOOR = "W2-7F"  # TODO：一般化
 AP_COUNT = 26
@@ -171,7 +172,10 @@ def debug_APFP():
 		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$avg_err_dist[m]'}}}]
 		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
 		average_error_distance = agg[0]["average"]
-		db.debug_APFP.insert({"AP":AP,"FP":FP,"avg_err_dist":average_error_distance})
+		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$accuracy'}}}]
+		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
+		average_accuracy = agg[0]["average"]
+		db.debug_APFP.insert({"AP":AP,"FP":FP,"avg_err_dist":average_error_distance, "avg_accuracy": average_accuracy})
 
 		# # 結果を出力
 		output_result()
