@@ -30,7 +30,7 @@ from utils import get_m_from_px
 # FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
 # AP_RANGE, FP_RANGE = range(19,27,2), range(13,54)
-AP_RANGE, FP_RANGE = [19], range(46,54,3)
+AP_RANGE, FP_RANGE = [26],range(27,54,2)
 # AP_RANGE, FP_RANGE = [16], [50]
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
@@ -62,7 +62,7 @@ def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_
 	input_label_file_name = input_file_name.replace("train","label")
 	col_names = [node["pcwl_id"] for node in db.reg_pcwlnode.find({"floor":FLOOR})] #Name the column
 	df_train = pd.read_csv(PATH + input_file_name, engine='python', names=col_names)
-	if type(FP_delete_list[0]) is int:  # 削除
+	if len(FP_delete_list) > 0 and type(FP_delete_list[0]) is int:  # 削除
 		df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"])
 	else:	
 		df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"], dtype = str)
@@ -122,6 +122,7 @@ def debug_APFP():
 	db.debug_APFP.drop()
 	query_list = []
 	for i, (AP, FP) in enumerate(itertools.product(AP_RANGE, FP_RANGE)):
+		config.set_FP(FP)
 		init_all()  # DB初期化, PCWL関係DB追加
 		print("------------ AP: ", AP,"FP: ", FP, " ------------")
 		if i == 0:  # 初回のみPRデータとexp_paramをインポート

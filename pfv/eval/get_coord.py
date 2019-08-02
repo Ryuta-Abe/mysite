@@ -22,7 +22,8 @@ st_dt = 20161020134250
 # st_dt = 20161020134325
 # ed_dt = 20161020134430
 ed_dt = 20161020134630
-
+AP_COUNT = 26
+MIDPOINT_FP_COUNT = 53
 # db.analy_coord.remove({})
 
 # # Trueの場合, 1つ前の時刻(stay)を考慮する
@@ -89,9 +90,33 @@ def get_coord_from_info(floor, mac, dt):
 
 def insert_coord_from_node(floor, mac, position, dt):
 	MARGIN_RATIO = config.MARGIN_RATIO  # 中点を含めたFingerprintの際は4、ノードのみの時は2
+	FP = config.FP
+	MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER
+	CARES_MIDPOINT = False  # 中点がFPに存在するかどうか
+	if FP > AP_COUNT:
+		CARES_MIDPOINT = True
+		double_FP_delete_num = MIDPOINT_FP_COUNT - FP  # 中点を含む(AP数の約2倍)train fileから何個のラベルを削除するか
+		FP_midpoint_list = MIDPOINT_DELETE_ORDER[double_FP_delete_num:]  # 残ったFPに含まれる中点のリスト
+		if "9.1" in FP_midpoint_list:
+			index = FP_midpoint_list.index("9.1")
+			FP_midpoint_list[index] = "9.10"
+		if "18.2" in FP_midpoint_list:
+			index = FP_midpoint_list.index("18.2")
+			FP_midpoint_list[index] = "18.20"
+
 	from examine_route import rounding
 	prev_node, prev_dist, next_dist, next_node = position
 	mlist = [] # marginのリスト
+
+	def exists_midpoint(FP_midpoint_list, pcwl_id_1, pcwl_id_2):
+		midpoint = str(pcwl_id_1) + "." + str(pcwl_id_2)
+		if midpoint in FP_midpoint_list:
+			return True
+		midpoint = str(pcwl_id_2) + "." + str(pcwl_id_1)
+		if midpoint in FP_midpoint_list:
+			return True
+		else:
+			return False
 
 	def append_in_mlist(floor,margin_position,mlist,margin_dist):
 		pos_x, pos_y = get_position(floor, margin_position)
@@ -108,7 +133,10 @@ def insert_coord_from_node(floor, mac, position, dt):
 		next_list = node_info["next_id"]
 		for next_node in next_list:
 			distance = get_distance(floor, prev_node, next_node)
-			margin = distance/MARGIN_RATIO
+			if CARES_MIDPOINT and exists_midpoint(FP_midpoint_list, prev_node, next_node):
+				margin = distance / 4
+			else:
+				margin = distance / 2
 			mag_pos = [prev_node, margin, distance - margin, next_node]
 			mlist = append_in_mlist(floor,mag_pos,mlist,margin)
 
@@ -117,7 +145,7 @@ def insert_coord_from_node(floor, mac, position, dt):
 		route_info = db.idealroute.find_one({"$and": [{"floor" : floor},
 											{"query" : prev_node}, {"query" : next_node}]})
 		route_distance = route_info["total_distance"]
-		margin = route_distance/ MARGIN_RATIO
+		margin = route_distance / 4
 		# prev側のmarginを算出
 		if margin < prev_dist:  # marginがpositionの両端(prev,next_node)からはみ出ない場合
 			prev_margin_prev_dist = prev_dist - margin
