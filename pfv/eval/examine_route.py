@@ -97,7 +97,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 			examine_partial_route(mac,floor,via_nodes_list[i],via_nodes_list[i+1],via_dts_list[i],via_dts_list[i+1])
 		examine_partial_route(mac,floor,via_nodes_list[-1],ed_node,via_dts_list[-1],ed_dt)
 	
-	accuracy,existing_data_rate,average_error_distance,average_direct_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate  = process_count_result()
+	incorrect_error_distance, accuracy,existing_data_rate,average_error_distance,average_direct_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate  = process_count_result()
 	if average_error_distance is not None:
 		average_error_distance_m = rounding(average_error_distance * 14.4 / 110,2)
 		average_error_distance = rounding(average_error_distance,2)
@@ -106,7 +106,7 @@ def examine_route(mac,floor,st_node,ed_node,via_nodes_list,st_dt,ed_dt,via_dts_l
 	db.examine_summary.insert({"exp_id":exp_id,"mac":mac,"floor":floor,"st_node":st_node,"ed_node":ed_node,"via_nodes_list":via_nodes_list,"st_dt":st_dt,"ed_dt":ed_dt,"via_dts_list":via_dts_list,
 		"accuracy":accuracy,"existing_rate":existing_data_rate,
 		"avg_err_dist[px]":average_error_distance,"avg_err_dist[m]":average_error_distance_m,"avg_direct_err_dist[m]":average_direct_error_distance_m,
-		"match_rate":match_rate, "adjacent_rate":adjacent_rate, "middle_rate":middle_rate, "wrong_node_rate":wrong_node_rate})
+		"match_rate":match_rate, "adjacent_rate":adjacent_rate, "middle_rate":middle_rate, "wrong_node_rate":wrong_node_rate, "avg_incorrect_err_dist[m]":incorrect_error_distance})
 
 def examine_partial_route(mac,floor,st_node,ed_node,st_dt,ed_dt):  # 経路の端以外に交差点を持たないようなrouteにおける測位精度の算出
 	ideal_one_route = {}
@@ -241,6 +241,11 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 	db.examine_route.insert({"floor": floor, "mac": mac, "datetime":dt,"judgement":judgement,"position":actual_position_list,
 		"pos_x":pos_x,"pos_y":pos_y,"correct":correct_nodes,"analyzed":analyzed_node,"err_dist":moment_error_dist,"direct_err_dist":moment_direct_error_distance})
 	db.actual_position.insert({"floor": floor, "mac": mac, "datetime":dt,"pos_x":pos_x,"pos_y":pos_y})
+
+	# 不正解時の誤差距離の算出
+	if moment_error_dist != 0 and moment_error_dist is not None:  # 誤差距離が存在する場合
+		incorrect_error_distance = rounding(moment_error_dist * 14.4 / 110, 2)
+		db.incorrect_dist.insert({"floor": floor, "mac": mac, "datetime":dt,"incorrect_err_dist[m]":incorrect_error_distance})
 
 	if DEBUG_PRINT:
 		print(str(dt) + ":" + judgement,"pos:" + str(actual_position_list),"correct:" + str(correct_nodes),
@@ -509,8 +514,20 @@ def process_count_result():
 			print ("wrong node rate(false only): " + str(wrong_node_rate_false) + "% "
 			 + "( " + str(wrong_node_count) + " / " + str(false_count) + " )")
 
+	# ある移動内における不正解時の平均誤差距離の算出
+	pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$incorrect_err_dist[m]'}}}]
+	agg = db.incorrect_dist.aggregate(pipeline = pipe)["result"]
+	if len(agg) == 0:  # 移動情報が1件も存在しないか, 常に誤差距離が0
+		if average_error_distance is None or average_error_distance == 0:
+			incorrect_error_distance = None
+		else:
+			print("Error: incorrect_error_distance is undefined")
+			raise ValueError
+	else: 
+		incorrect_error_distance = agg[0]["average"]
+	db.incorrect_dist.drop()
 
-	return existing_accuracy,existing_data_rate,average_error_distance, average_direct_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate
+	return incorrect_error_distance, existing_accuracy,existing_data_rate,average_error_distance, average_direct_error_distance, match_rate, adjacent_rate, middle_rate, wrong_node_rate
 
 
 # # DBに入っているデータを出力することも可能(コメント解除)

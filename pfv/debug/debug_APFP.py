@@ -60,7 +60,7 @@ MIDPOINT_FP_COUNT_TRAIN_FILE = FLOOR +"_train.csv"
 
 def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_delete_list):
 	input_label_file_name = input_file_name.replace("train","label")
-	col_names = [node["pcwl_id"] for node in db.reg_pcwlnode.find({"floor":FLOOR})] #Name the column
+	col_names = [node["pcwl_id"] for node in db.reg_pcwlnode.find({"floor":FLOOR})] # Name the column
 	df_train = pd.read_csv(PATH + input_file_name, engine='python', names=col_names)
 	if len(FP_delete_list) > 0 and type(FP_delete_list[0]) is int:  # 削除
 		df_label = pd.read_csv(PATH + input_label_file_name, engine='python', names=["label"])
@@ -105,6 +105,17 @@ def debug_APFP():
 
 	def output_result():
 		# 結果を出力
+		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$avg_err_dist[m]'}}}]
+		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
+		average_error_distance = agg[0]["average"]
+		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$accuracy'}}}]
+		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
+		average_accuracy = agg[0]["average"]
+		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$avg_incorrect_err_dist[m]'}}}]
+		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
+		average_incorrect_error_distance = agg[0]["average"]
+
+		db.debug_APFP.insert({"AP":AP,"FP":FP,"avg_err_dist":average_error_distance, "avg_accuracy": average_accuracy,"avg_incorrect_err_dist":average_incorrect_error_distance})
 		output_file_name = DATE + "_AP" + str(AP) + "_FP" + str(FP) + ".csv"
 		output_file = PATH + output_file_name
 		command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
@@ -115,6 +126,11 @@ def debug_APFP():
 	# 	MLFILE_PATH = "../../mlfile/csv/"
 	# 	shutil.move(PATH + train_file_name, MLFILE_PATH + train_file_name)
 	# 	shutil.move(PATH + label_file_name, MLFILE_PATH + label_file_name)
+	def output_final_result():
+		command = "mongoexport -d nm4bd -c debug_APFP --type=csv -o debug_APFP.csv -f AP,FP,avg_err_dist,avg_accuracy,average_incorrect_error_distance"
+		proc = subprocess.run(command.split(),stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+		print(proc.stdout.decode("utf8"))
+
 	def backup_model(floor, AP, FP):
 		ML_FILE_PATH = "../../mlmodel/"
 		shutil.copy(ML_FILE_PATH + floor + "_model.pkl", ML_FILE_PATH + "backup/" + "AP" + str(AP) + "_FP" + str(FP) + "_" + floor + "_model.pkl")
@@ -174,19 +190,12 @@ def debug_APFP():
 			config.set_DELETES_AP_FP(False, False)
 			# config.set_value(ini, "AP_FP", "DELETES_AP", False)
 			# config.set_value(ini, "AP_FP", "DELETES_FP", False)
-
+		# ST_DT <= t <= ED_DTの移動情報や, 誤差距離の算出
 		debug_all(ST_DT,ED_DT,query_list)
-		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$avg_err_dist[m]'}}}]
-		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
-		average_error_distance = agg[0]["average"]
-		pipe = [{ '$group' : { '_id': 'null', 'average': { '$avg': '$accuracy'}}}]
-		agg = db.examine_summary.aggregate(pipeline = pipe)["result"]
-		average_accuracy = agg[0]["average"]
-		db.debug_APFP.insert({"AP":AP,"FP":FP,"avg_err_dist":average_error_distance, "avg_accuracy": average_accuracy})
-
-		# # 結果を出力
+		# 結果を出力
 		output_result()
-## mongoexport -d nm4bd -c debug_APFP --type=csv -o result.csv -f AP,FP,avg_err_dist,avg_accuracy
+	# 最終結果(各AP, FPに対する誤差距離や精度)をdebug_APFP.csvに出力
+	output_final_result
 def get_theoretical_err_dist():
 	# for i, (AP, FP) in enumerate(itertools.product(AP_RANGE, FP_RANGE)):
 	# 	init_all()
