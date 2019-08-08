@@ -14,6 +14,7 @@ client = MongoClient()
 db = client.nm4bd
 import pandas as pd
 from statistics import mean
+import subprocess
 from init_all import init_all
 from csv_examine_route import make_exp_id
 from make_pcwlnode import delete_part_pcwlnode
@@ -127,7 +128,7 @@ def debug_APFP():
 	# 	shutil.move(PATH + train_file_name, MLFILE_PATH + train_file_name)
 	# 	shutil.move(PATH + label_file_name, MLFILE_PATH + label_file_name)
 	def output_final_result():
-		command = "mongoexport -d nm4bd -c debug_APFP --type=csv -o debug_APFP.csv -f AP,FP,avg_err_dist,avg_accuracy,average_incorrect_error_distance"
+		command = "mongoexport -d nm4bd -c debug_APFP --type=csv -o debug_APFP.csv -f AP,FP,avg_err_dist,avg_accuracy,avg_incorrect_err_dist"
 		proc = subprocess.run(command.split(),stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 		print(proc.stdout.decode("utf8"))
 
