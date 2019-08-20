@@ -31,8 +31,8 @@ from utils import get_m_from_px
 # FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
 # AP_RANGE, FP_RANGE = range(19,27,2), range(13,54)
-AP_RANGE, FP_RANGE = [26],range(27,54,2)
-# AP_RANGE, FP_RANGE = [16], [50]
+AP_RANGE, FP_RANGE = [26], [26]
+# AP_RANGE, FP_RANGE = [26], range(15,12,-1)
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
 # FP_DELETE_LIST = AP_DELETE_ORDER
@@ -86,6 +86,7 @@ def make_deleted_train_file(input_file_name,output_file_name, AP_delete_list,FP_
 	# with open(PATH + input_file, 'r') as f:
 	# 	doc = [row for row in csv.reader(f, delimiter=',')]
 	# for i, row in enumerate(doc):
+
 	# 	doc[i] = get_deleted_rssi_list(FLOOR,row,AP_DELETE_LIST)
 	# with open(PATH + output_file, 'w') as f:
 	# 	w = csv.writer(f, delimiter=',', lineterminator='\n')  #列区切りと行区切りの文字を指定
@@ -128,9 +129,10 @@ def debug_APFP():
 	# 	shutil.move(PATH + train_file_name, MLFILE_PATH + train_file_name)
 	# 	shutil.move(PATH + label_file_name, MLFILE_PATH + label_file_name)
 	def output_final_result():
-		command = "mongoexport -d nm4bd -c debug_APFP --type=csv -o debug_APFP.csv -f AP,FP,avg_err_dist,avg_accuracy,avg_incorrect_err_dist"
-		proc = subprocess.run(command.split(),stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-		print(proc.stdout.decode("utf8"))
+		command = "mongoexport -d nm4bd -c debug_APFP --type=csv -o debug_APFP.csv -f AP,FP,avg_err_dist,avg_accuracy,avg_incorrect_err_dist --sort {'FP':1}"
+		proc = subprocess.run(command.split(" "),stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+		# proc = subprocess.run(command, shell = True)
+		print(proc.stdout.decode("utf-8"))
 
 	def backup_model(floor, AP, FP):
 		ML_FILE_PATH = "../../mlmodel/"
@@ -196,7 +198,7 @@ def debug_APFP():
 		# 結果を出力
 		output_result()
 	# 最終結果(各AP, FPに対する誤差距離や精度)をdebug_APFP.csvに出力
-	output_final_result
+	output_final_result()
 def get_theoretical_err_dist():
 	# for i, (AP, FP) in enumerate(itertools.product(AP_RANGE, FP_RANGE)):
 	# 	init_all()
