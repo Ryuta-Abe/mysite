@@ -12,6 +12,7 @@ from examine_route  import *
 from get_coord import get_analy_coord 
 from convert_to_mac import convert_to_mac
 from statistics import mean
+from collections import Counter
 client = MongoClient()
 db = client.nm4bd
 
@@ -34,7 +35,7 @@ db = client.nm4bd
 """
 
 ## 直接実行前に指定 ##
-DROP_DP = True # 過去の結果を削除するか
+DROP_DP = False # 過去の結果を削除するか
 date = "190413"  # 解析日時()
 st_exp_id = 1
 ed_exp_id = 96
@@ -129,25 +130,28 @@ def analyze_err_dist():
 	data_count = 0
 	exist_data_list = []
 	for examine_data in examine_route_info:
-		if examine_data["err_dist"] is None:
+		err_dist = examine_data["err_dist"]
+		# if type(err_dist) 
+		if err_dist is None:
 			print("None")
-		if(examine_data["err_dist"] != null):
-			exist_data_list.append(int(examine_data["err_dist"]))
 		else:
-			print("null")
-	average_distance = mean(exist_data_list)
-	os.command("mongoexport -d nm4bd -c examine_route --type=csv -o " + err_dist_file_name + " -f err_dist,position,analyzed,mac,datetime")
+			exist_data_list.append(int(examine_data["err_dist"]))
+	counter = Counter(exist_data_list)
+	for err_dist, count in counter.most_common():
+		print(err_dist, count)
+	# average_distance = mean(exist_data_list)
+	# os.system("mongoexport -d nm4bd -c examine_route --type=csv -o " + err_dist_file_name + " -f err_dist,position,analyzed,mac,datetime")
 
 if __name__ == '__main__':
-	query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
-	csv_examine_route(query_list)
+	# query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
+	# csv_examine_route(query_list)
 	
 
-	# 結果を出力
-	path = "../../working/"
-	output_file_name = "20" + date + ".csv"
-	output_file = path + output_file_name
-	command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
-	os.system(command)
+	# # 結果を出力
+	# path = "../../working/"
+	# output_file_name = "20" + date + ".csv"
+	# output_file = path + output_file_name
+	# command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
+	# os.system(command)
 
-	# analyze_err_dist()
+	analyze_err_dist()
