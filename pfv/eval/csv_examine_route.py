@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 # import Env
-import os, sys
+import os, sys, csv
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
 from env import Env
 Env()
-
 from pymongo import *
 from datetime import datetime
+from statistics import mean
+from collections import Counter
 from convert_datetime import dt_to_end_next05,dt_from_14digits_to_iso,shift_seconds
 from examine_route  import *
 from get_coord import get_analy_coord 
 from convert_to_mac import convert_to_mac
-from statistics import mean
-from collections import Counter
+from utils import get_m_from_px
 client = MongoClient()
 db = client.nm4bd
 
@@ -40,7 +40,8 @@ date = "190413"  # 解析日時()
 st_exp_id = 1
 ed_exp_id = 96
 common_exp_id = date + "_"
-err_dist_file_name = "err_dist_report.csv"  # PRデータの取得間隔毎の誤差距離の出力ファイル名
+PATH = "../../working/"
+err_dist_file_name = "err_dist_report_margin.csv"  # PRデータの取得間隔毎の誤差距離の出力ファイル名
 ANALYZE_MODE = True  # PRデータの取得間隔毎の誤差距離の統計を出力したい時にTrue
 ####################
 if DROP_DP:
@@ -131,20 +132,23 @@ def analyze_err_dist():
 	exist_data_list = []
 	for examine_data in examine_route_info:
 		err_dist = examine_data["err_dist"]
-		# if type(err_dist) 
 		if err_dist is None:
 			print("None")
 		else:
-			exist_data_list.append(int(examine_data["err_dist"]))
+			err_dist = get_m_from_px(err_dist)
+			exist_data_list.append(err_dist)
 	counter = Counter(exist_data_list)
 	for err_dist, count in counter.most_common():
 		print(err_dist, count)
+	with open(PATH + err_dist_file_name, "w") as f:
+		writer = csv.writer(f, lineterminator='\n') # 改行コード（\n）を指定しておく
+		writer.writerows(counter.most_common()) # 2次元配列も書き込める
 	# average_distance = mean(exist_data_list)
 	# os.system("mongoexport -d nm4bd -c examine_route --type=csv -o " + err_dist_file_name + " -f err_dist,position,analyzed,mac,datetime")
 
 if __name__ == '__main__':
-	# query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
-	# csv_examine_route(query_list)
+	query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
+	csv_examine_route(query_list)
 	
 
 	# # 結果を出力

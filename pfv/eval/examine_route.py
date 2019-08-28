@@ -21,6 +21,7 @@ ADJACENT_FLAG = True # 分岐点以外でも隣接ノードokの条件の時True
 # DEBUG_PRINT = True
 DEBUG_PRINT = False
 FLOOR_LIST = ["W2-6F","W2-7F","W2-8F","W2-9F","kaiyo"]
+EXISTS_MARGIN = True
 
 # global var.
 examine_count = 0
@@ -208,7 +209,11 @@ def examine_position(mac,floor,dt,dlist = [],delta_distance = 0):
 				# 	moment_error_dist = 0
 				# 	break
 				if isinside(analyzed_pos_x,pos_x,mlist[i]["pos_x"]) and isinside(analyzed_pos_y,pos_y,mlist[i]["pos_y"]):
-					moment_error_dist = 0
+					if EXISTS_MARGIN:
+						moment_error_dist = 0
+					else:
+						moment_error_dist,_ = get_distance_between_points(floor, analyzed_position_list ,actual_position_list)
+						moment_error_dist = rounding(moment_error_dist, 2) # 小数点2桁目までに
 					judgement = "T(Match)"
 					break
 				else:

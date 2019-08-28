@@ -21,7 +21,7 @@ param = {"W2-6F":{"C" : 2.0, "gamma" : 0.0009},
          "W2-7F":{"C" : 10.0, "gamma" : 0.0007},
     	 "W2-8F":{"C" : 20.0, "gamma" : 0.0002},
 		 "W2-9F":{"C" : 4.0, "gamma" : 0.0008}}
-# CONTAINS_MIDPOINT = True
+CONTAINS_MIDPOINT = True
 """
 指定パラメータで分類モデル作成
 評価スコア出力
@@ -43,7 +43,7 @@ def get_best_param():
 		le = preprocessing.LabelEncoder()
 		le.fit(y)
 		y = le.transform(y)
-	clf = GridSearchCV(svm.SVC(), parameters, cv = 5,n_jobs=-2)
+	clf = GridSearchCV(svm.SVC(), parameters, cv = 5,n_jobs=6)
 	clf.fit(X,y)
 	params = clf.cv_results_["params"]
 	ranks = clf.cv_results_["rank_test_score"]
@@ -127,9 +127,9 @@ le2.inverse_transform([2, 1, 0, 2, 3, 1])
 
 if __name__ == "__main__":
 	# st = time.time()
-	# get_best_param()
+	get_best_param()
 	train_file_name = "AP13_FP53_W2-7F_" + 'train.csv'
 	label_file_name = "W2-7F_label.csv"
-	make_model(train_file_name, label_file_name, True)
+	# make_model(train_file_name, label_file_name, True)
 	# ed = time.time()
 	# print("Time to execute:", ed-st)

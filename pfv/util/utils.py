@@ -1,4 +1,4 @@
-import sys,os
+import sys,os, csv
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
 from env import Env
 Env()
@@ -27,9 +27,16 @@ def get_pcwl_index(floor,pcwl_id):
         index = pcwl_id_list.index(pcwl_id)
         return index
 
-def get_m_from_px(px_distance):
+def get_m_from_px(px_distance, digit_to_round = 2):
     distance =  px_distance * 14.4 / 110
+    distance = round(distance, digit_to_round)
     return distance
+
+def get_list_from_csv(csv_file):
+    with open(csv_file) as f:
+        reader = csv.reader(f, delimiter=",")
+        result_list = [row for row in reader]
+    return result_list
 
 if __name__ == "__main__":
     index = get_pcwl_index("W2-7F",5)
