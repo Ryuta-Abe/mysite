@@ -107,9 +107,9 @@ def get_start_end(all_st):
     # print("----",all_st,"----",end="")
 
     if(flow_count + stay_count != tag_count):
-        print("----",all_st,"----",end="")
-        print("flow: ", flow_count, " / ", tag_count)
-        print("stay: ", stay_count, " / ", tag_count)        
+        print("----",all_st,"----", end = "  ")
+        print("flow: ", flow_count, " / ", tag_count, end = "  ")
+        print("stay: ", stay_count, " / ", tag_count, end = "  ")      
         print("Error: Data Lost:", lost_mac_list)
     else:
         print("\r----",all_st,"----", "was analyzed successfully!", end = "")

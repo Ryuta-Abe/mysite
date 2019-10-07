@@ -13,6 +13,8 @@ from examine_route  import *
 from get_coord import get_analy_coord 
 from convert_to_mac import convert_to_mac
 from utils import get_m_from_px
+from examine_err_dist import examine_err_dist
+
 client = MongoClient()
 db = client.nm4bd
 
@@ -48,6 +50,7 @@ if DROP_DP:
 	db.examine_summary.drop()
 	db.examine_route.drop()
 	db.analy_coord.drop()
+err_dist_file = PATH + err_dist_file_name
 
 def make_exp_id(common_exp_id, st_exp_id, ed_exp_id):
 	query_list = []
@@ -140,11 +143,10 @@ def analyze_err_dist():
 	counter = Counter(exist_data_list)
 	for err_dist, count in counter.most_common():
 		print(err_dist, count)
-	with open(PATH + err_dist_file_name, "w") as f:
+	with open(err_dist_file, "w") as f:
 		writer = csv.writer(f, lineterminator='\n') # 改行コード（\n）を指定しておく
 		writer.writerows(counter.most_common()) # 2次元配列も書き込める
-	# average_distance = mean(exist_data_list)
-	# os.system("mongoexport -d nm4bd -c examine_route --type=csv -o " + err_dist_file_name + " -f err_dist,position,analyzed,mac,datetime")
+	examine_err_dist(err_dist_file)
 
 if __name__ == '__main__':
 	query_list = make_exp_id(common_exp_id, st_exp_id, ed_exp_id)
@@ -157,5 +159,3 @@ if __name__ == '__main__':
 	# output_file = path + output_file_name
 	# command = 'mongoexport --sort {"exp_id":1} -d nm4bd -c examine_summary -o '+output_file+' --type=csv --fieldFile ../../mlfile/txt/exp_result.txt'
 	# os.system(command)
-
-	analyze_err_dist()
