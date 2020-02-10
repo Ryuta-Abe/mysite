@@ -10,7 +10,5 @@ pfv.zip
 working/
 mlfile/csv/
 mlmodel/backup/
-
-
-
-
+mlmodel/*.p
+mlmodel/*.pkl
