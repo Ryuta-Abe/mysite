@@ -15,7 +15,7 @@ from scipy.special import erf
 from utils import get_list_from_csv
 ### TODO: 以下を変更 ###
 BIN_WIDTH = 0.01
-SHOWS_GRAPH = True
+SHOWS_GRAPH = False
 #######################
 
 PATH = "../../working/"

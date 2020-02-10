@@ -31,7 +31,7 @@ from utils import get_m_from_px
 # FP_RANGE = [14, 39]
 # FP_RANGE = range(27, 54)
 # AP_RANGE, FP_RANGE = range(19,27,2), range(13,54)
-AP_RANGE, FP_RANGE = [26], [26]
+AP_RANGE, FP_RANGE = [26], [20]
 # AP_RANGE, FP_RANGE = [26], range(15,12,-1)
 AP_DELETE_ORDER = config.AP_DELETE_ORDER
 MIDPOINT_DELETE_ORDER = config.MIDPOINT_DELETE_ORDER  # len: MIDPOINT_FP_COUNT - AP_COUNT
@@ -51,6 +51,8 @@ MIDPOINT_FP_COUNT = 53  # 中点を含むFP数
 PATH =  "../../working/"
 AP_COUNT_TRAIN_FILE = "190611_W2-7F_train.csv"
 MIDPOINT_FP_COUNT_TRAIN_FILE = FLOOR +"_train.csv"
+IDEAL_DISTANCE_FILE = "ideal_err_dist.txt"
+
 # MIDPOINT_FP_DELETE_LIST = []  # len: MIDPOINT_FP_COUNT - AP_COUNT
 # INI_FILE = "../config.ini"
 # ini = ConfigParser()
@@ -103,6 +105,8 @@ def debug_APFP():
 		param_file = PATH + param_file_name
 		os.system("mongoimport -d nm4bd -c trtmp " + json_file + " --drop")
 		os.system("mongoimport -d nm4bd -c csvtest --headerline --columnsHaveTypes --type=csv " + param_file + " --drop")
+		if os.path.exists(PATH + IDEAL_DISTANCE_FILE):
+			os.remove(PATH + IDEAL_DISTANCE_FILE)
 		return query_list
 
 	def output_result():

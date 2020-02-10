@@ -25,7 +25,8 @@ DELETES_AP = True
 if CONTAINS_MIDPOINT:
 	MARGIN_RATIO = 4
 else:
-	MARGIN_RATIO = 2	
+	MARGIN_RATIO = 2
+## AP_DELETE_ORDER = ['18.20', '12.14', '10.11', '6.24', '4.5', '14.15', '15.16', '16.17', '3.4', '8.25', '1.2', '12.26', '21.23', '16.27', '2.3', '5.23', '17.18', '9.26', '8.27', '9.25', '5.6', '21.22', '6.7', '9.10', '7.8', '12.13', '20.21']	
 AP_DELETE_ORDER = [14, 24, 15, 4, 2, 23, 17, 20, 25, 26, 27, 10, 6]  ## TODO: 一個消しすぎ, labelからは消していない
 AP_DELETE_NUM = 999
 MIDPOINT_DELETE_ORDER = ['12.14', '10.11', '6.24', '4.5', '14.15', '15.16', '16.17', '3.4', '8.25', '1.2', '12.26', '21.23', '16.27', '2.3', '5.23', '17.18', '9.26', '8.27', '9.25', '5.6', '21.22', '6.7', '7.8', '12.13', '20.21', '18.2', '9.1']
@@ -56,6 +57,15 @@ def get_MIDPOINT_DELETE_ORDER(floor):
 	midpoint_list = [label for label in df["label"].unique() if "." in label]
 	distance_list = [] 
 	for midpoint in midpoint_list:
+		if midpoint == '18.2':
+			midpoint = '18.20'
+			index = midpoint_list.index("18.2")
+			midpoint_list[index] = "18.20"
+		if midpoint == '9.1':
+			midpoint = '9.10'
+			index = midpoint_list.index("9.1")
+			midpoint_list[index] = "9.10"
+
 		st_node = int(midpoint.split(".")[0])
 		ed_node = int(midpoint.split(".")[1])		
 		distance = db.idealroute.find_one({"$and": [{"floor" : floor},{"query" : st_node},{"query" : ed_node}]})["total_distance"]
